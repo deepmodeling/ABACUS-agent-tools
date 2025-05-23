@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "abacus-agent"
+version = "0.1.0"
+description = "Abacus agent"
+requires-python = ">=3.11"
+
+[project.scripts]
+abacusagent = "abacusagent.main:main"
+
+[tool.setuptools]
+package-dir = { "abacusagent" = "src/abacusagent" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["abacusagent*"]
+exclude = ["tests*", "docs*", "examples*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]  
+testpaths = ["tests"] 
+addopts = "-v"        
+
+[project.optional-dependencies]
+dev = []

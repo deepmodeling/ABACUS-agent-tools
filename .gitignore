@@ -1,0 +1,50 @@
+# 基础忽略项
+*.py[cod]
+__pycache__/
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 环境文件
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# 编辑器文件
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 测试相关
+.coverage
+htmlcov/
+.pytest_cache/
+test-results/
+
+# 日志和数据库
+*.log
+*.sqlite
+*.db
+
+
+.DS_Store
+Thumbs.db
