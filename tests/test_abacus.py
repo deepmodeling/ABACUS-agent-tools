@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 
 os.environ["ABACUSAGENT_MODEL"] = "test"  # Set the model to test
-from abacusagent.modules.abacus_prepare import abacus_prepare
+from abacusagent.modules.abacus import abacus_prepare
 
 class TestAbacusPrepare(unittest.TestCase):
     def setUp(self):
@@ -12,7 +12,7 @@ class TestAbacusPrepare(unittest.TestCase):
         self.addCleanup(self.test_dir.cleanup)  
         self.test_path = Path(self.test_dir.name)
         
-        self.data_dir = Path(__file__).parent / "abacus_prepare"
+        self.data_dir = Path(__file__).parent / "abacus"
         self.pp_path = (self.data_dir / "pp").resolve()
         self.orb_path = (self.data_dir / "orb").resolve()
         self.stru_file1 = (self.data_dir / "STRU").resolve()
