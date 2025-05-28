@@ -1,6 +1,7 @@
 from pathlib import Path
 import importlib
 import os
+import argparse
 
 def load_tools():
     """
@@ -20,12 +21,32 @@ def load_tools():
             print(f"⚠️ Failed to load {module_name}: {str(e)}")
 
 
+def parse_args():
+    """
+    Parse command line arguments.
+    """
+    parser = argparse.ArgumentParser(description="AbacusAgent Command Line Interface")
+    
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="fastmcp",
+        help="Model to use (default: fastmcp)"
+    )
+    
+    args = parser.parse_args()
+    
+    return args
+
 def main():
     """
     Main function to run the MCP tool.
     """
-    os.environ["ABACUSAGENT_MODEL"] =  "dp"  # Set the model to dp
-    
+    args = parse_args()  # Parse command line arguments
+    # Set the environment variable for the model
+    os.environ["ABACUSAGENT_MODEL"] = args.model
+    print(f"Model set to: {args.model}")
+
     from abacusagent.init_mcp import mcp
     load_tools()  # Load all tools
     mcp.run(transport="streamable-http")
