@@ -59,7 +59,20 @@ class TestAbacusModifyInput(unittest.TestCase):
         self.test_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.test_dir.cleanup)  
         self.test_path = Path(self.test_dir.name)
+        
         self.data_dir = Path(__file__).parent / "abacus"
+        self.pp_path = (self.data_dir / "pp").resolve()
+        self.orb_path = (self.data_dir / "orb").resolve()
+        self.stru_file1 = (self.data_dir / "STRU").resolve()
+        self.stru_file2 = (self.data_dir / "POSCAR").resolve()
+        
+        self.original_cwd = os.getcwd()
+        os.chdir(self.test_path)
+        
+        print(f"Test directory: {self.test_path}")
+            
+    def tearDown(self):
+        os.chdir(self.original_cwd) 
 
     def test_abacus_modify_input_basic(self):
         """
@@ -67,8 +80,8 @@ class TestAbacusModifyInput(unittest.TestCase):
         """
 
         extra_input = {'vdw_corr': 'd3_bj', 'nspin': 2}
-        self.input_file = Path("./") / "abacus/INPUT"
-        modified_input_file = Path("./") / "abacus/INPUT_MODIFIED"
+        self.input_file = self.data_dir / "INPUT"
+        modified_input_file = self.data_dir / "INPUT_MODIFIED"
         outputs = abacus_modify_input(self.input_file,
                                       modified_input_file=modified_input_file,
                                       extra_input=extra_input)
@@ -91,9 +104,9 @@ class TestAbacusModifyInput(unittest.TestCase):
         dft_plus_u_settings = {'Fe': ['d', 3.0],
                                'O':  0.5}
         extra_input = {'vdw_corr': 'd3_bj', 'nspin': 2}
-        modified_input_file = Path("./") / "abacus/INPUT_LiFePO4_MODIFIED"
-        self.input_file = Path("./") / "abacus/INPUT_LiFePO4"
-        self.stru_file = Path("./") / "abacus/STRU_LiFePO4"
+        modified_input_file = self.data_dir / "INPUT_LiFePO4_MODIFIED"
+        self.input_file = self.data_dir / "INPUT_LiFePO4"
+        self.stru_file = self.data_dir / "STRU_LiFePO4"
 
         outputs = abacus_modify_input(self.input_file,
                                       modified_input_file=modified_input_file,
@@ -132,7 +145,20 @@ class TestAbacusModifyStru(unittest.TestCase):
         self.test_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.test_dir.cleanup)  
         self.test_path = Path(self.test_dir.name)
+        
         self.data_dir = Path(__file__).parent / "abacus"
+        self.pp_path = (self.data_dir / "pp").resolve()
+        self.orb_path = (self.data_dir / "orb").resolve()
+        self.stru_file1 = (self.data_dir / "STRU").resolve()
+        self.stru_file2 = (self.data_dir / "POSCAR").resolve()
+        
+        self.original_cwd = os.getcwd()
+        os.chdir(self.test_path)
+        
+        print(f"Test directory: {self.test_path}")
+            
+    def tearDown(self):
+        os.chdir(self.original_cwd) 
 
     def test_abacus_modify_stru_pp_orb(self):
         """
@@ -140,8 +166,8 @@ class TestAbacusModifyStru(unittest.TestCase):
         """
         pp = {'Ni': 'Ni_ONCV_PBE-1.2.upf', 'O': 'O_ONCV_PBE-1.2.upf'}
         orb = {'Ni': 'Ni_gga_10au_6s3p3d2f.orb', 'O': 'O_gga_10au_3s3p2d.orb'}
-        stru_file = Path("./") / "abacus/STRU_NiO"
-        modified_stru_file = Path("./") / "abacus/STRU_NiO_modified"
+        stru_file = self.data_dir / "STRU_NiO"
+        modified_stru_file = self.data_dir / "STRU_NiO_modified"
 
         outputs = abacus_modify_stru(stru_file, 
                                     modified_stru_file=modified_stru_file,
@@ -166,8 +192,8 @@ class TestAbacusModifyStru(unittest.TestCase):
         movable_coors = [[0, 0, 1],
                          [0, 0, 0],
                          [1, 0, 1]]
-        stru_file = Path("./") / "abacus/STRU_NiO_fixatom"
-        modified_stru_file = Path("./") / "abacus/STRU_NiO_modified"
+        stru_file = self.data_dir / "STRU_NiO_fixatom"
+        modified_stru_file = self.data_dir / "STRU_NiO_modified"
 
         outputs = abacus_modify_stru(stru_file, 
                                     modified_stru_file=modified_stru_file,
@@ -193,8 +219,8 @@ class TestAbacusModifyStru(unittest.TestCase):
         Test modify magnetic moment for every atom in STRU file in the nspin=2 case
         """
         initial_magmoms = [2.0, 2.0, 0.0, 0.0]
-        stru_file = Path("./") / "abacus/STRU_NiO"
-        modified_stru_file = Path("./") / "abacus/STRU_NiO_modified"
+        stru_file = self.data_dir / "STRU_NiO"
+        modified_stru_file = self.data_dir / "STRU_NiO_modified"
 
         outputs = abacus_modify_stru(stru_file, 
                                     modified_stru_file=modified_stru_file,
@@ -219,8 +245,8 @@ class TestAbacusModifyStru(unittest.TestCase):
                            [2.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0]]
-        stru_file = Path("./") / "abacus/STRU_NiO"
-        modified_stru_file = Path("./") / "abacus/STRU_NiO_modified"
+        stru_file = self.data_dir / "STRU_NiO"
+        modified_stru_file = self.data_dir / "STRU_NiO_modified"
 
         outputs = abacus_modify_stru(stru_file, 
                                     modified_stru_file=modified_stru_file,
@@ -247,8 +273,8 @@ class TestAbacusModifyStru(unittest.TestCase):
         initial_magmoms = [2.0, 2.0, 0.0, 0.0]
         angle1 = [5.0, 10.0, 15.0, 20.0]
         angle2 = [20.0, 15.0, 10.0, 0.0]
-        stru_file = Path("./") / "abacus/STRU_NiO"
-        modified_stru_file = Path("./") / "abacus/STRU_NiO_modified"
+        stru_file = self.data_dir / "STRU_NiO"
+        modified_stru_file = self.data_dir / "STRU_NiO_modified"
 
         outputs = abacus_modify_stru(stru_file, 
                                     modified_stru_file=modified_stru_file,
@@ -280,15 +306,28 @@ class TestAbacusCollectData(unittest.TestCase):
         self.test_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.test_dir.cleanup)  
         self.test_path = Path(self.test_dir.name)
+        
         self.data_dir = Path(__file__).parent / "abacus"
+        self.pp_path = (self.data_dir / "pp").resolve()
+        self.orb_path = (self.data_dir / "orb").resolve()
+        self.stru_file1 = (self.data_dir / "STRU").resolve()
+        self.stru_file2 = (self.data_dir / "POSCAR").resolve()
+        
+        self.original_cwd = os.getcwd()
+        os.chdir(self.test_path)
+        
+        print(f"Test directory: {self.test_path}")
+            
+    def tearDown(self):
+        os.chdir(self.original_cwd) 
     
     def test_abacus_collect_data(self):
         """
         Test collect data from directory of abacus jobs
         """
-        abacusjob_dir = Path("./") / "abacus/Si-sp"
-        data_ref_json = Path("./") / "abacus/Si-sp/metrics.json"
-        abacustest_json = Path("./") / "abacus/Si-sp/abacustest-collectdata.json"
+        abacusjob_dir = self.data_dir / "Si-sp"
+        data_ref_json = self.data_dir / "Si-sp/metrics.json"
+        abacustest_json = self.data_dir / "Si-sp/abacustest-collectdata.json"
 
         with open(abacustest_json, "r") as fin:
             s = json.load(fin)
