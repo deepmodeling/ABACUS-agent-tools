@@ -29,6 +29,9 @@ jobs:
           git clone https://github.com/pxlxingliang/abacus-test.git
           cd abacus-test && git checkout develop
           pip install .
+    - name: Install abacus-agent
+      run: |
+          pip install .
     - name: Run unittest tests
       run: |
         cd tests
