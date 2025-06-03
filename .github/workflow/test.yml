@@ -1,28 +1,32 @@
-name: Python Project Automated Tests
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Auto test
+
 on:
   push:
-    branches: [main, develop]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [main, develop]
+    branches: [ "main", "develop" ]
 
 jobs:
-  test:
+  build:
+
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [3.11]
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
+        python-version: ["3.11"]
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      
-      - name: Install dependencies
-        run: |
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
           git clone https://github.com/pxlxingliang/abacus-test.git
           cd abacus-test && git checkout develop
           pip install .
-          pip install pytest pytest-cov
+  
