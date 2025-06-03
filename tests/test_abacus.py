@@ -326,12 +326,9 @@ class TestAbacusCollectData(unittest.TestCase):
         Test collect data from directory of abacus jobs
         """
         abacusjob_dir = self.data_dir / "Si-sp"
-        data_ref_json = self.data_dir / "Si-sp/metrics.json"
-        abacustest_json = self.data_dir / "Si-sp/abacustest-collectdata.json"
-
-        with open(abacustest_json, "r") as fin:
-            s = json.load(fin)
-            metrics = s['PARAM']
+        data_ref_json = self.data_dir / "Si-sp/metrics-ref.json"
+        
+        metrics = ['normal_end', 'natom', 'ibzk', 'nelec', 'nbands', 'scf_steps', 'energy_per_atom']
         with open(data_ref_json, "r") as fin:
             data_ref = json.load(fin)
         

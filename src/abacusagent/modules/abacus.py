@@ -171,7 +171,7 @@ def abacus_modify_stru(
     orb: Optional[Dict[str, str]] = None,
     fix_atoms_idx: Optional[List[int]] = None,
     movable_coords: Optional[List[bool]] = None,
-    initial_magmoms: Optional[List[List[float]]] = None,
+    initial_magmoms: Optional[Tuple[List[float], List[List[float]]]] = None,
     angle1: Optional[List[float]] = None,
     angle2: Optional[List[float]] = None
 ) -> TypedDict("results",{"stru_path": Path}):
@@ -198,7 +198,9 @@ def abacus_modify_stru(
     Returns:
         A dictionary containing the path of the modified ABACUS STRU file under the key 'stru_path'.
     Raises:
-        ValueError: If `stru_file` is not path of a file
+        ValueError: If `stru_file` is not path of a file, or dimension of initial_magmoms, angle1 or angle2 is not equal with number of atoms,
+          or length of fixed_atoms_idx and movable_coords are not equal, or element in movable_coords are not a list with 3 bool elements
+        KeyError: If pseudopotential or orbital are not provided for a element
     """
     if stru_file.is_file():
         stru = AbacusStru.ReadStru(stru_file)
@@ -206,31 +208,61 @@ def abacus_modify_stru(
         raise ValueError(f"{stru_file} is not path of a file")
     
     # Set pp and orb
+    elements = stru.get_element(number=False,total=False)
     if pp is not None:
         pplist = []
-        for element in stru.get_element(number=False,total=False):
-            pplist.append(pp[element])
+        for element in elements:
+            if element in pp:
+                pplist.append(pp[element])
+            else:
+                raise KeyError(f"Pseudopotential for element {element} is not provided")
+        
         stru.set_pp(pplist)
 
     if orb is not None:
         orb_list = []
-        for element in stru.get_element(number=False,total=False):
-            orb_list.append(orb[element])
+        for element in elements:
+            if element in orb:
+                orb_list.append(orb[element])
+            else:
+                raise KeyError(f"Orbital for element {element} is not provided")
+
         stru.set_orb(orb_list)
     
     # Set atomic magmom for every atom
+    natoms = len(stru.coord)
     if initial_magmoms is not None:
-        stru.set_atommag(initial_magmoms)
+        if len(initial_magmoms) == natoms:
+            stru.set_atommag(initial_magmoms)
+        else:
+            raise ValueError("The dimension of given initial magmoms is not equal with number of atoms")
     if angle1 is not None and angle2 is not None:
-        stru.set_angle1(angle1)
-        stru.set_angle2(angle2)
+        if len(initial_magmoms) == natoms:
+            stru.set_angle1(angle1)
+        else:
+            raise ValueError("The dimension of given angle1 of initial magmoms is not equal with number of atoms")
+        
+        if len(initial_magmoms) == natoms:
+            stru.set_angle2(angle2)
+        else:
+            raise ValueError("The dimension of given angle2 of initial magmoms is not equal with number of atoms")
     
     # Set atom fixations
     # Atom fixations in fix_atoms and movable_coors will be applied to original atom fixation
     if fix_atoms_idx is not None:
         atom_move = stru.get_move()
         for fix_idx, atom_idx in enumerate(fix_atoms_idx):
-            atom_move[atom_idx] = movable_coords[fix_idx]
+            if fix_idx < 0 or fix_idx >= natoms:
+                raise ValueError("Given index of atoms to be fixed is not a integer >= 0 or < natoms")
+            
+            if len(fix_atoms_idx) == len(movable_coords):
+                if len(movable_coords[fix_idx]) == 3:
+                    atom_move[atom_idx] = movable_coords[fix_idx]
+                else:
+                    raise ValueError("Elements of movable_coords should be a list with 3 bool elements")
+            else:
+                raise ValueError("Length of fix_atoms_idx and movable_coords should be equal")
+
         stru._move = atom_move
     
     stru.write(modified_stru_file)
@@ -240,7 +272,20 @@ def abacus_modify_stru(
 @mcp.tool()
 def abacus_collect_data(
     abacusjob: Path,
-    metrics: List[str] = ["normal_end", "scf_conv", "energy", "total_time"]
+    metrics: List[Literal["version", "ncore", "omp_num", "normal_end", "INPUT", "kpt", "fft_grid",
+                          "nbase", "nbands", "nkstot", "ibzk", "natom", "nelec", "nelec_dict", "point_group",
+                          "point_group_in_space_group", "converge", "total_mag", "absolute_mag", "energy", 
+                          "energy_ks", "energies", "volume", "efermi", "energy_per_atom", "force", "forces", 
+                          "stress", "virial", "pressure", "stresses", "virials", "pressures", "largest_gradient", 
+                          "band", "band_weight", "band_plot", "band_gap", "total_time", "stress_time", "force_time", 
+                          "scf_time", "scf_time_each_step", "step1_time", "scf_steps", "atom_mags", "atom_mag", 
+                          "atom_elec", "atom_orb_elec", "atom_mag_u", "atom_elec_u", "drho", "drho_last", 
+                          "denergy", "denergy_last", "denergy_womix", "denergy_womix_last", "lattice_constant", 
+                          "lattice_constants", "cell", "cells", "cell_init", "coordinate", "coordinate_init", 
+                          "element", "label", "element_list", "atomlabel_list", "pdos", "charge", "charge_spd", 
+                          "atom_mag_spd", "relax_converge", "relax_steps", "ds_lambda_step", "ds_lambda_rms", 
+                          "ds_mag", "ds_mag_force", "ds_time", "mem_vkb", "mem_psipw"]]
+                          = ["normal_end", "scf_conv", "energy", "total_time"]
 ) -> TypedDict("results",{"collected_data": Path}):
     """
     Collect ABACUS calculation results.
@@ -252,7 +297,7 @@ def abacus_collect_data(
                         ncore: the mpi cores
                       omp_num: the omp cores
                    normal_end: if the job is normal ending
-                        INPUT: a dict to store the setting in OUT.xxx/INPUT
+                        INPUT: a dict to store the setting in OUT.xxx/INPUT, see manual of ABACUS INPUT file
                           kpt: list, the K POINTS setting in KPT file
                      fft_grid: fft grid for charge/potential
                         nbase: number of basis in LCAO
