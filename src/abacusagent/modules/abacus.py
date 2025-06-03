@@ -230,7 +230,7 @@ def abacus_modify_stru(
         stru.set_orb(orb_list)
     
     # Set atomic magmom for every atom
-    natoms = len(stru.coord)
+    natoms = len(stru.get_coord())
     if initial_magmoms is not None:
         if len(initial_magmoms) == natoms:
             stru.set_atommag(initial_magmoms)

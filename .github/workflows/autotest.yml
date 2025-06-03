@@ -35,5 +35,6 @@ jobs:
     - name: Run unittest tests
       run: |
         cd tests
+        export PYTHONPATH=${PYTHONPATH}:`pwd`
         python -m unittest discover -v
   
