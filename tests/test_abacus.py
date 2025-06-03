@@ -345,5 +345,6 @@ class TestAbacusCollectData(unittest.TestCase):
             else:
                 self.assertEqual(data_ref[metric], collected_metrics[metric])
 
+if __name__ == '__main__':
+    unittest.main()
 
-unittest.main()
