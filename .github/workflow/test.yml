@@ -14,7 +14,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-      
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -23,21 +22,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          git clone 
+          git clone https://github.com/pxlxingliang/abacus-test.git
           cd abacus-test && git checkout develop
           pip install .
           pip install pytest pytest-cov
-      
-      - name: Cache dependencies
-        id: cache-dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Run tests with coverage  # 运行测试并生成覆盖率报告
-        run: |
-          pytest --cov=your_package --cov-report=xml  # 生成 XML 格式覆盖率报告
-          pytest --cov=your_package --cov-report=html  # 生成 HTML 格式报告（可本地查看）
