@@ -77,7 +77,6 @@ def abacus_prepare(
     
     return {"job_path": str(Path(job_path[0]).absolute())}
 
-@mcp.tool()
 def abacus_get_input(
     input_file: str
 ) -> TypedDict("results", {"input_params": Dict[str, Any]}):
