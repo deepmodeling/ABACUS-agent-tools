@@ -62,7 +62,8 @@ def abacus_prepare(
             jobtype=job_type,
             pp_path=pp_path,
             orb_path=orb_path,
-            input_file=extra_input_file
+            input_file=extra_input_file,
+            lcao=lcao,
         ).run()
     except Exception as e:
         raise RuntimeError(f"Error preparing input files: {e}")
