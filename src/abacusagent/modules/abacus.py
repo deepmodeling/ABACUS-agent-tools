@@ -484,7 +484,6 @@ def run_abacus_local(
 
     return {'normal_end': metrics['normal_end']}
 
-@mcp.tool()
 def get_pp(
     elements: List[str],
     pp_type: Literal['sg15-v1-std', 'sg15-v1-acc', 'sg15-v2', 'dojo'] = 'sg15-v2'
@@ -655,8 +654,6 @@ def get_pp(
 
     return {"result": return_pps}
 
-
-@mcp.tool()
 def get_orb(
     elements: List[str],
     orb_type: Literal['sg15-v1-std', 'sg15-v1-acc', 'sg15-v2', 'dojo'] = 'sg15-v2'

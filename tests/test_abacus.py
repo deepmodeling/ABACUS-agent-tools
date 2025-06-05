@@ -195,8 +195,9 @@ class TestAbacusModifyStru(unittest.TestCase):
         movable_coors = [[0, 0, 1],
                          [0, 0, 0],
                          [1, 0, 1]]
-        stru_file = self.data_dir / "STRU_NiO_fixatom"
-        modified_stru_file = self.data_dir / "STRU_NiO_modified"
+        old_stru_file = self.data_dir / "STRU_NiO_ref"
+        stru_file = self.data_dir / "STRU_NiO"
+        shutil.copy2(old_stru_file, stru_file)
 
         outputs = abacus_modify_stru(stru_file, 
                                     fix_atoms_idx=fix_atoms_idx,
@@ -212,8 +213,8 @@ class TestAbacusModifyStru(unittest.TestCase):
                 self.assertEqual(movable_coors[fix_idx][coord_idx],
                                  modified_stru_move[fix_atom_idx][coord_idx])
 
-        if modified_stru_file.exists():
-            modified_stru_file.unlink()
+        if stru_file.exists():
+            stru_file.unlink()
 
 
     def test_abacus_modify_initial_magmoms_nspin2(self):
