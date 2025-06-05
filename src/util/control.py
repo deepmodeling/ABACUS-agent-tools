@@ -15,12 +15,12 @@ def workflow_example(x: int, y: int) -> int:
     # initialize the FlowEnvironment
     myenv = FlowEnvironment('workflow_example')
     
-    # run the first function within the environment
+    # Example 1: run the first function within the environment
     res = myenv.run(func, a=x, b=y)
     if not myenv.still_alive():
         return myenv.dump() # if the environment is not alive, dump the state
     
-    # run another function
+    # Example 2: run another function
     res = myenv.run(func, a=res, b=10)
     if not myenv.still_alive():
         return myenv.dump() # if the environment is not alive, dump the state
@@ -42,7 +42,7 @@ class FlowEnvironment:
     '''
     a class to represent the state of the workflow.
     '''
-    def __init__(self, name: str, flog=None):
+    def __init__(self, name: str, flog=None, fstate=None):
         '''
         instantiate the FlowEnvironment with a name and an optional log file.
         
@@ -61,6 +61,7 @@ class FlowEnvironment:
             'results': [],
             'flog': flog
         }
+        self.fstate = fstate
         self.avail = True
         # initialize the logging if flog is provided
         if flog is not None:
@@ -104,18 +105,18 @@ class FlowEnvironment:
             f": {self.avail}")
         return self.avail
     
-    def dump(self, fn=None):
+    def dump(self):
         '''
         dump the state to a json file.
         if fn is None, dump to a file named by the workflow name.
         '''
-        return self.state
-    
-        if fn is None:
-            fn = f'{self.name}-{time.strftime("%Y%m%d-%H%M%S")}.json'
+        if self.fstate is not None:
+            # fn = f'{self.name}-{time.strftime("%Y%m%d-%H%M%S")}.json'
         
-        with open(fn, 'w') as f:
-            json.dump(self.state, f, indent=4)
+            with open(self.fstate, 'w') as f:
+                json.dump(self.state, f, indent=4)
+        
+        return self.state
     
     def run(self, func, *args, **kwargs):
         '''
@@ -401,4 +402,44 @@ class FlowEnvironmentTest(unittest.TestCase):
         print(self.env)
     
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(exit=True)
+
+    # example
+    
+    def add(a, b):
+        return a + b
+    
+    def multiply(a, b):
+        return a * b
+    
+    def divide(a, b):
+        return a / b
+    
+    def myworkflow(x: int, y: int, fstate=None) -> int:
+        '''
+        an example workflow function.
+        '''
+        myenv = FlowEnvironment('myworkflow', fstate=fstate)
+        
+        res = myenv.run(add, a=x, b=y)
+        if not myenv.still_alive():
+            return myenv.dump()
+        
+        res = myenv.run(multiply, res, 10)
+        if not myenv.still_alive():
+            return myenv.dump()
+        
+        res = myenv.run(divide, res, 0)
+        if not myenv.still_alive():
+            return myenv.dump()
+        
+        res = myenv.run(add, res, 100)
+        if not myenv.still_alive():
+            return myenv.dump()
+        
+        return myenv.dump()
+    
+    # run the example workflow
+    result = myworkflow(5, 3, fstate='what_the_llm_reads.json')
+    print(result)
+    
