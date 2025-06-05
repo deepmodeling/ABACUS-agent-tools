@@ -455,7 +455,7 @@ def abacus_collect_data(
     
     return {'collected_metrics': collected_metrics}
 
-@mcp.tool()
+#@mcp.tool()
 def run_abacus_local(
     abacusjob: str,
 ) -> TypedDict("results",{"normal_end": bool}):
