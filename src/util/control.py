@@ -34,22 +34,42 @@ def workflow_example(x: int, y: int) -> int:
 
 import json
 import time
-from functools import wraps
 import unittest
+import logging
+from functools import wraps
 
 class FlowEnvironment:
     '''
     a class to represent the state of the workflow.
     '''
-    def __init__(self, name: str):
+    def __init__(self, name: str, flog=None):
+        '''
+        instantiate the FlowEnvironment with a name and an optional log file.
+        
+        Parameters
+        ----------
+        name : str
+            The name of the workflow.
+        flog : str, optional
+            The log file to record the workflow state. If None, no logging is performed.
+        '''
         self.name = name
         self.state = {
             'workflow': self.name,
             'start_time': time.strftime("%Y.%m.%d %H:%M:%S"),
             'end_time': None,
-            'results': []
+            'results': [],
+            'flog': flog
         }
         self.avail = True
+        # initialize the logging if flog is provided
+        if flog is not None:
+            logging.basicConfig(
+                filename=flog, 
+                level=logging.INFO,
+                format='%(asctime)s - %(levelname)s - %(message)s')
+            logging.info(f"Workflow {self.name} initialized at "
+                         f"{self.state['start_time']}")
     
     def refresh(self, t=None):
         '''
@@ -58,6 +78,11 @@ class FlowEnvironment:
         if self.still_alive():
             self.state['end_time'] = t \
                 if t is not None else time.strftime("%Y.%m.%d %H:%M:%S")
+            logging.info(f"Workflow {self.name} refreshed at "
+                         f"{self.state['end_time']}")
+        else:
+            logging.warning(f"Workflow {self.name} is not available, "
+                            f"cannot refresh the state.")
     
     def kill(self) -> dict:
         '''
@@ -65,6 +90,9 @@ class FlowEnvironment:
         '''
         self.refresh()
         self.avail = False
+        logging.info(f"Workflow {self.name} killed at "
+                     f"{self.state['end_time']}")
+        logging.shutdown()
         return self.state
     
     def still_alive(self):
@@ -72,6 +100,8 @@ class FlowEnvironment:
         check the status of the workflow.
         Returns True if the workflow is available, False otherwise.
         '''
+        logging.info(f"Checking if workflow {self.name} is still alive."
+            f": {self.avail}")
         return self.avail
     
     def dump(self, fn=None):
@@ -92,6 +122,8 @@ class FlowEnvironment:
         run a function and record the state.
         '''
         if not self.still_alive():
+            logging.error(f"Workflow {self.name} is not available, "
+                          f"cannot run the function.")
             return self.state
         
         # if the environment is still alive
@@ -113,6 +145,8 @@ class FlowEnvironment:
                     'exception': []
                 }
             )
+            logging.warning(f"Function {task_name} is not callable, "
+                           f"returning the result directly.")
             self.refresh()
             return func
         
@@ -134,6 +168,8 @@ class FlowEnvironment:
                     'exception': []
                 }
             )
+            logging.info(f"Function {task_name} executed successfully, "
+                         f"returning the result.")
             return result
         except Exception as e:
             self.state['results'].append(
@@ -144,6 +180,8 @@ class FlowEnvironment:
                     'exception': str(e)
                 }
             )
+            logging.error(f"Function {task_name} raised an exception: {e}")
+            # if an exception occurs, kill the environment
             self.kill()
             return self.state
         finally:
