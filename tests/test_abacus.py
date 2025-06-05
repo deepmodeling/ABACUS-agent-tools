@@ -1,5 +1,6 @@
 import unittest
 import os, sys
+import shutil
 import math
 import json
 from pathlib import Path
@@ -37,7 +38,7 @@ class TestAbacusPrepare(unittest.TestCase):
         # catch the screen output
         sys.stdout = open(os.devnull, 'w')
         
-        outputs = abacus_prepare(self.stru_file1,
+        outputs = abacus_prepare(str(self.stru_file1.absolute()),
             stru_type = "abacus/stru",
             pp_path= self.pp_path,
             orb_path = self.orb_path,
@@ -45,7 +46,7 @@ class TestAbacusPrepare(unittest.TestCase):
             lcao= True
         )
         self.assertTrue(os.path.exists(outputs["job_path"]))
-        self.assertEqual(outputs["job_path"], Path("000000").absolute())
+        self.assertEqual(outputs["job_path"], str(Path("000000").absolute()))
         self.assertTrue(os.path.exists("000000/INPUT"))
         self.assertTrue(os.path.exists("000000/STRU"))
         self.assertTrue(os.path.exists("000000/As_ONCV_PBE-1.0.upf"))
@@ -79,22 +80,24 @@ class TestAbacusModifyInput(unittest.TestCase):
         Test modify INPUT parameters without modifying DFT+U parameters
         """
 
-        extra_input = {'vdw_corr': 'd3_bj', 'nspin': 2}
+        extra_input = {'vdw_method': 'd3_bj', 'nspin': 2}
+        remove_input = {'gamma_only'}
+        self.old_input_file = self.data_dir / "INPUT_ref"
         self.input_file = self.data_dir / "INPUT"
-        modified_input_file = self.data_dir / "INPUT_MODIFIED"
+        shutil.copy2(self.old_input_file, self.input_file)
+        original_input_param = ReadInput(self.input_file)
         outputs = abacus_modify_input(self.input_file,
-                                      modified_input_file=modified_input_file,
-                                      extra_input=extra_input)
+                                      extra_input=extra_input,
+                                      remove_input=remove_input)
         
         self.assertTrue(os.path.exists(outputs["input_path"]))
-        original_input_param = ReadInput(self.input_file)
-        modified_input_param = ReadInput(modified_input_file)
-        self.assertEqual(modified_input_param['vdw_corr'], extra_input['vdw_corr'])
+        modified_input_param = ReadInput(self.input_file)
+        self.assertEqual(modified_input_param['vdw_method'], extra_input['vdw_method'])
         self.assertEqual(modified_input_param['nspin'], extra_input['nspin'])
         self.assertEqual(modified_input_param['ecutwfc'], original_input_param['ecutwfc'])
         
-        if modified_input_file.exists():
-            modified_input_file.unlink()
+        if self.input_file.exists():
+            self.input_file.unlink()
 
     def test_abacus_modify_input_dftu(self):
         """
@@ -103,21 +106,21 @@ class TestAbacusModifyInput(unittest.TestCase):
 
         dft_plus_u_settings = {'Fe': ['d', 3.0],
                                'O':  0.5}
-        extra_input = {'vdw_corr': 'd3_bj', 'nspin': 2}
-        modified_input_file = self.data_dir / "INPUT_LiFePO4_MODIFIED"
+        extra_input = {'vdw_method': 'd3_bj', 'nspin': 2}
+        self.old_input_file = self.data_dir / "INPUT_LiFePO4_old"
         self.input_file = self.data_dir / "INPUT_LiFePO4"
         self.stru_file = self.data_dir / "STRU_LiFePO4"
+        shutil.copy2(self.old_input_file, self.input_file)
+        original_input_param = ReadInput(self.input_file)
 
         outputs = abacus_modify_input(self.input_file,
-                                      modified_input_file=modified_input_file,
                                       stru_file = self.stru_file,
                                       dft_plus_u_settings=dft_plus_u_settings,
                                       extra_input=extra_input)
         
         self.assertTrue(os.path.exists(outputs["input_path"]))
-        modified_input_param = ReadInput(modified_input_file)
-        original_input_param = ReadInput(self.input_file)
-        self.assertEqual(modified_input_param['vdw_corr'], extra_input['vdw_corr'])
+        modified_input_param = ReadInput(self.input_file)
+        self.assertEqual(modified_input_param['vdw_method'], extra_input['vdw_method'])
         self.assertEqual(modified_input_param['nspin'], extra_input['nspin'])
         self.assertEqual(modified_input_param['ecutwfc'], original_input_param['ecutwfc'])
 
@@ -136,8 +139,8 @@ class TestAbacusModifyInput(unittest.TestCase):
         for i in range(len(hubbard_u_modified)):
             self.assertAlmostEqual(hubbard_u_modified[i], hubbard_u_ref[i])
         
-        if modified_input_file.exists():
-            modified_input_file.unlink()
+        if self.input_file.exists():
+            self.input_file.unlink()
 
 
 class TestAbacusModifyStru(unittest.TestCase):
@@ -166,11 +169,11 @@ class TestAbacusModifyStru(unittest.TestCase):
         """
         pp = {'Ni': 'Ni_ONCV_PBE-1.2.upf', 'O': 'O_ONCV_PBE-1.2.upf'}
         orb = {'Ni': 'Ni_gga_10au_6s3p3d2f.orb', 'O': 'O_gga_10au_3s3p2d.orb'}
+        old_stru_file = self.data_dir / "STRU_NiO_ref"
         stru_file = self.data_dir / "STRU_NiO"
-        modified_stru_file = self.data_dir / "STRU_NiO_modified"
+        shutil.copy2(old_stru_file, stru_file)
 
         outputs = abacus_modify_stru(stru_file, 
-                                    modified_stru_file=modified_stru_file,
                                     pp=pp,
                                     orb=orb)
         
@@ -181,8 +184,8 @@ class TestAbacusModifyStru(unittest.TestCase):
             self.assertEqual(modified_stru.get_pp()[idx],  pp[element])
             self.assertEqual(modified_stru.get_orb()[idx], orb[element])
         
-        if modified_stru_file.exists():
-            modified_stru_file.unlink()
+        if stru_file.exists():
+            stru_file.unlink()
 
     def test_abacus_modify_stru_fixed_atoms(self):
         """
@@ -196,7 +199,6 @@ class TestAbacusModifyStru(unittest.TestCase):
         modified_stru_file = self.data_dir / "STRU_NiO_modified"
 
         outputs = abacus_modify_stru(stru_file, 
-                                    modified_stru_file=modified_stru_file,
                                     fix_atoms_idx=fix_atoms_idx,
                                     movable_coords=movable_coors)
         
@@ -219,11 +221,11 @@ class TestAbacusModifyStru(unittest.TestCase):
         Test modify magnetic moment for every atom in STRU file in the nspin=2 case
         """
         initial_magmoms = [2.0, 2.0, 0.0, 0.0]
+        old_stru_file = self.data_dir / "STRU_NiO_ref"
         stru_file = self.data_dir / "STRU_NiO"
-        modified_stru_file = self.data_dir / "STRU_NiO_modified"
+        shutil.copy2(old_stru_file, stru_file)
 
         outputs = abacus_modify_stru(stru_file, 
-                                    modified_stru_file=modified_stru_file,
                                     initial_magmoms=initial_magmoms)
         
         self.assertTrue(os.path.exists(outputs["stru_path"]))
@@ -234,8 +236,8 @@ class TestAbacusModifyStru(unittest.TestCase):
             self.assertIsInstance(modified_stru_initial_magmoms[idx], float)
             self.assertAlmostEqual(value, modified_stru_initial_magmoms[idx])
         
-        if modified_stru_file.exists():
-            modified_stru_file.unlink()
+        if stru_file.exists():
+            stru_file.unlink()
 
     def test_abacus_modify_initial_magmoms_nspin4(self):
         """
@@ -245,11 +247,11 @@ class TestAbacusModifyStru(unittest.TestCase):
                            [2.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0]]
+        old_stru_file = self.data_dir / "STRU_NiO_ref"
         stru_file = self.data_dir / "STRU_NiO"
-        modified_stru_file = self.data_dir / "STRU_NiO_modified"
+        shutil.copy2(old_stru_file, stru_file)
 
         outputs = abacus_modify_stru(stru_file, 
-                                    modified_stru_file=modified_stru_file,
                                     initial_magmoms=initial_magmoms)
         
         self.assertTrue(os.path.exists(outputs["stru_path"]))
@@ -263,8 +265,8 @@ class TestAbacusModifyStru(unittest.TestCase):
                 self.assertAlmostEqual(initial_magmoms[idx][idx2],
                                        modified_stru_initial_magmoms[idx][idx2])
         
-        if modified_stru_file.exists():
-            modified_stru_file.unlink()
+        if stru_file.exists():
+            stru_file.unlink()
 
     def test_abacus_modify_initial_magmoms_nspin4_angle(self):
         """
@@ -273,11 +275,12 @@ class TestAbacusModifyStru(unittest.TestCase):
         initial_magmoms = [2.0, 2.0, 0.0, 0.0]
         angle1 = [5.0, 10.0, 15.0, 20.0]
         angle2 = [20.0, 15.0, 10.0, 0.0]
+        old_stru_file = self.data_dir / "STRU_NiO_ref"
         stru_file = self.data_dir / "STRU_NiO"
+        shutil.copy2(old_stru_file, stru_file)
         modified_stru_file = self.data_dir / "STRU_NiO_modified"
 
         outputs = abacus_modify_stru(stru_file, 
-                                    modified_stru_file=modified_stru_file,
                                     initial_magmoms=initial_magmoms,
                                     angle1=angle1,
                                     angle2=angle2)
@@ -326,22 +329,16 @@ class TestAbacusCollectData(unittest.TestCase):
         Test collect data from directory of abacus jobs
         """
         abacusjob_dir = self.data_dir / "Si-sp"
-        data_ref_json = self.data_dir / "Si-sp/metrics.json"
-        abacustest_json = self.data_dir / "Si-sp/abacustest-collectdata.json"
+        data_ref_json = self.data_dir / "Si-sp/metrics-ref.json"
 
-        with open(abacustest_json, "r") as fin:
-            s = json.load(fin)
-            metrics = s['PARAM']
+        metrics = ["normal_end", "natom", "ibzk", "nelec", "nbands", "scf_steps", "energy_per_atom"]
         with open(data_ref_json, "r") as fin:
             data_ref = json.load(fin)
         
         outputs = abacus_collect_data(abacusjob_dir,
                                      metrics)
+        collected_metrics = outputs['collected_metrics']
         
-        with open(outputs['collected_data']) as fin:
-            collected_metrics = json.load(fin)
-        
-        self.assertTrue(os.path.isfile(outputs['collected_data']))
         for metric in metrics:
             if metric in ['nelec', 'energy_per_atom']:
                 self.assertAlmostEqual(data_ref[metric], collected_metrics[metric])
