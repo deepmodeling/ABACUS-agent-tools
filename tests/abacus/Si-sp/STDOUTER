@@ -1,0 +1,2 @@
+OMP: Warning #182: OMP_STACKSIZE: ignored because KMP_STACKSIZE has been defined
+Info: Local MPI proc number: 1,OpenMP thread number: 6,Total thread number: 6,Local thread limit: 12
