@@ -25,4 +25,6 @@ testpaths = ["tests"]
 addopts = "-v"        
 
 [project.optional-dependencies]
-dev = []
+dev = ["mcp>=1.9.0",
+       "abacustest",
+]
