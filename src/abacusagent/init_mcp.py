@@ -1,12 +1,16 @@
 import os
 
-if os.getenv("ABACUSAGENT_MODEL") == "dp":
+port = os.environ.get("ABACUSAGENT_PORT", "50001")
+host = os.environ.get("ABACUSAGENT_HOST", "0.0.0.0")
+model = os.environ.get("ABACUSAGENT_MODEL", "fastmcp")
+
+if model == "dp":
     from dp.agent.server import CalculationMCPServer
-    mcp = CalculationMCPServer("Demo", port=50001)
-elif os.getenv("ABACUSAGENT_MODEL") == "fastmcp":
+    mcp = CalculationMCPServer("ABACUSAGENT", port=port, host=host)
+elif model == "fastmcp":
     from mcp.server.fastmcp import FastMCP
-    mcp = FastMCP("research", port=50001)
-elif os.getenv("ABACUSAGENT_MODEL") == "test": # For unit test of models
+    mcp = FastMCP("ABACUSAGENT", port=port, host=host)
+elif model == "test": # For unit test of models
     class MCP:
         def tool(self):
             def decorator(func):
