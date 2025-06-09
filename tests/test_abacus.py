@@ -347,4 +347,4 @@ class TestAbacusCollectData(unittest.TestCase):
                 self.assertEqual(data_ref[metric], collected_metrics[metric])
 
 
-unittest.main()
+#unittest.main()
