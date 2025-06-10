@@ -1,5 +1,6 @@
 import os
 import json
+import asyncio
 from pathlib import Path
 from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple, Union
 from abacustest.lib_model.model_013_inputs import PrepInput
@@ -7,6 +8,8 @@ from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
 
 from abacusagent.init_mcp import mcp
+from abacusagent.modules.comm import run_abacus
+
 
 @mcp.tool()
 def abacus_prepare(
@@ -439,30 +442,17 @@ def abacus_collect_data(
     return {'collected_metrics': collected_metrics}
 
 # This function is for test purpose on my local machine only.
-#@mcp.tool()
-def run_abacus_local(
+@mcp.tool()
+async def run_abacus_onejob(
     abacusjob: str,
-) -> TypedDict("results",{"normal_end": bool}):
+) -> Dict[str, Any]:
     """
-    Run abacus in local machine.
+    Run one ABACUS job and collect data.
     Args:
-        abacusjob (str): Path to the directory containing the ABACUS job output files.
+        abacusjob (str): Path to the directory containing the ABACUS input files.
     Returns:
-        Whether the abacus job ends normally.
-    
-    Raises:
-        RuntimeError: if the abacus calculations didn't end normally
+        the collected metrics from the ABACUS job.
     """
-    abacusjob = Path(abacusjob)
-    original_path = Path("./")
-    os.chdir(Path(abacusjob))
-    os.system("runabacus.sh")
-    os.chdir(original_path)
+    await run_abacus(abacusjob)
 
-    output = abacus_collect_data(str(abacusjob))
-    with open("metrics.json") as fin:
-        metrics = json.load(fin)
-    if metrics['normal_end'] is not True:
-        raise RuntimeError("the abacus job didn't end normally")
-
-    return {'normal_end': metrics['normal_end']}
+    return abacus_collect_data(str(abacusjob))
