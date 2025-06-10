@@ -443,26 +443,16 @@ def abacus_collect_data(
 
 # This function is for test purpose on my local machine only.
 @mcp.tool()
-async def run_abacus_local(
+async def run_abacus_onejob(
     abacusjob: str,
-) -> TypedDict("results",{"normal_end": bool}):
+) -> Dict[str, Any]:
     """
-    Run abacus in local machine.
+    Run one ABACUS job and collect data.
     Args:
-        abacusjob (str): Path to the directory containing the ABACUS job output files.
+        abacusjob (str): Path to the directory containing the ABACUS input files.
     Returns:
-        Whether the abacus job ends normally.
-    
-    Raises:
-        RuntimeError: if the abacus calculations didn't end normally
+        the collected metrics from the ABACUS job.
     """
-    abacusjob = Path(abacusjob)
-    run_abacus(abacusjob)
+    await run_abacus(abacusjob)
 
-    await output = abacus_collect_data(str(abacusjob))
-    with open("metrics.json") as fin:
-        metrics = json.load(fin)
-    if metrics['normal_end'] is not True:
-        raise RuntimeError("the abacus job didn't end normally")
-
-    return {'normal_end': metrics['normal_end']}
+    return abacus_collect_data(str(abacusjob))
