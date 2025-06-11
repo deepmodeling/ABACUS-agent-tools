@@ -6,6 +6,7 @@ ENVS = {
     "ABACUSAGENT_SUBMIT_TYPE": "local",  # local, bohrium
 
     # connection settings
+    "ABACUSAGENT_TRANSPORT": "sse",  # sse, streamable-http
     "ABACUSAGENT_HOST": "localhost",
     "ABACUSAGENT_PORT": "50001", 
     "ABACUSAGENT_MODEL": "fastmcp",  # fastmcp, abacus, bohrium
@@ -26,6 +27,7 @@ ENVS = {
     "_comments":{
         "ABACUS_WORK_PATH": "The working directory for AbacusAgent, where all temporary files will be stored.",
         "ABACUS_SUBMIT_TYPE": "The type of submission for ABACUS, can be local or bohrium.",
+        "ABACUSAGENT_TRANSPORT": "The transport protocol for AbacusAgent, can be 'sse' or 'streamable-http'.",
         "ABACUSAGENT_HOST": "The host address for the AbacusAgent server.",
         "ABACUSAGENT_PORT": "The port number for the AbacusAgent server.",
         "ABACUSAGENT_MODEL": "The model to use for AbacusAgent, can be 'fastmcp', 'test', or 'dp'.",
@@ -42,7 +44,7 @@ ENVS = {
     }
 }
 
-def set_envs(model_input=None, port_input=None, host_input=None):
+def set_envs(transport_input=None, model_input=None, port_input=None, host_input=None):
     """
     Set environment variables for AbacusAgent.
     
@@ -66,6 +68,8 @@ def set_envs(model_input=None, port_input=None, host_input=None):
             envjson[key] = value
             update_envjson = True
     
+    if transport_input is not None:
+        os.environ["ABACUSAGENT_TRANSPORT"] = str(transport_input)
     if port_input is not None:
         os.environ["ABACUSAGENT_PORT"] = str(port_input)
     if host_input is not None:
