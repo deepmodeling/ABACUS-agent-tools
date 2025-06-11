@@ -37,6 +37,7 @@ import time
 import unittest
 import logging
 from functools import wraps
+from typing import Callable, Dict, Optional
 
 class FlowEnvironment:
     '''
@@ -67,7 +68,7 @@ class FlowEnvironment:
         if flog is not None:
             logging.basicConfig(
                 filename=flog, 
-                level=logging.INFO,
+                level=logging.ERROR,
                 format='%(asctime)s - %(levelname)s - %(message)s')
             logging.info(f"Workflow {self.name} initialized at "
                          f"{self.state['start_time']}")
@@ -188,16 +189,72 @@ class FlowEnvironment:
         finally:
             self.refresh()
             # refresh the end time after the function is executed
-    
+        
     # support the decorator protocol
-    def decorate(self, func):
+    def decorate(self, func: Callable) -> Callable:
         '''
-        a decorator to run a function within the environment.
+        a decorator to run a function within the environment. All
+        functions will be recorded in the environment state. A 
+        manually dump is needed to save the state to a file.
+        
+        Parameters
+        ----------
+        func : Callable
+            The function to be decorated.
+
+        Returns
+        -------
+        Callable
+            A wrapper function that runs the original function within
+            a FlowEnvironment instance. The wrapped function will 
+            return the state dict if the function is not callable,
+            or any exception occurs during the execution. If there
+            is no exception, the wrapped function will return the
+            return value of the original function.
         '''
         @wraps(func)
         def wrapper(*args, **kwargs):
             return self.run(func, *args, **kwargs)
         return wrapper
+    
+    @staticmethod
+    def static_decorate(fstate: Optional[str] = None) -> Callable[..., Callable]:
+        '''
+        a static implementation of the decorator to run a function.
+        The function will be recorded in its own environment state.
+        Once the function is returned, the state dict will be dumped
+        to a file named by the function name.
+        
+        Parameters
+        ----------
+        fstate : Optional[str], optional
+            The file name to dump the state. If None, a default name
+            will be generated based on the function name and current
+            timestamp. Default is None.
+        
+        Returns
+        -------
+        Callable
+            A wrapper function that runs the original function within
+            a FlowEnvironment instance and dumps the state to a file.
+            If any exception occurs during the execution, the state
+            dict will be returned instead of the function's return value.
+        '''
+        def decorator(func: Callable) -> Callable:
+            myname = func.__name__
+            myfstate = fstate or \
+                f'pyfunc-{myname}-{time.strftime("%Y%m%d%H%M%S")}.json'
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                # create a FlowEnvironment instance with the function name
+                env = FlowEnvironment(name=myname, fstate=myfstate)
+                result = env.run(func, *args, **kwargs)
+                # dump the state to a file named by the function name and
+                # close the environment
+                env.dump()
+                return result.copy() if isinstance(result, dict) else result
+            return wrapper
+        return decorator
     
     def __call__(self, func):
         '''
@@ -250,6 +307,30 @@ class FlowEnvironment:
             self.kill()
         else:
             self.refresh()
+
+    def rejuvenate(self):
+        '''
+        rejuvinate the environment, i.e., reset the state.
+        
+        Returns
+        -------
+        dict
+            The previous state of the environment before rejuvenation.
+        '''
+        mymemory = self.dump().copy()
+        
+        # reset the state
+        self.state = {
+            'workflow': self.name,
+            'start_time': time.strftime("%Y.%m.%d %H:%M:%S"),
+            'end_time': None,
+            'results': [],
+            'flog': self.state.get('flog', None)
+        }
+        self.avail = True
+        logging.info(f"Workflow {self.name} rejuvenated at "
+                     f"{self.state['start_time']}")
+        return mymemory
 
 class FlowEnvironmentTest(unittest.TestCase):
     '''
@@ -401,10 +482,20 @@ class FlowEnvironmentTest(unittest.TestCase):
         self.assertEqual(self.env.state['results'][0]['return'], None)
         print(self.env)
     
+    def test_static_decorator(self):
+        
+        @FlowEnvironment.static_decorate
+        def multiply(a, b):
+            return a * b
+        
+        result = multiply(2, 3)
+        print(result)
+    
 if __name__ == '__main__':
     unittest.main(exit=True)
 
-    # example
+    # example 1: instantiate the workflow-environment within the
+    # workflow function, and run the functions within the environment.
     
     def add(a, b):
         return a + b
@@ -443,3 +534,76 @@ if __name__ == '__main__':
     result = myworkflow(5, 3, fstate='what_the_llm_reads.json')
     print(result)
     
+    # example 2: use the FlowEnvironment as a dynamic decorator
+    myenv = FlowEnvironment('dynamic_decorator_example')
+    
+    @myenv.decorate
+    def dynamic_decorated_add(a, b):
+        return a + b
+    
+    @myenv.decorate
+    def dynamic_decorated_multiply(a, b):
+        return a * b
+    
+    @myenv.decorate
+    def dynamic_decorated_divide(a, b):
+        return a / b
+    
+    @myenv.decorate
+    def dynamic_decorated_workflow(x: int, y: int) -> int:
+        '''
+        an example workflow function with dynamic decorator.
+        '''
+        res = dynamic_decorated_add(x, y)
+        if not myenv.still_alive():
+            return myenv.dump()
+        
+        res = dynamic_decorated_multiply(res, 10)
+        if not myenv.still_alive():
+            return myenv.dump()
+        
+        res = dynamic_decorated_divide(res, 0)
+        if not myenv.still_alive():
+            return myenv.dump()
+        
+        res = dynamic_decorated_add(res, 100)
+        if not myenv.still_alive():
+            return myenv.dump()
+        
+        return myenv.dump()
+    
+    # run the dynamic decorated workflow
+    result = dynamic_decorated_workflow(5, 3)
+    print(result)
+    
+    # example 3: use the static decorator
+    @FlowEnvironment.static_decorate(fstate='static_decorated_add.json')
+    def static_decorated_add(a, b):
+        return a + b
+    
+    @FlowEnvironment.static_decorate(fstate='static_decorated_multiply.json')
+    def static_decorated_multiply(a, b):
+        return a * b
+    
+    @FlowEnvironment.static_decorate(fstate='static_decorated_divide.json')
+    def static_decorated_divide(a, b):
+        return a / b
+    
+    @FlowEnvironment.static_decorate(fstate='static_decorated_workflow.json')
+    def static_decorated_workflow(x: int, y: int) -> int:
+        '''
+        an example workflow function with static decorator.
+        '''
+        res = static_decorated_add(x, y)
+
+        res = static_decorated_multiply(res, 10)
+        
+        res = static_decorated_divide(res, 0)
+        
+        res = static_decorated_add(res, 100)
+        
+        return res
+    
+    # run the static decorated workflow
+    result = static_decorated_workflow(5, 3)
+    print(result)
