@@ -34,22 +34,8 @@ pip install .
 
 #### Starting ABACUS agent tools
 Before launching `abacusagent`, you must provide the necessary configurations in the `~/.abacusagent/env.json` file. This file defines how the ABACUS agent tools generate input files and manage ABACUS calculation workflows.
-```{
-    "ABACUSAGENT_WORK_PATH": "/tmp/abacusagent",
-    "ABACUSAGENT_SUBMIT_TYPE": "local",,
-    "ABACUSAGENT_TRANSPORT": "sse"
-    "ABACUSAGENT_HOST": "localhost",
-    "ABACUSAGENT_PORT": "50001",
-    "ABACUSAGENT_MODEL": "fastmcp",
-    "BOHRIUM_USERNAME": "",
-    "BOHRIUM_PASSWORD": "",
-    "BOHRIUM_PROJECT_ID": "",
-    "BOHRIUM_ABACUS_IMAGE": "registry.dp.tech/dptech/abacus-stable:LTSv3.10",
-    "BOHRIUM_ABACUS_MACHINE": "c32_m64_cpu",
-    "BOHRIUM_ABACUS_COMMAND": "OMP_NUM_THREADS=1 mpirun -np 16 abacus",
-    "ABACUS_COMMAND": "abacus",
-    "ABACUS_PP_PATH": "",
-    "ABACUS_ORB_PATH": "",
+```
+{
     "_comments": {
         "ABACUS_WORK_PATH": "The working directory for AbacusAgent, where all temporary files will be stored.",
         "ABACUS_SUBMIT_TYPE": "The type of submission for ABACUS, can be local or bohrium.",
@@ -69,6 +55,7 @@ Before launching `abacusagent`, you must provide the necessary configurations in
     }
 }
 ```
+Then you can start `abacusagent`.
 ```bash
 >>> abacusagent
 ✅ Successfully loaded: abacusagent.modules.abacus
@@ -93,8 +80,7 @@ from . import agent
 import os
 from google.adk.agents import Agent
 from google.adk.models.lite_llm import LiteLlm
-from google.adk.sessions import InMemorySessionService
-from google.adk.tools.mcp_tool import MCPTool, MCPToolset
+from google.adk.tools.mcp_tool import MCPToolset
 from google.adk.tools.mcp_tool.mcp_toolset import SseServerParams
 from dp.agent.adapter.adk import CalculationMCPToolset
 
@@ -105,11 +91,10 @@ model = LiteLlm(model='deepseek/deepseek-chat')
 instruction = "Provide your prompts to LLM here"
 
 # Specify the URL and port for connecting to the SSE server running the ABACUS agent.
-abacus_agent_url = "https://127.0.0.1:50001/sse"
-toolset = MCPToolset(
+toolset = CalculationMCPToolset(
     connection_params=SseServerParams(
-        url=abacus_agent_url,
-    ),
+        url="http://localhost:50001/sse",
+    )
 )
 
 root_agent = Agent(
