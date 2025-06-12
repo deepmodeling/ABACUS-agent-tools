@@ -27,12 +27,39 @@ git clone -b develop https://github.com/pxlxingliang/ABACUS-agent-tools.git
 cd abacus-agent
 pip install .
 ```
+If you haven't installed ABACUS, you can install ABACUS to the same environment by conda:
+```bash
+conda install abacus "libblas=*=*mkl" mpich -c conda-forge
+```
 
 ## Using ABACUS agent tools with Google ADK
 
 ### Use ABACUS agent tools and Google ADK on local machine
 
 #### Starting ABACUS agent tools
+Before launching `abacusagent`, you must provide the necessary configurations in the `~/.abacusagent/env.json` file. This file defines how the ABACUS agent tools generate input files and manage ABACUS calculation workflows.
+```
+{
+    "_comments": {
+        "ABACUS_WORK_PATH": "The working directory for AbacusAgent, where all temporary files will be stored.",
+        "ABACUS_SUBMIT_TYPE": "The type of submission for ABACUS, can be local or bohrium.",
+        "ABACUSAGENT_HOST": "The host address for the AbacusAgent server.",
+        "ABACUSAGENT_PORT": "The port number for the AbacusAgent server.",
+        "ABACUSAGENT_MODEL": "The model to use for AbacusAgent, can be 'fastmcp', 'test', or 'dp'.",
+        "BOHRIUM_USERNAME": "The username for Bohrium.",
+        "BOHRIUM_PASSWORD": "The password for Bohrium.",
+        "BOHRIUM_PROJECT_ID": "The project ID for Bohrium.",
+        "BOHRIUM_ABACUS_IMAGE": "The image for Abacus on Bohrium.",
+        "BOHRIUM_ABACUS_MACHINE": "The machine type for Abacus on Bohrium.",
+        "BOHRIUM_ABACUS_COMMAND": "The command to run Abacus on Bohrium",
+        "ABACUS_COMMAND": "The command to execute Abacus on local machine.",
+        "ABACUS_PP_PATH": "The path to the pseudopotential library for Abacus.",
+        "ABACUS_ORB_PATH": "The path to the orbital library for Abacus.",
+        "_comments": "This dictionary contains the default environment variables for AbacusAgent."
+    }
+}
+```
+Then you can start `abacusagent`.
 ```bash
 >>> abacusagent
 ✅ Successfully loaded: abacusagent.modules.abacus
@@ -57,37 +84,28 @@ from . import agent
 import os
 from google.adk.agents import Agent
 from google.adk.models.lite_llm import LiteLlm
-from google.adk.sessions import InMemorySessionService
-from google.adk.tools.mcp_tool import MCPTool, MCPToolset
+from google.adk.tools.mcp_tool import MCPToolset
 from google.adk.tools.mcp_tool.mcp_toolset import SseServerParams
-#from dp.agent.adapter.adk import CalculationMCPToolset
+from dp.agent.adapter.adk import CalculationMCPToolset
 
-os.environ["ABACUSAGENT_MODEL"] = "fastmcp"
-from abacusagent.modules.abacus import *
-
-# Provide LLM you want to use and API key here
+# Set environments about LLM you want to use and API key here. 
 os.environ['DEEPSEEK_API_KEY'] = ""
 model = LiteLlm(model='deepseek/deepseek-chat')
 
 instruction = "Provide your prompts to LLM here"
 
-tools = [abacus_prepare, abacus_modify_input, 
-         abacus_modify_stru, abacus_collect_data]
-
-"""
-abacus_agent_url = "https://127.0.0.1:50001/mcp"
-toolset = MCPToolset(
+# Specify the URL and port for connecting to the SSE server running the ABACUS agent.
+toolset = CalculationMCPToolset(
     connection_params=SseServerParams(
-        url=abacus_agent_url,
-    ),
+        url="http://localhost:50001/sse",
+    )
 )
-"""
 
 root_agent = Agent(
     name="Abacus_agent",
     model=model,
     instruction=instruction,
-    tools=tools
+    tools=[toolset]
 )
 ```
 #### Starting Google ADK
