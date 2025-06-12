@@ -1,11 +1,13 @@
 import os
 import json
+import time
 
 ENVS = {
     "ABACUSAGENT_WORK_PATH": "/tmp/abacusagent",
     "ABACUSAGENT_SUBMIT_TYPE": "local",  # local, bohrium
 
     # connection settings
+    "ABACUSAGENT_TRANSPORT": "sse",  # sse, streamable-http
     "ABACUSAGENT_HOST": "localhost",
     "ABACUSAGENT_PORT": "50001", 
     "ABACUSAGENT_MODEL": "fastmcp",  # fastmcp, abacus, bohrium
@@ -26,6 +28,7 @@ ENVS = {
     "_comments":{
         "ABACUS_WORK_PATH": "The working directory for AbacusAgent, where all temporary files will be stored.",
         "ABACUS_SUBMIT_TYPE": "The type of submission for ABACUS, can be local or bohrium.",
+        "ABACUSAGENT_TRANSPORT": "The transport protocol for AbacusAgent, can be 'sse' or 'streamable-http'.",
         "ABACUSAGENT_HOST": "The host address for the AbacusAgent server.",
         "ABACUSAGENT_PORT": "The port number for the AbacusAgent server.",
         "ABACUSAGENT_MODEL": "The model to use for AbacusAgent, can be 'fastmcp', 'test', or 'dp'.",
@@ -42,16 +45,22 @@ ENVS = {
     }
 }
 
-def set_envs(model_input=None, port_input=None, host_input=None):
+def set_envs(transport_input=None, model_input=None, port_input=None, host_input=None):
     """
     Set environment variables for AbacusAgent.
     
-    The priority of environment variables is as follows:
-    1. The value of `port_input` and `host_input` has the highest priority.
-    2. The existing environment reading from `os.environ`.
-    3. The values in the `~/.abacusagent/env.json` file.
-
-    If the `~/.abacusagent/env.json` file does not exist, it will be created with default values.
+    Args:
+        transport_input (str, optional): The transport protocol to use. Defaults to None.
+        model_input (str, optional): The model to use. Defaults to None.
+        port_input (int, optional): The port number to run the MCP server on. Defaults to None.
+        host_input (str, optional): The host address to run the MCP server on. Defaults to None.
+    
+    Returns:
+        dict: The environment variables that have been set.
+    
+    Notes:
+        - The input parameters has higher priority than the default values in `ENVS`.
+        - If the `~/.abacusagent/env.json` file does not exist, it will be created with default values.
     """
     # read setting in ~/.abacusagent/env.json
     envjson_file = os.path.expanduser("~/.abacusagent/env.json")
@@ -66,18 +75,17 @@ def set_envs(model_input=None, port_input=None, host_input=None):
             envjson[key] = value
             update_envjson = True
     
+    if transport_input is not None:
+        envjson["ABACUSAGENT_TRANSPORT"] = str(transport_input)
     if port_input is not None:
-        os.environ["ABACUSAGENT_PORT"] = str(port_input)
+        envjson["ABACUSAGENT_PORT"] = str(port_input)
     if host_input is not None:
-        os.environ["ABACUSAGENT_HOST"] = str(host_input)
+        envjson["ABACUSAGENT_HOST"] = str(host_input)
     if model_input is not None:
-        os.environ["ABACUSAGENT_MODEL"] = str(model_input)
+        envjson["ABACUSAGENT_MODEL"] = str(model_input)
         
     for key, value in envjson.items():
-        if key.startswith("_"):
-            continue
-        elif key not in os.environ:
-            os.environ[key] = str(value)
+        os.environ[key] = str(value)
     
     if update_envjson:
         # write envjson to ~/.abacusagent/env.json
@@ -87,5 +95,24 @@ def set_envs(model_input=None, port_input=None, host_input=None):
             open(envjson_file, "w"),
             indent=4
         )
+    return envjson
     
+def create_workpath():
+    """
+    Create the working directory for AbacusAgent, and change the current working directory to it.
     
+    Returns:
+        str: The path to the working directory.
+    """
+    work_path = os.environ.get("ABACUSAGENT_WORK_PATH", "/tmp/abacusagent") + f"/{time.strftime('%Y%m%d%H%M%S')}"
+    os.makedirs(work_path, exist_ok=True)
+    cwd = os.getcwd()
+    os.chdir(work_path)
+    print(f"Changed working directory to: {work_path}")
+    # write the environment variables to a file
+    json.dump({
+        k: os.environ.get(k) for k in ENVS.keys()
+    }.update({"ABACUSAGENT_START_PATH": cwd}), 
+        open("env.json", "w"), indent=4)
+    
+    return work_path    
