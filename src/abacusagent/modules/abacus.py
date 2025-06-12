@@ -1,6 +1,5 @@
 import os
 import json
-import asyncio
 from pathlib import Path
 from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple, Union
 from abacustest.lib_model.model_013_inputs import PrepInput
@@ -443,7 +442,7 @@ def abacus_collect_data(
 
 # This function is for test purpose on my local machine only.
 @mcp.tool()
-async def run_abacus_onejob(
+def run_abacus_onejob(
     abacusjob: str,
 ) -> Dict[str, Any]:
     """
@@ -453,6 +452,6 @@ async def run_abacus_onejob(
     Returns:
         the collected metrics from the ABACUS job.
     """
-    await run_abacus(abacusjob)
+    run_abacus(abacusjob)
 
     return abacus_collect_data(str(abacusjob))

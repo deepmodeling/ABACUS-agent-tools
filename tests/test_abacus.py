@@ -346,4 +346,3 @@ class TestAbacusCollectData(unittest.TestCase):
             else:
                 self.assertEqual(data_ref[metric], collected_metrics[metric])
 
-

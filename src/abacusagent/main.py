@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument(
         "--transport",
         type=str,
-        default="sse",
+        default=None,
         choices=["sse", "streamable-http"],
         help="Transport protocol to use (default: sse), choices: sse, streamable-http"
     )
@@ -58,23 +58,37 @@ def parse_args():
     
     return args
 
+def print_address():
+    """
+    Print the address of the MCP server based on environment variables.
+    """
+    address = f"{os.environ['ABACUSAGENT_HOST']}:{os.environ['ABACUSAGENT_PORT']}"
+    if os.environ["ABACUSAGENT_TRANSPORT"] == "sse":
+        print("Address:", address + "/sse")
+    elif os.environ["ABACUSAGENT_TRANSPORT"] == "streamable-http":
+        print("Address:", address + "/mcp")
+    else:
+        raise ValueError("Invalid transport protocol specified. Use 'sse' or 'streamable-http'.")
+
 def main():
     """
     Main function to run the MCP tool.
     """
-    args = parse_args()  # Parse command line arguments
+    args = parse_args()  
     
-    #if args.model in ["dp"]:
-    #    raise ValueError(f"Model '{args.model}' is not supported yet.")
-    # Set environment variables based on arguments
-    from abacusagent.env import set_envs
-    set_envs(model_input=args.model,
-             port_input=args.port, 
-             host_input=args.host)
+    from abacusagent.env import set_envs, create_workpath
+    set_envs(
+        transport_input=args.transport,
+        model_input=args.model,
+        port_input=args.port, 
+        host_input=args.host)
+    create_workpath()
 
     from abacusagent.init_mcp import mcp
     load_tools()  
-    mcp.run(transport=args.transport)
+
+    print_address()
+    mcp.run(transport=os.environ["ABACUSAGENT_TRANSPORT"])
 
 if __name__ == "__main__":
     main()
