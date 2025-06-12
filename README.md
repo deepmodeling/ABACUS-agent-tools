@@ -27,6 +27,10 @@ git clone -b develop https://github.com/pxlxingliang/ABACUS-agent-tools.git
 cd abacus-agent
 pip install .
 ```
+If you haven't installed ABACUS, you can install ABACUS to the same environment by conda:
+```bash
+conda install abacus "libblas=*=*mkl" mpich -c conda-forge
+```
 
 ## Using ABACUS agent tools with Google ADK
 
