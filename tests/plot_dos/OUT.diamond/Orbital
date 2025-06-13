@@ -1,0 +1,17 @@
+  #io    spec    l    m    z  sym
+    0      Si    0    0    1              s
+    0      Si    1    0    1             pz
+    0      Si    1    1    1             px
+    0      Si    1    2    1             py
+    1      Si    0    0    1              s
+    1      Si    1    0    1             pz
+    1      Si    1    1    1             px
+    1      Si    1    2    1             py
+
+
+  #io =Orbital index in supercell
+#spec =Atomic species label
+   #l =Angular mumentum quantum number
+   #m =Magnetic quantum number
+   #z =Zeta index of orbital
+ #sym =Symmetry name of real orbital
