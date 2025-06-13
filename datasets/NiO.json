@@ -1,0 +1,33 @@
+[
+{
+    "description": "This example is calculating the band gap of NiO using APNS-v1 pseudopotential and orbital bundle. This material is a typical magnetic material. The magnetic moment of Ni atoms are in antiferromangetics form. The band gap are calculated using PBE+U with Ueff= 7 eV for Ni 3d orbital.",
+    "input": {
+        "basis_type": "lcao",
+        "calculation": "scf",
+        "dft_plus_u": "1",
+        "ecutwfc": "100",
+        "hubbard_u": "7.0 0.0",
+        "ks_solver": "genelpa",
+        "kspacing": "0.14",
+        "mixing_beta": "0.2",
+        "mixing_beta_mag": "0.8",
+        "mixing_gg0": "1",
+        "mixing_ndim": "30",
+        "mixing_type": "broyden",
+        "nspin": "2",
+        "onsite_radius": "3.0",
+        "orbital_corr": "2 -1",
+        "out_bandgap": "1",
+        "out_chg": "-1",
+        "out_mul": "1",
+        "scf_nmax": "300",
+        "scf_thr": "1e-6",
+        "smearing_method": "gauss",
+        "smearing_sigma": "0.01",
+        "symmetry": "1"
+    },
+    "stru": "ATOMIC_SPECIES\nNi  58.6934 Ni_ONCV_PBE-1.2.upf upf201\nO  15.9994 O.upf upf201\n\nNUMERICAL_ORBITAL\nNi_gga_8au_100Ry_4s2p2d1f.orb\nO_gga_6au_100Ry_2s2p1d.orb\n\nLATTICE_CONSTANT\n1.8897260000\n\nLATTICE_VECTORS\n        4.1632639461        2.0729584133        2.0729584133\n        2.0729584133        4.1632639461        2.0729584133\n        2.0729584133        2.0729584133        4.1632639461\n\nATOMIC_POSITIONS\nDirect\n\nNi #label\n0.0000   #magnetism\n2 #number of atoms\n        0.0000000000        0.0000000000        0.0000000000 m 1 1 1 mag  1.3047\n        0.5000000000        0.5000000000        0.5000000000 m 1 1 1 mag -1.3047\n\nO #label\n0.0000   #magnetism\n2 #number of atoms\n        0.2500000000        0.2500000000        0.2500000000 m 1 1 1 mag -0.0000\n        0.7500000000        0.7500000000        0.7500000000 m 1 1 1 mag -0.0000\n",
+    "pp_path": "APNS-v1",
+    "orb_path": "APNS-v1"
+}
+]

@@ -1,0 +1,11 @@
+INPUT_PARAMETERS
+suffix	diamond
+ntype	1
+nbands	20
+calculation	scf
+basis_type	lcao
+ecutwfc	20
+symmetry	1
+scf_nmax	20
+scf_thr	1e-08
+kspacing	0.3
