@@ -100,6 +100,9 @@ def get_file_content(
     except:
         raise IOError(f"Read content of {filepath} failed")
     
+    max_length = 2000
+    if len(file_content) > max_length:
+        file_content = file_content[:max_length]
     return {'file_content': file_content}
 
 @mcp.tool()
