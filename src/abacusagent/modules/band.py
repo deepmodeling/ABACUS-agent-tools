@@ -516,14 +516,16 @@ def abacus_cal_band(stru_file: str,
     Raises:
         NotImplementedError: If nspin=4 is requested
     """
+    if extra_input is None:
+        extra_input = {}
     if nspin not in extra_input.keys():
         extra_input['nspin'] = nspin    
     if nspin == 2 or nspin == 4:
         extra_input['mixing_beta'] = 0.4
     
     # Create work dir for band calculation
-    abacusagent_work_path = Path(os.environ.get("ABACUSAGENT_WORK_PATH")).absolute()
-    band_work_path = abacusagent_work_path / f"./band-{time.strftime('%Y%m%d%H%M%S')}"
+    cwd = Path(os.getcwd()).absolute()
+    band_work_path = cwd / f"./band-{time.strftime('%Y%m%d%H%M%S')}"
     if not os.path.exists(band_work_path):
         os.mkdir(band_work_path)
     
@@ -587,6 +589,8 @@ def abacus_cal_band_pyatb(stru_file: str,
     Raises:
         NotImplementedError: If nspin=4 is requested
     """
+    if extra_input is None:
+        extra_input = {}
     if nspin not in extra_input.keys():
         extra_input['nspin'] = nspin
     
@@ -594,8 +598,8 @@ def abacus_cal_band_pyatb(stru_file: str,
         extra_input['mixing_beta'] = 0.4
     
     # Create work dir for band calculation
-    abacusagent_work_path = Path(os.environ.get("ABACUSAGENT_WORK_PATH")).absolute()
-    band_work_path = abacusagent_work_path / f"./band-{time.strftime('%Y%m%d%H%M%S')}"
+    cwd = Path(os.getcwd()).absolute()
+    band_work_path = cwd / f"./band-{time.strftime('%Y%m%d%H%M%S')}"
     if not os.path.exists(band_work_path):
         os.mkdir(band_work_path)
     
@@ -619,13 +623,22 @@ def abacus_cal_band_pyatb(stru_file: str,
             'band_pdf_path': band_pdf_path}
 
 if __name__ == '__main__':
-    from abacusagent.env import set_envs
+    from abacusagent.env import set_envs, create_workpath
     set_envs()
+    create_workpath()
 
     stru_file = '/mnt/e/temp/Si_mp-149_primitive.cif'
     stru_type = 'cif'
     extra_input = {}
 
+    """
+    abacus_cal_band(stru_file,
+                    'cif',
+                    1, 
+                    "Si",
+                    "band.png",
+                    10,)
+    """
     abacus_cal_band_pyatb(stru_file,
                           stru_type,
                           1,
