@@ -621,28 +621,3 @@ def abacus_cal_band_pyatb(stru_file: str,
     
     return {'band_gap': band_gap,
             'band_pdf_path': band_pdf_path}
-
-if __name__ == '__main__':
-    from abacusagent.env import set_envs, create_workpath
-    set_envs()
-    create_workpath()
-
-    stru_file = '/mnt/e/temp/Si_mp-149_primitive.cif'
-    stru_type = 'cif'
-    extra_input = {}
-
-    """
-    abacus_cal_band(stru_file,
-                    'cif',
-                    1, 
-                    "Si",
-                    "band.png",
-                    10,)
-    """
-    abacus_cal_band_pyatb(stru_file,
-                          stru_type,
-                          1,
-                          'hse',
-                          0.16,
-                          1e-3,
-                          extra_input=extra_input)
