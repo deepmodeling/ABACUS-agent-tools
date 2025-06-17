@@ -551,9 +551,9 @@ def abacus_cal_band(stru_file: str,
                                energy_range,
                                band_pic_path)
     if nspin == 1:
-        return {'band_gap': band_gap}
+        return {'band_gap': band_gap, 'band_picture': band_pic_path}
     elif nspin == 2:
-        return {'band_gap_up': band_gap[0], 'band_gap_down': band_gap[1]}
+        return {'band_gap_up': band_gap[0], 'band_gap_down': band_gap[1], 'band_picture': band_pic_path}
     else:
         raise NotImplementedError("Band plot for nspin=4 is not supported yet")
 
@@ -620,4 +620,4 @@ def abacus_cal_band_pyatb(stru_file: str,
                                              energy_range)
     
     return {'band_gap': band_gap,
-            'band_pdf_path': band_pdf_path}
+            'band_picture': band_pdf_path}
