@@ -10,7 +10,7 @@ ENVS = {
     "ABACUSAGENT_TRANSPORT": "sse",  # sse, streamable-http
     "ABACUSAGENT_HOST": "localhost",
     "ABACUSAGENT_PORT": "50001", 
-    "ABACUSAGENT_MODEL": "fastmcp",  # fastmcp, abacus, bohrium
+    "ABACUSAGENT_MODEL": "dp",  # fastmcp, abacus, dp
 
     # bohrium settings
     "BOHRIUM_USERNAME": "",
