@@ -29,4 +29,5 @@ addopts = "-v"
 [project.optional-dependencies]
 dev = ["mcp>=1.9.0",
        "abacustest",
+       "science-agent-sdk"
 ]
