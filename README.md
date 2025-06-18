@@ -38,6 +38,7 @@ conda install abacus "libblas=*=*mkl" mpich -c conda-forge
 
 #### Starting ABACUS agent tools
 Before launching `abacusagent`, you must provide the necessary configurations in the `~/.abacusagent/env.json` file. This file defines how the ABACUS agent tools generate input files and manage ABACUS calculation workflows.
+Note: When running `abacusagent`, it will automatically check if the file exists. If not, `abacusagent` will create it and set some default values. It is recommended to run `abacusagent` once first before modifying this file.
 ```
 {
     "_comments": {
