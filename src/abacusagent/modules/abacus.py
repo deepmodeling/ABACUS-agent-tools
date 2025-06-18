@@ -19,7 +19,7 @@ def abacus_prepare(
     job_type: Literal["scf", "relax", "cell-relax", "md"] = "scf",
     lcao: bool = True,
     extra_input: Optional[Dict[str, Any]] = None,
-) -> TypedDict("results",{"job_path": str}):
+) -> Dict[str, Any]:
     """
     Prepare input files for ABACUS calculation.
     Args:
@@ -33,6 +33,9 @@ def abacus_prepare(
     
     Returns:
         A dictionary containing the job path.
+        - 'job_path': The absolute path to the job directory.
+        - 'input_content': The content of the generated INPUT file.
+        - 'input_files': A list of files in the job directory.
     Raises:
         FileNotFoundError: If the structure file or pseudopotential path does not exist.
         ValueError: If LCAO basis set is selected but no orbital library path is provided.
@@ -76,12 +79,17 @@ def abacus_prepare(
     if len(job_path) == 0:
         raise RuntimeError("No job path returned from PrepInput.")
     
-    return {"job_path": str(Path(job_path[0]).absolute())}
+    input_content = ReadInput(Path(job_path[0]) / "INPUT")
+    input_files = os.listdir(Path(job_path[0]))
+
+    return {"job_path": str(Path(job_path[0]).absolute()),
+            "input_content": input_content,
+            "input_files": input_files}
 
 @mcp.tool()
 def get_file_content(
     filepath: str
-) -> TypedDict("results", {"file_content": str}):
+) -> Dict[str, str]:
     """
     Get content of a file.
     Args:
@@ -109,7 +117,7 @@ def abacus_modify_input(
     dft_plus_u_settings: Optional[Dict[str, Union[float, Tuple[Literal["p", "d", "f"], float]]]] = None,
     extra_input: Optional[Dict[str, Any]] = None,
     remove_input: Optional[List[str]] = None
-) -> TypedDict("results",{"input_path": str}):
+) -> Dict[str, Any]:
     """
     Modify keywords in ABACUS INPUT file.
     Args:
@@ -124,7 +132,9 @@ def abacus_modify_input(
         remove_input: A list of param names to be removed in the INPUT file
 
     Returns:
-        A dictionary containing the path of the modified INPUT file under the key `'input_path'`.
+        A dictionary containing:
+        - input_path: the path of the modified INPUT file.
+        - input_content: the content of the modified INPUT file as a dictionary.
     Raises:
         FileNotFoundError: If path of given INPUT file does not exist
         RuntimeError: If write modified INPUT file failed
@@ -200,9 +210,11 @@ def abacus_modify_input(
 
     try:
         WriteInput(input_param, input_file)
-        return {'input_path': str(Path(input_file).absolute())}
     except Exception as e:
         raise RuntimeError("Error occured during writing modified INPUT file")
+
+    return {'input_path': str(Path(input_file).absolute()),
+            'input_content': input_param}
 
 @mcp.tool()
 def abacus_modify_stru(
@@ -214,7 +226,7 @@ def abacus_modify_stru(
     initial_magmoms: Optional[List[float]] = None,
     angle1: Optional[List[float]] = None,
     angle2: Optional[List[float]] = None
-) -> TypedDict("results",{"stru_path": str}):
+) -> Dict[str, Any]:
     """
     Modify pseudopotential, orbital, atom fixation, initial magnetic moments and initial velocities in ABACUS STRU file.
     Args:
@@ -235,7 +247,9 @@ def abacus_modify_stru(
         angle2: in non-colinear case, specify angle between x-axis and real spin in projection in xy-plane , in angle measure instead of radian measure
 
     Returns:
-        A dictionary containing the path of the modified ABACUS STRU file under the key 'stru_path'.
+        A dictionary containing:
+        - stru_path: the path of the modified ABACUS STRU file
+        - stru_content: the content of the modified ABACUS STRU file as a string.
     Raises:
         ValueError: If `stru_file` is not path of a file, or dimension of initial_magmoms, angle1 or angle2 is not equal with number of atoms,
           or length of fixed_atoms_idx and movable_coords are not equal, or element in movable_coords are not a list with 3 bool elements
@@ -306,8 +320,11 @@ def abacus_modify_stru(
         stru._move = atom_move
     
     stru.write(stru_file)
+    stru_content = Path(stru_file).read_text(encoding='utf-8')
     
-    return {'stru_path': str(stru_file.absolute())}
+    return {'stru_path': str(stru_file.absolute()),
+            'stru_content': stru_content 
+            }
 
 @mcp.tool()
 def abacus_collect_data(
@@ -326,7 +343,7 @@ def abacus_collect_data(
                           "atom_mag_spd", "relax_converge", "relax_steps", "ds_lambda_step", "ds_lambda_rms", 
                           "ds_mag", "ds_mag_force", "ds_time", "mem_vkb", "mem_psipw"]]
                           = ["normal_end", "converge", "energy", "total_time"]
-) -> TypedDict("results", {"metrics": Dict[str, Any]}):
+) -> Dict[str, Any]:
     """
     Collect results after ABACUS calculation and dump to a json file.
     Args:
@@ -440,7 +457,6 @@ def abacus_collect_data(
     
     return {'collected_metrics': collected_metrics}
 
-# This function is for test purpose on my local machine only.
 @mcp.tool()
 def run_abacus_onejob(
     abacusjob: str,
