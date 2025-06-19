@@ -7,7 +7,7 @@ from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
 
 from abacusagent.init_mcp import mcp
-from abacusagent.modules.util.comm import run_abacus
+from abacusagent.modules.util.comm import run_abacus, generate_work_path
 
 
 @mcp.tool()
@@ -63,7 +63,11 @@ def abacus_prepare(
         extra_input_file = "INPUT.tmp"
         WriteInput(extra_input, extra_input_file)
     
+    work_path = generate_work_path()
+    pwd = os.getcwd()
+    os.chdir(work_path)
     try:
+        
         _, job_path = PrepInput(
             files=str(stru_file),
             filetype=stru_type,
@@ -72,17 +76,21 @@ def abacus_prepare(
             orb_path=orb_path,
             input_file=extra_input_file,
             lcao=lcao
-        ).run()
+        ).run()  
     except Exception as e:
+        os.chdir(pwd)
         raise RuntimeError(f"Error preparing input files: {e}")
-
+    
     if len(job_path) == 0:
+        os.chdir(pwd)
         raise RuntimeError("No job path returned from PrepInput.")
     
     input_content = ReadInput(Path(job_path[0]) / "INPUT")
-    input_files = os.listdir(Path(job_path[0]))
+    input_files = os.listdir(job_path[0])
+    job_path = str(Path(job_path[0]).absolute())
+    os.chdir(pwd)
 
-    return {"job_path": str(Path(job_path[0]).absolute()),
+    return {"job_path": job_path,
             "input_content": input_content,
             "input_files": input_files}
 
