@@ -221,7 +221,7 @@ def link_abacusjob(src: str,
             else:
                 os.symlink(file, dst_file)
             
-def generate_work_path():
+def generate_work_path(create: bool = True) -> str:
     """
     Generate a unique working directory path based on call function and current time.
     
@@ -234,6 +234,8 @@ def generate_work_path():
     current_time = time.strftime("%Y%m%d%H%M%S")
     random_string = str(uuid.uuid4())[:8]
     work_path = f"{current_time}.{calling_function}.{random_string}"
+    if create:
+        os.makedirs(work_path, exist_ok=True)
     
     return work_path
     
