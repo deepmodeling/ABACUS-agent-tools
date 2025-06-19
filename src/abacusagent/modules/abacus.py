@@ -7,7 +7,7 @@ from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
 
 from abacusagent.init_mcp import mcp
-from abacusagent.modules.comm import run_abacus
+from abacusagent.modules.util.comm import run_abacus
 
 
 @mcp.tool()

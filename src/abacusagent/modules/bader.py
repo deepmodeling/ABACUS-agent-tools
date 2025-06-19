@@ -10,7 +10,7 @@ from typing import List, Dict, Optional
 import numpy as np
 
 from abacusagent.init_mcp import mcp
-from abacusagent.util.control import FlowEnvironment
+from abacusagent.modules.util.control import FlowEnvironment
 
 def parse_abacus_cmd(cmd: str) -> Dict[str, str|int]:
     '''
