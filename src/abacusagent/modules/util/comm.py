@@ -233,7 +233,7 @@ def generate_work_path():
     calling_function = traceback.extract_stack(limit=2)[-2].name
     current_time = time.strftime("%Y%m%d%H%M%S")
     random_string = str(uuid.uuid4())[:8]
-    work_path = f"{calling_function}.{current_time}.{random_string}"
+    work_path = f"{current_time}.{calling_function}.{random_string}"
     
     return work_path
     
