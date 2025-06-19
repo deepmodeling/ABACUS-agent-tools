@@ -39,7 +39,7 @@ def parse_args():
         type=str,
         default=None,
         choices=["fastmcp", "test", "dp"],
-        help="Model to use (default: fastmcp), choices: fastmcp, test, dp"
+        help="Model to use (default: dp), choices: fastmcp, test, dp"
     )
     parser.add_argument(
         "--port",

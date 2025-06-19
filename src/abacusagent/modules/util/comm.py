@@ -1,10 +1,12 @@
 import subprocess
 import select
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 import os
 import time
 import json
+import traceback
+import uuid
 
 def run_command(
         cmd,
@@ -153,8 +155,85 @@ def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
     else:
         raise ValueError("Invalid ABACUSAGENT_SUBMIT_TYPE. Must be 'local' or 'bohrium'.")
             
-            
-            
-            
 
+def link_abacusjob(src: str, 
+                   dst: str, 
+                   include:Optional[List[str]]=None, 
+                   exclude:Optional[List[str]]=None,
+                   copy_files = ["INPUT", "STRU", "KPT"],
+                   overwrite: Optional[bool] = True
+                   ):
+    """
+    Link the ABACUS job files from src to dst.
+    
+    Parameters:
+    src (str): Source directory containing the ABACUS job files.
+    dst (str): Destination directory where the job files will be linked.
+    include (Optional[List[str]]): List of files to include. If None, all files are included.
+    exclude (Optional[List[str]]): List of files to exclude. If None, no files are excluded.
+    copy_files (List[str]): List of files to copy from src to dst. Default is ["INPUT", "STRU", "KPT"].
+    overwrite (bool): If True, existing files in the destination will be overwritten. Default is True.
+    
+    Notes: 
+        - If somes files are included in both include and exclude, the file will be excluded.
+        - glob.glob is used to match the files in the source directory.
+    """
+    src = Path(src).absolute()
+    dst = Path(dst).absolute()
+    
+    if not src.is_dir():
+        raise ValueError(f"{src} is not a valid directory.")
+    
+    if dst.is_file():
+        raise ValueError(f"{dst} is a file, not a directory.")
+    os.makedirs(dst, exist_ok=True)
+    
+    if include is None:
+        include = ["*"]
+    include_files = []
+    for pattern in include:
+        include_files.extend(src.glob(pattern))
+        
+    if exclude is None:
+        exclude = []
+    exclude_files = []
+    for pattern in exclude:
+        exclude_files.extend(src.glob(pattern))
+    
+    # Remove excluded files from included files
+    include_files = [f for f in include_files if f not in exclude_files]
+    if not include_files:
+        traceback.print_stack()
+        print("No files to link after applying include and exclude patterns.\n",
+              f"Include patterns: {include}, Exclude patterns: {exclude}, Source: {src}, Destination: {dst}\n",
+              f"Files in source: {list(src.glob('*'))}"
+              )
+    else:
+        for file in include_files:
+            dst_file = dst / file.name
+            if dst_file.exists():
+                if overwrite:
+                    dst_file.unlink()
+                else:
+                    continue
+            if str(file.name) in copy_files:
+                os.system(f"cp {file} {dst_file}")
+            else:
+                os.symlink(file, dst_file)
+            
+def generate_work_path():
+    """
+    Generate a unique working directory path based on call function and current time.
+    
+    directory = calling function name + current time + random string.
+    
+    Returns:
+        str: The path to the working directory.
+    """
+    calling_function = traceback.extract_stack(limit=2)[-2].name
+    current_time = time.strftime("%Y%m%d%H%M%S")
+    random_string = str(uuid.uuid4())[:8]
+    work_path = f"{calling_function}.{current_time}.{random_string}"
+    
+    return work_path
     

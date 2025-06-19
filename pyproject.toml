@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=45", "setuptools_scm>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "abacus-agent"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Abacus agent"
 requires-python = ">=3.11"
 
@@ -13,6 +13,8 @@ abacusagent = "abacusagent.main:main"
 
 [tool.setuptools]
 package-dir = { "abacusagent" = "src/abacusagent" }
+
+[tool.setuptools_scm]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -27,4 +29,5 @@ addopts = "-v"
 [project.optional-dependencies]
 dev = ["mcp>=1.9.0",
        "abacustest",
+       "science-agent-sdk"
 ]
