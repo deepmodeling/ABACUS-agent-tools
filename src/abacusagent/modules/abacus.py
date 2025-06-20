@@ -80,11 +80,13 @@ def generate_bulk_structure(element: str,
     except Exception as e:
         raise ValueError(f"Generate structure failed: {str(e)}") from e
     
+    work_path = generate_work_path(create=True)
+    
     if file_format == "cif":
-        structure_file = f"{element}_{crystal_structure}.cif"
+        structure_file = f"{work_path}/{element}_{crystal_structure}.cif"
         structure.write(structure_file, format="cif")
     elif file_format == "poscar":
-        structure_file = f"{element}_{crystal_structure}.vasp"
+        structure_file = f"{work_path}/{element}_{crystal_structure}.vasp"
         structure.write(structure_file, format="vasp")
     else:
         raise ValueError("Unsupported file format. Use 'cif' or 'poscar'.")
