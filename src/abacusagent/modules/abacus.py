@@ -68,7 +68,7 @@ def generate_bulk_structure(element: str,
             special_params['c'] = c
         special_params['orthorhombic'] = orthorhombic
     
-    if crystal_structure in ['diamond', 'zincblende']:
+    if crystal_structure in ['fcc', 'bcc', 'diamond', 'zincblende']:
         special_params['cubic'] = cubic
     try:
         structure = bulk(
