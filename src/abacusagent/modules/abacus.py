@@ -9,6 +9,92 @@ from abacustest.lib_collectdata.collectdata import RESULT
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import run_abacus, generate_work_path
 
+@mcp.tool()
+def generate_bulk_structure(element: str, 
+                           crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
+                           a:float =None, 
+                           c: float =None,
+                           cubic: bool =False,
+                           orthorhombic: bool =False,
+                           file_format: Literal["cif", "poscar"] = "cif",
+                           ) -> Dict[str, Any]:
+    """
+    Generate a bulk crystal structure using ASE's `bulk` function.
+    
+    Args:
+        element (str): The chemical symbol of the element (e.g., 'Cu', 'Si', 'NaCl').
+        crystal_structure (str): The type of crystal structure to generate. Options include:
+            - 'sc' (simple cubic), a is needed
+            - 'fcc' (face-centered cubic), a is needed
+            - 'bcc' (body-centered cubic), a is needed
+            - 'hcp' (hexagonal close-packed), a is needed, if c is None, c will be set to sqrt(8/3) * a.
+            - 'diamond' (diamond cubic structure), a is needed
+            - 'zincblende' (zinc blende structure), a is needed, two elements are needed, e.g., 'GaAs'
+            - 'rocksalt' (rock salt structure), a is needed, two elements are needed, e.g., 'NaCl'
+        a (float, optional): Lattice constant in Angstroms. Required for all structures.
+        c (float, optional): Lattice constant for the c-axis in Angstroms. Required for 'hcp' structure.
+        cubic (bool, optional): If constructing a cubic supercell for fcc, bcc, diamond, zincblende, or rocksalt structures.
+        orthorhombic (bool, optional): If constructing orthorhombic cell for 'hcp' structure.
+        file_format (str, optional): The format of the output file. Options are 'cif' or 'poscar'. Default is 'cif'.
+    
+    Notes: all crystal need the lattice constant a, which is the length of the unit cell (or conventional cell).
+
+    Returns:
+        structure_file: The path to generated structure file.
+        cell: The cell parameters of the generated structure as a list of lists.
+        coordinate: The atomic coordinates of the generated structure as a list of lists.
+    
+    Examples:
+    >>> # FCC Cu
+    >>> cu_fcc = generate_bulk_structure('Cu', 'fcc', a=3.6)
+    >>>
+    >>> # HCP Mg with custom c-axis
+    >>> mg_hcp = generate_bulk_structure('Mg', 'hcp', a=3.2, c=5.2, orthorhombic=True)
+    >>>
+    >>> # Diamond Si
+    >>> si_diamond = generate_bulk_structure('Si', 'diamond', a=5.43, cubic=True)
+    >>> # Zincblende GaAs
+    >>> gaas_zincblende = generate_bulk_structure('GaAs', 'zincblende', a=5.65, cubic=True)
+    
+    """
+    if a is None:
+        raise ValueError("Lattice constant 'a' must be provided for all crystal structures.")
+    
+    from ase.build import bulk
+    special_params = {}
+    
+    if crystal_structure == 'hcp':
+        if c is not None:
+            special_params['c'] = c
+        special_params['orthorhombic'] = orthorhombic
+    
+    if crystal_structure in ['diamond', 'zincblende']:
+        special_params['cubic'] = cubic
+    try:
+        structure = bulk(
+            name=element,
+            crystalstructure=crystal_structure,
+            a=a,
+            **special_params
+        )
+    except Exception as e:
+        raise ValueError(f"Generate structure failed: {str(e)}") from e
+    
+    if file_format == "cif":
+        structure_file = f"{element}_{crystal_structure}.cif"
+        structure.write(structure_file, format="cif")
+    elif file_format == "poscar":
+        structure_file = f"{element}_{crystal_structure}.vasp"
+        structure.write(structure_file, format="vasp")
+    else:
+        raise ValueError("Unsupported file format. Use 'cif' or 'poscar'.")
+    
+    return {
+        "structure_file": str(Path(structure_file).absolute()),
+        "cell": structure.get_cell().tolist(),
+        "coordinate": structure.get_positions().tolist()
+    }
+
 
 @mcp.tool()
 def abacus_prepare(
