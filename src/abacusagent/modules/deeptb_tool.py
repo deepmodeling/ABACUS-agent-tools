@@ -9,7 +9,6 @@ class ConfigResult(TypedDict):
 
 @mcp.tool()
 def generate_deeptb_config(
-    config_output_path: Optional[str] = "deeptb_config.json",
     material: Literal["Si"] = "Si",
 ) -> ConfigResult:
     """
@@ -25,6 +24,8 @@ def generate_deeptb_config(
     抛出:
         RuntimeError: 写入配置文件失败。
     """
+    
+    config_output_path = "deeptb_config.json"
 
     config = {
         "common_options": {
@@ -105,5 +106,3 @@ def generate_deeptb_config(
         raise RuntimeError(f"写入配置文件失败: {e}")
 
     return {"config_path": str(Path(config_output_path).absolute())}
-
-
