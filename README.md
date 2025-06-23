@@ -114,3 +114,11 @@ Visit http://your-node-address.dp.tech:50002 in your browser, where:
 - `your-node-address.dp.tech` is the remote node URL
 - `50002` is the configured port for Google ADK
 
+## Supported functions
+Functions of ABACUS Agent tools are in active development. Currently, the following functions are exposed as 
+MCP tools and can be 
+- Prepare ABACUS input files (INPUT, STRU, KPT, pseudopotential and orbital files)
+- Modify INPUT and STRU
+- Bader charge
+- Density of states (DOS) and projected density of states (PDOS)
+- Band calculation
