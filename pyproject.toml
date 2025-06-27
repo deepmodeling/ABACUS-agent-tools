@@ -3,7 +3,7 @@ requires = ["setuptools>=45", "setuptools_scm>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "abacus-agent"
+name = "abacusagent"
 dynamic = ["version"]
 description = "Abacus agent"
 requires-python = ">=3.11"
