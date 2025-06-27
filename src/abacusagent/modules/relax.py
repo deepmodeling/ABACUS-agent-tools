@@ -12,7 +12,7 @@ from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_w
 
 @mcp.tool()
 def abacus_do_relax(
-    abacus_inputs_path: str,
+    abacus_inputs_path: Path,
     force_thr_ev: Optional[float] = None,
     stress_thr_kbar: Optional[float] = None,
     max_steps: Optional[int] = None,
@@ -75,7 +75,7 @@ def abacus_do_relax(
 
 
 def prepare_relax_inputs(
-    work_path: str,
+    work_path: Path,
     force_thr_ev: Optional[float] = None,
     stress_thr_kbar: Optional[float] = None,
     max_steps: Optional[int] = None,

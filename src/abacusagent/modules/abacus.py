@@ -212,7 +212,7 @@ def get_file_content(
 @mcp.tool()
 def abacus_modify_input(
     input_file: Path,
-    stru_file: Optional[str] = None,
+    stru_file: Optional[Path] = None,
     dft_plus_u_settings: Optional[Dict[str, Union[float, Tuple[Literal["p", "d", "f"], float]]]] = None,
     extra_input: Optional[Dict[str, Any]] = None,
     remove_input: Optional[List[str]] = None
@@ -312,12 +312,12 @@ def abacus_modify_input(
     except Exception as e:
         raise RuntimeError("Error occured during writing modified INPUT file")
 
-    return {'input_path': str(Path(input_file).absolute()),
+    return {'input_path': Path(input_file).absolute(),
             'input_content': input_param}
 
 @mcp.tool()
 def abacus_modify_stru(
-    stru_file: str,
+    stru_file: Path,
     pp: Optional[Dict[str, str]] = None,
     orb: Optional[Dict[str, str]] = None,
     fix_atoms_idx: Optional[List[int]] = None,

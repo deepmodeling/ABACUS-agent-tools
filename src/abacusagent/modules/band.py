@@ -11,7 +11,7 @@ from abacusagent.modules.abacus import abacus_modify_input, abacus_collect_data
 from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path
 
 @mcp.tool()
-def abacus_plot_band(abacusjob_dir: str,
+def abacus_plot_band(abacusjob_dir: Path,
                      energy_min: float = -10,
                      energy_max: float = 10
 ) -> Dict[str, Any]:
@@ -162,10 +162,10 @@ def abacus_plot_band(abacusjob_dir: str,
     plt.show()
 
     return {'band_gap': band_gap,
-            'band_picture': abacusjob_dir + '/band.png'}
+            'band_picture': Path(abacusjob_dir + '/band.png')}
 
 @mcp.tool()
-def abacus_postprocess_band_pyatb(band_calc_path: str,
+def abacus_postprocess_band_pyatb(band_calc_path: Path,
                                   energy_min: float = -10,
                                   energy_max: float = 10,
                                   connect_line_points=30
@@ -280,10 +280,10 @@ def abacus_postprocess_band_pyatb(band_calc_path: str,
     os.system(f"cp {band_calc_path + '/Out/Band_Structure/band.png'} {band_picture}")
 
     return {'band_gap': band_gap,
-            'band_picture': band_calc_path + '/band.png'}    
+            'band_picture': Path(band_calc_path + '/band.png')}    
 
 @mcp.tool()
-def abacus_cal_band(abacus_inputs_path: str,
+def abacus_cal_band(abacus_inputs_path: Path,
                     dft_functional: str = 'pbe',
                     energy_min: float = -10,
                     energy_max: float = 10
@@ -335,10 +335,10 @@ def abacus_cal_band(abacus_inputs_path: str,
 
     return {'band_gap': plot_output['band_gap'],
             'band_calc_dir': work_path,
-            'band_picture': plot_output['band_picture']}
+            'band_picture': Path(plot_output['band_picture'])}
 
 @mcp.tool()
-def abacus_cal_band_pyatb(abacus_inputs_path: str,
+def abacus_cal_band_pyatb(abacus_inputs_path: Path,
                           dft_functional: str = 'pbe',
                           energy_min: float = -10.0,
                           energy_max: float =  10.0
@@ -376,7 +376,7 @@ def abacus_cal_band_pyatb(abacus_inputs_path: str,
     
     return {'band_gap': postprocess_output['band_gap'],
             'band_calc_dir': abacus_inputs_path,
-            'band_picture': postprocess_output['band_picture']}
+            'band_picture': Path(postprocess_output['band_picture'])}
 
 if __name__ == '__main__':
     from abacusagent.env import set_envs, create_workpath

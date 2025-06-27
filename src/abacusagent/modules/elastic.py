@@ -5,6 +5,7 @@ import os
 import shutil
 import time
 from typing import Dict, List
+from pathlib import Path
 
 import numpy as np
 import dpdata
@@ -20,7 +21,7 @@ from abacusagent.modules.abacus import abacus_modify_input, abacus_collect_data
 from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path
 
 def prepare_deformed_stru(
-    input_stru_dir: str,
+    input_stru_dir: Path,
     norm_strain: float,
     shear_strain: float
 ):
@@ -44,8 +45,8 @@ def prepare_deformed_stru(
 
 def prepare_deformed_stru_inputs(
     deformed_strus: DeformedStructureSet,
-    work_path: str,
-    input_stru_dir: str,
+    work_path: Path,
+    input_stru_dir: Path,
 ):
     """
     Prepare ABACUS inputs directories from deformed structures and prepared inputs templates
@@ -83,7 +84,7 @@ def prepare_deformed_stru_inputs(
         deformed_stru_abacus.set_atommag(original_stru.get_atommag())
         deformed_stru_abacus.write(abacusjob_dir + "/STRU")
 
-        abacusjob_dirs.append(abacusjob_dir)
+        abacusjob_dirs.append(Path(abacusjob_dir))
         stru_counts += 1
 
     return abacusjob_dirs
@@ -99,7 +100,7 @@ def collected_stress_to_pymatgen_stress(stress: List[float]):
 
 @mcp.tool()
 def abacus_cal_elastic(
-    abacus_inputs_path: str,
+    abacus_inputs_path: Path,
     norm_strain: float = 0.01,
     shear_strain: float = 0.01,
 ) -> Dict[str, float]:
