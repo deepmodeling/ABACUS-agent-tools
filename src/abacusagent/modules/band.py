@@ -283,7 +283,7 @@ def abacus_postprocess_band_pyatb(band_calc_path: str,
             'band_picture': band_calc_path + '/band.png'}    
 
 @mcp.tool()
-def abacus_cal_band(abacus_inputs_path: str,
+def abacus_cal_band(abacus_inputs_path: Path,
                     dft_functional: str = 'pbe',
                     energy_min: float = -10,
                     energy_max: float = 10
@@ -335,7 +335,7 @@ def abacus_cal_band(abacus_inputs_path: str,
 
     return {'band_gap': plot_output['band_gap'],
             'band_calc_dir': work_path,
-            'band_picture': plot_output['band_picture']}
+            'band_picture': Path(plot_output['band_picture'])}
 
 @mcp.tool()
 def abacus_cal_band_pyatb(abacus_inputs_path: str,

@@ -3,14 +3,6 @@ import json
 from pathlib import Path
 from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple, Union
 
-os.system("which python")
-os.system("whoami")
-os.system("conda env list")
-os.system("echo $PATH")
-os.system("which conda")
-os.system("pwd")
-os.system("cat ~/.bashrc")
-
 from abacustest.lib_model.model_013_inputs import PrepInput
 from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
@@ -138,7 +130,7 @@ def abacus_prepare(
         ValueError: If LCAO basis set is selected but no orbital library path is provided.
         RuntimeError: If there is an error preparing input files.
     """
-    stru_file = Path(stru_file)
+    stru_file = Path(stru_file).absolute()
     if not os.path.isfile(stru_file):
         raise FileNotFoundError(f"Structure file {stru_file} does not exist.")
     
@@ -579,4 +571,4 @@ def run_abacus_onejob(
     """
     run_abacus(abacusjob)
 
-    return abacus_collect_data(str(abacusjob))
+    return abacus_collect_data(abacusjob)

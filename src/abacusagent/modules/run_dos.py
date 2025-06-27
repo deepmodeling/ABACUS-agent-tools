@@ -4,12 +4,13 @@ import sys
 import numpy as np
 import shutil
 import subprocess
+from pathlib import Path
 import matplotlib.pyplot as plt
 from abacustest.lib_prepare.abacus import ReadInput, WriteInput
 from abacusagent.init_mcp import mcp
 
 @mcp.tool()
-def run_dos(abacus_path: str,
+def run_dos(abacus_path: Path,
     test_mode: bool = False,
 ) -> str:
     """
@@ -87,7 +88,7 @@ def run_dos(abacus_path: str,
     return plot_paths
 
 
-def pygrep(pattern: str, filename: str) -> str:
+def pygrep(pattern: str, filename: Path) -> str:
     """
     Check if a pattern exists in a file.
     

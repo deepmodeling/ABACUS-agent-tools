@@ -6,6 +6,7 @@ import re
 import unittest
 import subprocess
 from typing import List, Dict, Optional
+from pathlib import Path
 
 import numpy as np
 
@@ -67,8 +68,8 @@ def ver_cmp(v1: str|tuple[int], v2: str|tuple[int]) -> int:
 @FlowEnvironment.static_decorate()
 @mcp.tool()
 def calculate_charge_densities_with_abacus(
-    abacus: str,
-    jobdir: str
+    abacus: Path,
+    jobdir: Path
 ) -> Optional[List[str]]:
     """
     Calculate the charge density using ABACUS in the specified job directory.
@@ -115,7 +116,7 @@ def calculate_charge_densities_with_abacus(
 @FlowEnvironment.static_decorate()
 @mcp.tool()
 def parse_abacus_param(
-    fn: str
+    fn: Path
 ) -> Dict[str, str]:
     """
     Parse the ABACUS parameter file to extract relevant parameters.
@@ -138,7 +139,7 @@ def parse_abacus_param(
 @FlowEnvironment.static_decorate()
 @mcp.tool()
 def merge_charge_densities_of_different_spin(
-    cube_manipulator: str,
+    cube_manipulator: Path,
     fcube: List[str]
 ) -> str:
     """
@@ -169,7 +170,7 @@ def merge_charge_densities_of_different_spin(
 @FlowEnvironment.static_decorate()
 @mcp.tool()
 def make_charge_density_cube(
-    cube_manipulator: str,
+    cube_manipulator: Path,
     fcube: List[str]
 ) -> str:
     """
@@ -187,7 +188,7 @@ def make_charge_density_cube(
 @FlowEnvironment.static_decorate()
 @mcp.tool()
 def read_bader_acf(
-    fn: str
+    fn: Path
 ) -> List[float]:
     """
     Read Bader charges from a file.
@@ -207,8 +208,8 @@ def read_bader_acf(
 @FlowEnvironment.static_decorate()
 @mcp.tool()
 def calculate_bader_charges(
-    bader: str,
-    fcube: str
+    bader: Path,
+    fcube: Path
 ) -> List[str]:
     """
     Calculate Bader charges using the bader executable.
@@ -239,9 +240,9 @@ def calculate_bader_charges(
 @FlowEnvironment.static_decorate()
 @mcp.tool()
 def postprocess_charge_densities(
-    fcube: List[str]|str,
-    cube_manipulator: str,
-    bader: str
+    fcube: List[Path]|Path,
+    cube_manipulator: Path,
+    bader: Path
 ) -> List[float]:
     """
     postprocess the charge density to obtain Bader charges.
@@ -263,10 +264,10 @@ def postprocess_charge_densities(
 @FlowEnvironment.static_decorate()
 @mcp.tool() # make it visible to the MCP server
 def calculate(
-    jobdir: str,
-    abacus: str,
-    cube_manipulator: str,
-    bader: str
+    jobdir: Path,
+    abacus: Path,
+    cube_manipulator: Path,
+    bader: Path
 ) -> List[float]:
     """
     Calculate Bader charges for a given job directory, with ABACUS as
