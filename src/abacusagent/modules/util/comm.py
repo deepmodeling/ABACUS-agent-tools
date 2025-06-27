@@ -62,6 +62,41 @@ def remove_comm_prefix(paths: Union[List[Path], List[str]]) -> List[str]:
     
     return relative_paths
 
+def get_physical_cores():
+    """
+    """
+    # 对于Linux系统，解析/proc/cpuinfo文件
+    with open('/proc/cpuinfo', 'r') as f:
+        cpuinfo = f.read()
+    
+    # 统计物理ID的数量和每个物理ID下的核心数
+    physical_ids = set()
+    cores_per_socket = {}
+    
+    for line in cpuinfo.split('\n'):
+        if line.startswith('physical id'):
+            phys_id = line.split(':')[1].strip()
+            physical_ids.add(phys_id)
+        elif line.startswith('cpu cores'):
+            cores = int(line.split(':')[1].strip())
+            if phys_id in cores_per_socket:
+                cores_per_socket[phys_id] = max(cores_per_socket[phys_id], cores)
+            else:
+                cores_per_socket[phys_id] = cores
+    
+    # 计算总物理核心数
+    if physical_ids and cores_per_socket:
+        return sum(cores_per_socket.values())
+    else:
+        # 备选方法：使用lscpu命令
+        output = subprocess.check_output('lscpu', shell=True).decode()
+        for line in output.split('\n'):
+            if line.startswith('Core(s) per socket:'):
+                cores_per_socket = int(line.split(':')[1].strip())
+            elif line.startswith('Socket(s):'):
+                sockets = int(line.split(':')[1].strip())
+        return cores_per_socket * sockets
+
 def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
     """
     Run the Abacus on the given job paths.
@@ -81,13 +116,16 @@ def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
     submit_type = os.environ.get("ABACUSAGENT_SUBMIT_TYPE", "local").lower()
     
     if submit_type == "local":
+        physical_cores = get_physical_cores()
+        command_cmd = os.environ.get("ABACUS_COMMAND", f"OMP_NUM_THREADS=1 mpirun -np {physical_cores} abacus > abacus.log 2>&1")
+
         for job_path in job_paths:
             if not job_path.is_dir():
                 raise ValueError(f"{job_path} is not a valid directory.")
             
             os.chdir(job_path)
-            cmd = f"{os.environ['ABACUS_COMMAND']} > abacus.log 2>&1"
-            return_code, out, err = run_command(cmd)
+            #cmd = f"{os.environ['ABACUS_COMMAND']} > abacus.log 2>&1"            
+            return_code, out, err = run_command([command_cmd])
             os.chdir(cwd)
             if return_code != 0:
                 raise RuntimeError(f"ABACUS command failed with error: {err}")
