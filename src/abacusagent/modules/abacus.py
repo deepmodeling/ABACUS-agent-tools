@@ -2,6 +2,15 @@ import os
 import json
 from pathlib import Path
 from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple, Union
+
+os.system("which python")
+os.system("whoami")
+os.system("conda env list")
+os.system("echo $PATH")
+os.system("which conda")
+os.system("pwd")
+os.system("cat ~/.bashrc")
+
 from abacustest.lib_model.model_013_inputs import PrepInput
 from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
@@ -92,7 +101,7 @@ def generate_bulk_structure(element: str,
         raise ValueError("Unsupported file format. Use 'cif' or 'poscar'.")
     
     return {
-        "structure_file": str(Path(structure_file).absolute()),
+        "structure_file": Path(structure_file).absolute(),
         "cell": structure.get_cell().tolist(),
         "coordinate": structure.get_positions().tolist()
     }
@@ -100,10 +109,10 @@ def generate_bulk_structure(element: str,
 
 @mcp.tool()
 def abacus_prepare(
-    stru_file: str,
+    stru_file: Path,
     stru_type: Literal["cif", "poscar", "abacus/stru"] = "cif",
-    pp_path: Optional[str] = None,
-    orb_path: Optional[str] = None,
+    pp_path: Optional[Path] = None,
+    orb_path: Optional[Path] = None,
     job_type: Literal["scf", "relax", "cell-relax", "md"] = "scf",
     lcao: bool = True,
     extra_input: Optional[Dict[str, Any]] = None,
@@ -175,7 +184,7 @@ def abacus_prepare(
     
     input_content = ReadInput(Path(job_path[0]) / "INPUT")
     input_files = os.listdir(job_path[0])
-    job_path = str(Path(job_path[0]).absolute())
+    job_path = Path(job_path[0]).absolute()
     os.chdir(pwd)
 
     return {"job_path": job_path,
@@ -184,7 +193,7 @@ def abacus_prepare(
 
 @mcp.tool()
 def get_file_content(
-    filepath: str
+    filepath: Path
 ) -> Dict[str, str]:
     """
     Get content of a file.
@@ -211,8 +220,8 @@ def get_file_content(
 
 @mcp.tool()
 def abacus_modify_input(
-    input_file: str,
-    stru_file: Optional[str] = None,
+    input_file: Path,
+    stru_file: Optional[Path] = None,
     dft_plus_u_settings: Optional[Dict[str, Union[float, Tuple[Literal["p", "d", "f"], float]]]] = None,
     extra_input: Optional[Dict[str, Any]] = None,
     remove_input: Optional[List[str]] = None
@@ -256,7 +265,8 @@ def abacus_modify_input(
             try:
                 del input_param[param]
             except:
-                raise KeyError(f"There's no {param} in the original INPUT file")
+                print(f"There's no {param} in the original INPUT file")
+                #raise KeyError(f"There's no {param} in the original INPUT file")
        
     # DFT+U settings
     main_group_elements = [
@@ -312,12 +322,12 @@ def abacus_modify_input(
     except Exception as e:
         raise RuntimeError("Error occured during writing modified INPUT file")
 
-    return {'input_path': str(Path(input_file).absolute()),
+    return {'input_path': Path(input_file).absolute(),
             'input_content': input_param}
 
 @mcp.tool()
 def abacus_modify_stru(
-    stru_file: str,
+    stru_file: Path,
     pp: Optional[Dict[str, str]] = None,
     orb: Optional[Dict[str, str]] = None,
     fix_atoms_idx: Optional[List[int]] = None,
@@ -421,13 +431,13 @@ def abacus_modify_stru(
     stru.write(stru_file)
     stru_content = Path(stru_file).read_text(encoding='utf-8')
     
-    return {'stru_path': str(stru_file.absolute()),
+    return {'stru_path': stru_file.absolute(),
             'stru_content': stru_content 
             }
 
 @mcp.tool()
 def abacus_collect_data(
-    abacusjob: str,
+    abacusjob: Path,
     metrics: List[Literal["version", "ncore", "omp_num", "normal_end", "INPUT", "kpt", "fft_grid",
                           "nbase", "nbands", "nkstot", "ibzk", "natom", "nelec", "nelec_dict", "point_group",
                           "point_group_in_space_group", "converge", "total_mag", "absolute_mag", "energy", 
@@ -558,7 +568,7 @@ def abacus_collect_data(
 
 @mcp.tool()
 def run_abacus_onejob(
-    abacusjob: str,
+    abacusjob: Path,
 ) -> Dict[str, Any]:
     """
     Run one ABACUS job and collect data.
