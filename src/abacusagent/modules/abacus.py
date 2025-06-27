@@ -92,7 +92,7 @@ def generate_bulk_structure(element: str,
         raise ValueError("Unsupported file format. Use 'cif' or 'poscar'.")
     
     return {
-        "structure_file": str(Path(structure_file).absolute()),
+        "structure_file": Path(structure_file).absolute(),
         "cell": structure.get_cell().tolist(),
         "coordinate": structure.get_positions().tolist()
     }
@@ -100,7 +100,7 @@ def generate_bulk_structure(element: str,
 
 @mcp.tool()
 def abacus_prepare(
-    stru_file: str,
+    stru_file: Path,
     stru_type: Literal["cif", "poscar", "abacus/stru"] = "cif",
     pp_path: Optional[str] = None,
     orb_path: Optional[str] = None,
@@ -129,7 +129,7 @@ def abacus_prepare(
         ValueError: If LCAO basis set is selected but no orbital library path is provided.
         RuntimeError: If there is an error preparing input files.
     """
-    stru_file = Path(stru_file)
+    stru_file = Path(stru_file).absolute()
     if not os.path.isfile(stru_file):
         raise FileNotFoundError(f"Structure file {stru_file} does not exist.")
     
@@ -175,7 +175,7 @@ def abacus_prepare(
     
     input_content = ReadInput(Path(job_path[0]) / "INPUT")
     input_files = os.listdir(job_path[0])
-    job_path = str(Path(job_path[0]).absolute())
+    job_path = Path(job_path[0]).absolute()
     os.chdir(pwd)
 
     return {"job_path": job_path,
@@ -184,7 +184,7 @@ def abacus_prepare(
 
 @mcp.tool()
 def get_file_content(
-    filepath: str
+    filepath: Path
 ) -> Dict[str, str]:
     """
     Get content of a file.
@@ -208,7 +208,7 @@ def get_file_content(
 
 @mcp.tool()
 def abacus_modify_input(
-    input_file: str,
+    input_file: Path,
     stru_file: Optional[str] = None,
     dft_plus_u_settings: Optional[Dict[str, Union[float, Tuple[Literal["p", "d", "f"], float]]]] = None,
     extra_input: Optional[Dict[str, Any]] = None,
@@ -424,7 +424,7 @@ def abacus_modify_stru(
 
 @mcp.tool()
 def abacus_collect_data(
-    abacusjob: str,
+    abacusjob: Path,
     metrics: List[Literal["version", "ncore", "omp_num", "normal_end", "INPUT", "kpt", "fft_grid",
                           "nbase", "nbands", "nkstot", "ibzk", "natom", "nelec", "nelec_dict", "point_group",
                           "point_group_in_space_group", "converge", "total_mag", "absolute_mag", "energy", 
@@ -555,7 +555,7 @@ def abacus_collect_data(
 
 @mcp.tool()
 def run_abacus_onejob(
-    abacusjob: str,
+    abacusjob: Path,
 ) -> Dict[str, Any]:
     """
     Run one ABACUS job and collect data.
@@ -566,4 +566,4 @@ def run_abacus_onejob(
     """
     run_abacus(abacusjob)
 
-    return abacus_collect_data(str(abacusjob))
+    return abacus_collect_data(abacusjob)

@@ -78,7 +78,9 @@ def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
     
     cwd = os.getcwd()
     
-    if os.environ.get("ABACUSAGENT_SUBMIT_TYPE") == "local":
+    submit_type = os.environ.get("ABACUSAGENT_SUBMIT_TYPE", "local").lower()
+    
+    if submit_type == "local":
         for job_path in job_paths:
             if not job_path.is_dir():
                 raise ValueError(f"{job_path} is not a valid directory.")
@@ -90,7 +92,7 @@ def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
             if return_code != 0:
                 raise RuntimeError(f"ABACUS command failed with error: {err}")
             
-    elif os.environ.get("ABACUSAGENT_SUBMIT_TYPE") == "bohrium":
+    elif submit_type == "bohrium":
         # use abacustest to submit the job to bohrium
         # check the environment variables is not ""
         key_envs = [
