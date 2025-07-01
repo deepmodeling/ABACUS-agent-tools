@@ -251,10 +251,7 @@ def abacus_modify_input(
     # Remove keys
     if remove_input is not None:
         for param in remove_input:
-            try:
-                del input_param[param]
-            except:
-                raise KeyError(f"There's no {param} in the original INPUT file")
+            input_param.pop(param,None)
        
     # DFT+U settings
     main_group_elements = [
