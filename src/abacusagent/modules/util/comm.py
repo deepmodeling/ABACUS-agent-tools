@@ -117,14 +117,13 @@ def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
     
     if submit_type == "local":
         physical_cores = get_physical_cores()
-        command_cmd = os.environ.get("ABACUS_COMMAND", f"OMP_NUM_THREADS=1 mpirun -np {physical_cores} abacus > abacus.log 2>&1")
+        command_cmd = os.environ.get("ABACUS_COMMAND", f"OMP_NUM_THREADS=1 mpirun -np {physical_cores} abacus") + " > abacus.log 2>&1"     
 
         for job_path in job_paths:
             if not job_path.is_dir():
                 raise ValueError(f"{job_path} is not a valid directory.")
             
-            os.chdir(job_path)
-            #cmd = f"{os.environ['ABACUS_COMMAND']} > abacus.log 2>&1"            
+            os.chdir(job_path)           
             return_code, out, err = run_command([command_cmd])
             os.chdir(cwd)
             if return_code != 0:
