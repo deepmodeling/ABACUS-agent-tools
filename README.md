@@ -38,6 +38,7 @@ conda install abacus "libblas=*=*mkl" mpich -c conda-forge
 
 #### Starting ABACUS agent tools
 Before launching `abacusagent`, you must provide the necessary configurations in the `~/.abacusagent/env.json` file. This file defines how the ABACUS agent tools generate input files and manage ABACUS calculation workflows.
+Note: When running `abacusagent`, it will automatically check if the file exists. If not, `abacusagent` will create it and set some default values. It is recommended to run `abacusagent` once first before modifying this file.
 ```
 {
     "_comments": {
@@ -113,3 +114,11 @@ Visit http://your-node-address.dp.tech:50002 in your browser, where:
 - `your-node-address.dp.tech` is the remote node URL
 - `50002` is the configured port for Google ADK
 
+## Supported functions
+Functions of ABACUS Agent tools are in active development. Currently, the following functions are exposed as 
+MCP tools and can be 
+- Prepare ABACUS input files (INPUT, STRU, KPT, pseudopotential and orbital files)
+- Modify INPUT and STRU
+- Bader charge
+- Density of states (DOS) and projected density of states (PDOS)
+- Band calculation

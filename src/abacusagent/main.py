@@ -3,6 +3,9 @@ import importlib
 import os
 import argparse
 
+from importlib.metadata import version
+__version__ = version("abacusagent")
+
 def load_tools():
     """
     Load all tools from the abacusagent package.
@@ -39,7 +42,7 @@ def parse_args():
         type=str,
         default=None,
         choices=["fastmcp", "test", "dp"],
-        help="Model to use (default: fastmcp), choices: fastmcp, test, dp"
+        help="Model to use (default: dp), choices: fastmcp, test, dp"
     )
     parser.add_argument(
         "--port",
@@ -70,10 +73,18 @@ def print_address():
     else:
         raise ValueError("Invalid transport protocol specified. Use 'sse' or 'streamable-http'.")
 
+def print_version():
+    """
+    Print the version of the AbacusAgent.
+    """
+    print(f"\nAbacusAgentTools Version: {__version__}")
+    print("For more information, visit: https://github.com/deepmodeling/ABACUS-agent-tools\n")
+
 def main():
     """
     Main function to run the MCP tool.
     """
+    print_version()
     args = parse_args()  
     
     from abacusagent.env import set_envs, create_workpath

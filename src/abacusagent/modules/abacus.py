@@ -7,19 +7,107 @@ from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
 
 from abacusagent.init_mcp import mcp
-from abacusagent.modules.comm import run_abacus
+from abacusagent.modules.util.comm import run_abacus, generate_work_path
+
+@mcp.tool()
+def generate_bulk_structure(element: str, 
+                           crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
+                           a:float =None, 
+                           c: float =None,
+                           cubic: bool =False,
+                           orthorhombic: bool =False,
+                           file_format: Literal["cif", "poscar"] = "cif",
+                           ) -> Dict[str, Any]:
+    """
+    Generate a bulk crystal structure using ASE's `bulk` function.
+    
+    Args:
+        element (str): The chemical symbol of the element (e.g., 'Cu', 'Si', 'NaCl').
+        crystal_structure (str): The type of crystal structure to generate. Options include:
+            - 'sc' (simple cubic), a is needed
+            - 'fcc' (face-centered cubic), a is needed
+            - 'bcc' (body-centered cubic), a is needed
+            - 'hcp' (hexagonal close-packed), a is needed, if c is None, c will be set to sqrt(8/3) * a.
+            - 'diamond' (diamond cubic structure), a is needed
+            - 'zincblende' (zinc blende structure), a is needed, two elements are needed, e.g., 'GaAs'
+            - 'rocksalt' (rock salt structure), a is needed, two elements are needed, e.g., 'NaCl'
+        a (float, optional): Lattice constant in Angstroms. Required for all structures.
+        c (float, optional): Lattice constant for the c-axis in Angstroms. Required for 'hcp' structure.
+        cubic (bool, optional): If constructing a cubic supercell for fcc, bcc, diamond, zincblende, or rocksalt structures.
+        orthorhombic (bool, optional): If constructing orthorhombic cell for 'hcp' structure.
+        file_format (str, optional): The format of the output file. Options are 'cif' or 'poscar'. Default is 'cif'.
+    
+    Notes: all crystal need the lattice constant a, which is the length of the unit cell (or conventional cell).
+
+    Returns:
+        structure_file: The path to generated structure file.
+        cell: The cell parameters of the generated structure as a list of lists.
+        coordinate: The atomic coordinates of the generated structure as a list of lists.
+    
+    Examples:
+    >>> # FCC Cu
+    >>> cu_fcc = generate_bulk_structure('Cu', 'fcc', a=3.6)
+    >>>
+    >>> # HCP Mg with custom c-axis
+    >>> mg_hcp = generate_bulk_structure('Mg', 'hcp', a=3.2, c=5.2, orthorhombic=True)
+    >>>
+    >>> # Diamond Si
+    >>> si_diamond = generate_bulk_structure('Si', 'diamond', a=5.43, cubic=True)
+    >>> # Zincblende GaAs
+    >>> gaas_zincblende = generate_bulk_structure('GaAs', 'zincblende', a=5.65, cubic=True)
+    
+    """
+    if a is None:
+        raise ValueError("Lattice constant 'a' must be provided for all crystal structures.")
+    
+    from ase.build import bulk
+    special_params = {}
+    
+    if crystal_structure == 'hcp':
+        if c is not None:
+            special_params['c'] = c
+        special_params['orthorhombic'] = orthorhombic
+    
+    if crystal_structure in ['fcc', 'bcc', 'diamond', 'zincblende']:
+        special_params['cubic'] = cubic
+    try:
+        structure = bulk(
+            name=element,
+            crystalstructure=crystal_structure,
+            a=a,
+            **special_params
+        )
+    except Exception as e:
+        raise ValueError(f"Generate structure failed: {str(e)}") from e
+    
+    work_path = generate_work_path(create=True)
+    
+    if file_format == "cif":
+        structure_file = f"{work_path}/{element}_{crystal_structure}.cif"
+        structure.write(structure_file, format="cif")
+    elif file_format == "poscar":
+        structure_file = f"{work_path}/{element}_{crystal_structure}.vasp"
+        structure.write(structure_file, format="vasp")
+    else:
+        raise ValueError("Unsupported file format. Use 'cif' or 'poscar'.")
+    
+    return {
+        "structure_file": Path(structure_file).absolute(),
+        "cell": structure.get_cell().tolist(),
+        "coordinate": structure.get_positions().tolist()
+    }
 
 
 @mcp.tool()
 def abacus_prepare(
-    stru_file: str,
+    stru_file: Path,
     stru_type: Literal["cif", "poscar", "abacus/stru"] = "cif",
     pp_path: Optional[str] = None,
     orb_path: Optional[str] = None,
     job_type: Literal["scf", "relax", "cell-relax", "md"] = "scf",
     lcao: bool = True,
     extra_input: Optional[Dict[str, Any]] = None,
-) -> TypedDict("results",{"job_path": str}):
+) -> Dict[str, Any]:
     """
     Prepare input files for ABACUS calculation.
     Args:
@@ -33,12 +121,15 @@ def abacus_prepare(
     
     Returns:
         A dictionary containing the job path.
+        - 'job_path': The absolute path to the job directory.
+        - 'input_content': The content of the generated INPUT file.
+        - 'input_files': A list of files in the job directory.
     Raises:
         FileNotFoundError: If the structure file or pseudopotential path does not exist.
         ValueError: If LCAO basis set is selected but no orbital library path is provided.
         RuntimeError: If there is an error preparing input files.
     """
-    stru_file = Path(stru_file)
+    stru_file = Path(stru_file).absolute()
     if not os.path.isfile(stru_file):
         raise FileNotFoundError(f"Structure file {stru_file} does not exist.")
     
@@ -60,7 +151,11 @@ def abacus_prepare(
         extra_input_file = "INPUT.tmp"
         WriteInput(extra_input, extra_input_file)
     
+    work_path = generate_work_path()
+    pwd = os.getcwd()
+    os.chdir(work_path)
     try:
+        
         _, job_path = PrepInput(
             files=str(stru_file),
             filetype=stru_type,
@@ -69,19 +164,28 @@ def abacus_prepare(
             orb_path=orb_path,
             input_file=extra_input_file,
             lcao=lcao
-        ).run()
+        ).run()  
     except Exception as e:
+        os.chdir(pwd)
         raise RuntimeError(f"Error preparing input files: {e}")
-
+    
     if len(job_path) == 0:
+        os.chdir(pwd)
         raise RuntimeError("No job path returned from PrepInput.")
     
-    return {"job_path": str(Path(job_path[0]).absolute())}
+    input_content = ReadInput(Path(job_path[0]) / "INPUT")
+    input_files = os.listdir(job_path[0])
+    job_path = Path(job_path[0]).absolute()
+    os.chdir(pwd)
 
-@mcp.tool()
+    return {"job_path": job_path,
+            "input_content": input_content,
+            "input_files": input_files}
+
+#@mcp.tool()
 def get_file_content(
-    filepath: str
-) -> TypedDict("results", {"file_content": str}):
+    filepath: Path
+) -> Dict[str, str]:
     """
     Get content of a file.
     Args:
@@ -100,21 +204,22 @@ def get_file_content(
     except:
         raise IOError(f"Read content of {filepath} failed")
     
+    max_length = 2000
+    if len(file_content) > max_length:
+        file_content = file_content[:max_length]
     return {'file_content': file_content}
 
 @mcp.tool()
 def abacus_modify_input(
-    input_file: str,
-    stru_file: Optional[str] = None,
+    abacusjob_dir: Path,
     dft_plus_u_settings: Optional[Dict[str, Union[float, Tuple[Literal["p", "d", "f"], float]]]] = None,
     extra_input: Optional[Dict[str, Any]] = None,
     remove_input: Optional[List[str]] = None
-) -> TypedDict("results",{"input_path": str}):
+) -> Dict[str, Any]:
     """
     Modify keywords in ABACUS INPUT file.
     Args:
-        input_file: Path to the original ABACUS INPUT file.
-        stru_file: Path to the ABACUS STRU file, required for determining atom types in DFT+U settings.
+        abacusjob (str): Path to the directory containing the ABACUS input files.
         dft_plus_u_setting: Dictionary specifying DFT+U settings.  
             - Key: Element symbol (e.g., 'Fe', 'Ni').  
             - Value: A list with one or two elements:  
@@ -124,14 +229,16 @@ def abacus_modify_input(
         remove_input: A list of param names to be removed in the INPUT file
 
     Returns:
-        A dictionary containing the path of the modified INPUT file under the key `'input_path'`.
+        A dictionary containing:
+        - input_path: the path of the modified INPUT file.
+        - input_content: the content of the modified INPUT file as a dictionary.
     Raises:
         FileNotFoundError: If path of given INPUT file does not exist
         RuntimeError: If write modified INPUT file failed
     """
-    input_file = Path(input_file)
+    input_file = abacusjob_dir / "INPUT"
     if dft_plus_u_settings is not None:
-        stru_file = Path(stru_file)
+        stru_file = abacusjob_dir / "STRU"
     if not os.path.isfile(input_file):
         raise FileNotFoundError(f"INPUT file {input_file} does not exist.")
     
@@ -144,10 +251,7 @@ def abacus_modify_input(
     # Remove keys
     if remove_input is not None:
         for param in remove_input:
-            try:
-                del input_param[param]
-            except:
-                raise KeyError(f"There's no {param} in the original INPUT file")
+            input_param.pop(param,None)
        
     # DFT+U settings
     main_group_elements = [
@@ -200,13 +304,15 @@ def abacus_modify_input(
 
     try:
         WriteInput(input_param, input_file)
-        return {'input_path': str(Path(input_file).absolute())}
     except Exception as e:
         raise RuntimeError("Error occured during writing modified INPUT file")
 
+    return {'abacusjob_dir': abacusjob_dir,
+            'input_content': input_param}
+
 @mcp.tool()
 def abacus_modify_stru(
-    stru_file: str,
+    abacusjob_dir: Path,
     pp: Optional[Dict[str, str]] = None,
     orb: Optional[Dict[str, str]] = None,
     fix_atoms_idx: Optional[List[int]] = None,
@@ -214,11 +320,11 @@ def abacus_modify_stru(
     initial_magmoms: Optional[List[float]] = None,
     angle1: Optional[List[float]] = None,
     angle2: Optional[List[float]] = None
-) -> TypedDict("results",{"stru_path": str}):
+) -> Dict[str, Any]:
     """
     Modify pseudopotential, orbital, atom fixation, initial magnetic moments and initial velocities in ABACUS STRU file.
     Args:
-        stru_file: Path to the original ABACUS STRU file.
+        abacusjob (str): Path to the directory containing the ABACUS input files.
         pp: Dictionary mapping element names to pseudopotential file paths.
             If not provided, the pseudopotentials from the original STRU file are retained.
         orb: Dictionary mapping element names to numerical orbital file paths.
@@ -235,13 +341,15 @@ def abacus_modify_stru(
         angle2: in non-colinear case, specify angle between x-axis and real spin in projection in xy-plane , in angle measure instead of radian measure
 
     Returns:
-        A dictionary containing the path of the modified ABACUS STRU file under the key 'stru_path'.
+        A dictionary containing:
+        - stru_path: the path of the modified ABACUS STRU file
+        - stru_content: the content of the modified ABACUS STRU file as a string.
     Raises:
         ValueError: If `stru_file` is not path of a file, or dimension of initial_magmoms, angle1 or angle2 is not equal with number of atoms,
           or length of fixed_atoms_idx and movable_coords are not equal, or element in movable_coords are not a list with 3 bool elements
         KeyError: If pseudopotential or orbital are not provided for a element
     """
-    stru_file = Path(stru_file)
+    stru_file = abacusjob_dir / "STRU"
     if stru_file.is_file():
         stru = AbacusStru.ReadStru(stru_file)
     else:
@@ -306,12 +414,15 @@ def abacus_modify_stru(
         stru._move = atom_move
     
     stru.write(stru_file)
+    stru_content = Path(stru_file).read_text(encoding='utf-8')
     
-    return {'stru_path': str(stru_file.absolute())}
+    return {'abacusjob_dir': abacusjob_dir,
+            'stru_content': stru_content 
+            }
 
 @mcp.tool()
 def abacus_collect_data(
-    abacusjob: str,
+    abacusjob: Path,
     metrics: List[Literal["version", "ncore", "omp_num", "normal_end", "INPUT", "kpt", "fft_grid",
                           "nbase", "nbands", "nkstot", "ibzk", "natom", "nelec", "nelec_dict", "point_group",
                           "point_group_in_space_group", "converge", "total_mag", "absolute_mag", "energy", 
@@ -326,7 +437,7 @@ def abacus_collect_data(
                           "atom_mag_spd", "relax_converge", "relax_steps", "ds_lambda_step", "ds_lambda_rms", 
                           "ds_mag", "ds_mag_force", "ds_time", "mem_vkb", "mem_psipw"]]
                           = ["normal_end", "converge", "energy", "total_time"]
-) -> TypedDict("results", {"metrics": Dict[str, Any]}):
+) -> Dict[str, Any]:
     """
     Collect results after ABACUS calculation and dump to a json file.
     Args:
@@ -440,10 +551,9 @@ def abacus_collect_data(
     
     return {'collected_metrics': collected_metrics}
 
-# This function is for test purpose on my local machine only.
 @mcp.tool()
 def run_abacus_onejob(
-    abacusjob: str,
+    abacusjob: Path,
 ) -> Dict[str, Any]:
     """
     Run one ABACUS job and collect data.
@@ -454,4 +564,5 @@ def run_abacus_onejob(
     """
     run_abacus(abacusjob)
 
-    return abacus_collect_data(str(abacusjob))
+    return {'abacusjob_dir': abacusjob,
+            'metrics': abacus_collect_data(abacusjob)}
