@@ -182,7 +182,7 @@ def abacus_prepare(
             "input_content": input_content,
             "input_files": input_files}
 
-@mcp.tool()
+#@mcp.tool()
 def get_file_content(
     filepath: Path
 ) -> Dict[str, str]:
@@ -211,8 +211,7 @@ def get_file_content(
 
 @mcp.tool()
 def abacus_modify_input(
-    input_file: Path,
-    stru_file: Optional[Path] = None,
+    abacusjob_dir: Path,
     dft_plus_u_settings: Optional[Dict[str, Union[float, Tuple[Literal["p", "d", "f"], float]]]] = None,
     extra_input: Optional[Dict[str, Any]] = None,
     remove_input: Optional[List[str]] = None
@@ -220,8 +219,7 @@ def abacus_modify_input(
     """
     Modify keywords in ABACUS INPUT file.
     Args:
-        input_file: Path to the original ABACUS INPUT file.
-        stru_file: Path to the ABACUS STRU file, required for determining atom types in DFT+U settings.
+        abacusjob (str): Path to the directory containing the ABACUS input files.
         dft_plus_u_setting: Dictionary specifying DFT+U settings.  
             - Key: Element symbol (e.g., 'Fe', 'Ni').  
             - Value: A list with one or two elements:  
@@ -238,9 +236,9 @@ def abacus_modify_input(
         FileNotFoundError: If path of given INPUT file does not exist
         RuntimeError: If write modified INPUT file failed
     """
-    input_file = Path(input_file)
+    input_file = abacusjob_dir / "INPUT"
     if dft_plus_u_settings is not None:
-        stru_file = Path(stru_file)
+        stru_file = abacusjob_dir / "STRU"
     if not os.path.isfile(input_file):
         raise FileNotFoundError(f"INPUT file {input_file} does not exist.")
     
@@ -312,12 +310,12 @@ def abacus_modify_input(
     except Exception as e:
         raise RuntimeError("Error occured during writing modified INPUT file")
 
-    return {'input_path': Path(input_file).absolute(),
+    return {'abacusjob_dir': abacusjob_dir,
             'input_content': input_param}
 
 @mcp.tool()
 def abacus_modify_stru(
-    stru_file: Path,
+    abacusjob_dir: Path,
     pp: Optional[Dict[str, str]] = None,
     orb: Optional[Dict[str, str]] = None,
     fix_atoms_idx: Optional[List[int]] = None,
@@ -329,7 +327,7 @@ def abacus_modify_stru(
     """
     Modify pseudopotential, orbital, atom fixation, initial magnetic moments and initial velocities in ABACUS STRU file.
     Args:
-        stru_file: Path to the original ABACUS STRU file.
+        abacusjob (str): Path to the directory containing the ABACUS input files.
         pp: Dictionary mapping element names to pseudopotential file paths.
             If not provided, the pseudopotentials from the original STRU file are retained.
         orb: Dictionary mapping element names to numerical orbital file paths.
@@ -354,7 +352,7 @@ def abacus_modify_stru(
           or length of fixed_atoms_idx and movable_coords are not equal, or element in movable_coords are not a list with 3 bool elements
         KeyError: If pseudopotential or orbital are not provided for a element
     """
-    stru_file = Path(stru_file)
+    stru_file = abacusjob_dir / "STRU"
     if stru_file.is_file():
         stru = AbacusStru.ReadStru(stru_file)
     else:
@@ -421,7 +419,7 @@ def abacus_modify_stru(
     stru.write(stru_file)
     stru_content = Path(stru_file).read_text(encoding='utf-8')
     
-    return {'stru_path': str(stru_file.absolute()),
+    return {'abacusjob_dir': abacusjob_dir,
             'stru_content': stru_content 
             }
 
@@ -569,4 +567,5 @@ def run_abacus_onejob(
     """
     run_abacus(abacusjob)
 
-    return abacus_collect_data(abacusjob)
+    return {'abacusjob_dir': abacusjob,
+            'metrics': abacus_collect_data(abacusjob)}
