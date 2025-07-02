@@ -200,7 +200,8 @@ def link_abacusjob(src: str,
                    include:Optional[List[str]]=None, 
                    exclude:Optional[List[str]]=None,
                    copy_files = ["INPUT", "STRU", "KPT"],
-                   overwrite: Optional[bool] = True
+                   overwrite: Optional[bool] = True,
+                   exclude_directories: Optional[bool] = False
                    ):
     """
     Link the ABACUS job files from src to dst.
@@ -212,6 +213,7 @@ def link_abacusjob(src: str,
     exclude (Optional[List[str]]): List of files to exclude. If None, no files are excluded.
     copy_files (List[str]): List of files to copy from src to dst. Default is ["INPUT", "STRU", "KPT"].
     overwrite (bool): If True, existing files in the destination will be overwritten. Default is True.
+    exclude_directories (bool): If True, directories will be excluded from linking. Default is False.
     
     Notes: 
         - If somes files are included in both include and exclude, the file will be excluded.
@@ -249,6 +251,9 @@ def link_abacusjob(src: str,
               )
     else:
         for file in include_files:
+            if exclude_directories and os.path.isdir(file):
+                continue
+            
             dst_file = dst / file.name
             if dst_file.exists():
                 if overwrite:
