@@ -5,6 +5,7 @@ from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple, Union
 from abacustest.lib_model.model_013_inputs import PrepInput
 from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
+from abacustest.collectdata import parse_value
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path
@@ -17,8 +18,8 @@ def abacus_do_relax(
     stress_thr_kbar: Optional[float] = None,
     max_steps: Optional[int] = None,
     relax_cell: Optional[bool] = None,
-    fixed_axes: Literal["None", "volume", "shape", "a", "b", "c", "ab", "ac", "bc"] = None,
-    relax_method: Literal["cg", "bfgs", "bfgs_trad", "cg_bfgs", "sd", "fire"] = None,
+    fixed_axes: Optional[Literal["None", "volume", "shape", "a", "b", "c", "ab", "ac", "bc"]] = None,
+    relax_method: Optional[Literal["cg", "bfgs", "bfgs_trad", "cg_bfgs", "sd", "fire"]] = None,
     relax_new: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """
@@ -45,8 +46,13 @@ def abacus_do_relax(
 
     Returns:
         A dictionary containing:
-        - job_path: The absolute path to the job directory.
-        - result: The result of the relaxation calculation as a RESULT object.
+        - job_path: The job path of the relaxation calculation.
+        - result: The result of the relaxation calculation with a dictionary containing:
+            - normal_end: Whether the relaxation calculation ended normally.
+            - relax_steps: The number of relaxation steps taken.
+            - largest_gradient: The largest force gradient during the relaxation.
+            - relax_converge: Whether the relaxation converged.
+            - energies: The energies at each step of the relaxation.
     Raises:
         FileNotFoundError: If the job directory does not exist or does not contain necessary files.
         RuntimeError: If the ABACUS calculation fails or returns an error.
@@ -71,7 +77,53 @@ def abacus_do_relax(
     
     results = relax_postprocess(work_path)
 
-    return results
+    return {
+        "job_path": Path(work_path).absolute(),
+        "result": results
+    }
+
+@mcp.tool()
+def abacus_prepare_inputs_from_relax_results(
+    relax_jobpath: Path
+)-> Dict[str, Any]:
+    """
+    Prepare ABACUS input files based on the structure of the last relaxation step.
+    The INPUT/KPT and pseudopotential/orbital files will be copied from the relaxation job directory.
+    
+    Args:
+        relax_jobpath: Path to the relaxation results.
+    
+    Returns:
+        A dictionary containing the job path.
+        - 'job_path': The absolute path to the job directory.
+        - 'input_content': The content of the generated INPUT file.
+        - 'input_files': A list of files in the job directory.
+    """
+    rs = RESULT(path=relax_jobpath, fmt="abacus")
+    final_stru = os.path.join(relax_jobpath, f"OUT.{rs['suffix']}", "STRU_ION_D") # the structure file of the last relax step
+    
+    if not os.path.isfile(final_stru):
+        raise FileNotFoundError(f"We can not find the structure file of last relax step {final_stru}. \
+            Please check the path and ensure the relaxation calculation has completed successfully.")
+    
+    work_path = generate_work_path()
+    
+    link_abacusjob(
+        src=relax_jobpath,
+        dst=work_path,
+        copy_files=["INPUT", "STRU", "KPT"],
+        exclude=["OUT.*", "*.log", "*.out"],
+        exclude_directories=True
+    )
+    if os.path.isfile(work_path / "STRU"):
+        os.unlink(work_path / "STRU")
+    os.symlink(final_stru, work_path / "STRU")
+
+    return {
+        "job_path": Path(work_path).absolute(),
+        "input_content": ReadInput(work_path / "INPUT"),
+        "input_files": [f.name for f in work_path.iterdir()]
+    }
 
 
 def prepare_relax_inputs(
@@ -126,5 +178,12 @@ def prepare_relax_inputs(
     WriteInput(input_param, work_path+"/INPUT")
     
 
-def relax_postprocess(work_path):
-    pass
+def relax_postprocess(work_path: Path) -> Dict[str, Any]:
+    
+    rs = RESULT(path=work_path, fmt="abacus")
+    
+    metrics = ["normal_end", "relax_steps", "largest_gradient", "relax_converge", "energies"]
+    
+    results = parse_value(rs, metrics)
+    
+    return results
