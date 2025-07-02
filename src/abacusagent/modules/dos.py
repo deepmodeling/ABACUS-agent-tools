@@ -79,9 +79,9 @@ def abacus_dos_run_scf(abacus_inputs_path: Path,
         Dict[str, Any]: A dictionary containing the work path, normal end status, SCF steps, convergence status, and energies.
     """
     
-    input_param = ReadInput(abacus_inputs_path / "INPUT")
+    input_param = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
     # check if charge file has been generated
-    if os.path.isfile(abacus_inputs_path / "OUT." + input_param["suffix"] / "SPIN1_CHG.cube") and not force_run:
+    if os.path.isfile(os.path.join(abacus_inputs_path, "OUT." + input_param.get("suffix", "ABACUS") , "SPIN1_CHG.cube")) and not force_run:
         print("Charge file already exists, skipping SCF calculation.")
         work_path = abacus_inputs_path
     else:
@@ -90,10 +90,10 @@ def abacus_dos_run_scf(abacus_inputs_path: Path,
                        dst=work_path,
                        copy_files=["INPUT"])
 
-        input_param = ReadInput(work_path / "INPUT")
+        input_param = ReadInput(os.path.join(work_path, "INPUT"))
         input_param["calculation"] = "scf"
         input_param["out_chg"] = 1
-        WriteInput(input_param, work_path / "INPUT")
+        WriteInput(input_param, os.path.join(work_path, "INPUT"))
 
         run_abacus(work_path)
 
@@ -120,7 +120,7 @@ def abacus_dos_run_nscf(abacus_inputs_path: Path,
                    dst=work_path,
                    copy_files=["INPUT"])
     
-    input_param = ReadInput(work_path / "INPUT")
+    input_param = ReadInput(os.path.join(work_path, "INPUT"))
     input_param["calculation"] = "nscf"
     input_param["init_chg"] = "file"
     if input_param.get("basis", "pw") == "lcao":
@@ -140,7 +140,7 @@ def abacus_dos_run_nscf(abacus_inputs_path: Path,
             input_param[dos_param] = value
     
     
-    WriteInput(input_param, work_path / "INPUT")
+    WriteInput(input_param, os.path.join(work_path, "INPUT"))
     
     run_abacus(work_path)
     
@@ -365,7 +365,7 @@ def plot_dos_pdos(nscf_job_path: Path,
     
     """
     input_param = ReadInput(os.path.join(nscf_job_path, "INPUT"))
-    input_dir = os.path.join(nscf_job_path, "OUT." + input_param["suffix"])
+    input_dir = os.path.join(nscf_job_path, "OUT." + input_param.get("suffix","ABACUS"))
 
     # Construct file paths based on input directory
     input_file = os.path.join(input_dir, "PDOS")
