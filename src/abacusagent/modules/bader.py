@@ -3,14 +3,36 @@ workflow of calculating Bader charges.
 '''
 import os
 import re
+import glob
 import unittest
 import subprocess
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
+
+from pathlib import Path
 
 import numpy as np
 
 from abacusagent.init_mcp import mcp
-from abacusagent.modules.util.control import FlowEnvironment
+
+from abacustest.lib_prepare.abacus import ReadInput, WriteInput, AbacusStru
+from abacustest.lib_collectdata.collectdata import RESULT
+
+
+
+from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, run_command
+
+BADER_EXE = os.environ.get("BADER_EXE", "bader") # use environment variable to specify the bader executable path
+
+
+"""
+Install bader:
+
+apt install subversion
+svn co https://theory.cm.utexas.edu/svn/bader
+cd bader
+make
+cp bader /usr/local/bin/bader
+"""
 
 def parse_abacus_cmd(cmd: str) -> Dict[str, str|int]:
     '''
@@ -64,88 +86,49 @@ def ver_cmp(v1: str|tuple[int], v2: str|tuple[int]) -> int:
     
     return (v1 > v2) - (v1 < v2)  # Returns 1, 0, or -1
 
-@FlowEnvironment.static_decorate()
-@mcp.tool()
 def calculate_charge_densities_with_abacus(
-    abacus: str,
-    jobdir: str
+    jobdir: Path
 ) -> Optional[List[str]]:
     """
     Calculate the charge density using ABACUS in the specified job directory.
     
     Parameters:
-    abacus (str): Path to the abacus executable.
     jobdir (str): Directory where the job files are located.
     
     Returns:
     list: List of file names for the charge density cube files.
     """
     # get the abacus version with `abacus --version`
+    work_path = generate_work_path()
+    link_abacusjob(src=jobdir,
+                   dst=work_path,
+                   copy_files=["INPUT"])
+    input_param = ReadInput(os.path.join(work_path, 'INPUT'))
     
-    cmd = parse_abacus_cmd(abacus)['abacus'] + ' --version'
-    version = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if version.returncode != 0:
-        raise RuntimeError(f"Failed to get ABACUS version: {version.stderr}")
-    version = version.stdout.strip()
-    print(f"ABACUS version: {version}")
-    
-    cwd = os.getcwd()
-    os.chdir(jobdir)
-    cmd = f"{abacus}"
-    print(f"Running command: {cmd}")
-    
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    
-    if result.returncode != 0:
-        raise RuntimeError(f"Abacus command failed with error: {result.stderr}")
-    os.chdir(cwd)
-    
-    dftparam: Dict = parse_abacus_param(os.path.join(jobdir, 'INPUT'))
-    
-    nspin = int(dftparam.get('nspin', 1))
-    # the file name has been changed to chgs1.cube in ABACUS v3.9.0.6
-    fcube = [f'chgs{i+1}.cube' if ver_cmp(version, '3.9.0.6') >= 0
-                               else f'SPIN{i+1}_CHG.cube'
-             for i in range(nspin)]
-    
-    outdir = f'OUT.{dftparam.get("suffix", "ABACUS")}'
-    outdir = os.path.join(jobdir, outdir)
-    return [os.path.join(outdir, f) for f in fcube]
+    if os.path.isfile(os.path.join(work_path, 'OUT.' + input_param.get("suffix", "ABACUS"), 'SPIN1_CHG.cube')):
+        print("Charge file already exists, skipping SCF calculation.") 
+    else:
+        input_param["calculation"] = "scf"
+        input_param["out_chg"] = 1
+        WriteInput(input_param, os.path.join(work_path, 'INPUT'))
 
-@FlowEnvironment.static_decorate()
-@mcp.tool()
-def parse_abacus_param(
-    fn: str
-) -> Dict[str, str]:
-    """
-    Parse the ABACUS parameter file to extract relevant parameters.
+        run_abacus(job_paths=jobdir)
     
-    Parameters:
-    fn (str): Path to the ABACUS parameter file.
-    
-    Returns:
-    dict: A dictionary containing the parsed parameters.
-    """
-    with open(fn) as f:
-        data = [l.strip() for l in f.readlines() 
-                if l.strip() and \
-                    not l.startswith("#") and \
-                    not 'INPUT_PARMETERS' in l]
-    data = [l.split() for l in data]
-    
-    return dict(zip([d[0] for d in data], [' '.join(d[1:]) for d in data]))
+    fcube = glob.glob(os.path.join(jobdir, 'OUT.*', '*.cube'))
+    fcube.sort()
 
-@FlowEnvironment.static_decorate()
-@mcp.tool()
+    return {
+        "work_path": Path(work_path).absolute(),
+        "cube_files": [Path(f).absolute() for f in fcube]
+    }
+
 def merge_charge_densities_of_different_spin(
-    cube_manipulator: str,
     fcube: List[str]
 ) -> str:
     """
     Run the cube manipulator to process cube files.
     
     Parameters:
-    cube_manipulator (str): Path to the cube manipulator executable.
     fcube (list): List of file names for the cube files to be manipulated.
     
     Returns:
@@ -158,36 +141,17 @@ def merge_charge_densities_of_different_spin(
     dir_ = os.path.dirname(fcube[0])
     prefix_ = os.path.basename(fcube[0]).replace('.cube', '')
     fout = os.path.join(dir_, f"{prefix_}_merged.cube")
-    cmd = f'python3 {cube_manipulator} -i {fcube[0]} -o {fout} -p {fcube[1]}'
-    print(f"Running command: {cmd}")
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"Cube manipulator command failed with error: {result.stderr}")
-    print(f"Cube manipulator output: {result.stdout}")
+    
+    from .util.cube_manipulator import read_gaussian_cube, axpy, write_gaussian_cube
+    
+    data = read_gaussian_cube(fcube[0])
+    data2 = read_gaussian_cube(fcube[1])
+    data["data"] = axpy(data["data"], data2["data"], beta=1.0)
+    write_gaussian_cube(data, fout)
     return fout
 
-@FlowEnvironment.static_decorate()
-@mcp.tool()
-def make_charge_density_cube(
-    cube_manipulator: str,
-    fcube: List[str]
-) -> str:
-    """
-    Create a charge density cube file optinally using the cube manipulator.
-    
-    Parameters:
-    cube_manipulator (str): Path to the cube manipulator executable.
-    fcube (list): List of file names for the cube files to be manipulated.
-    
-    Returns:
-    str: Output from the cube manipulator command.
-    """
-    return merge_charge_densities_of_different_spin(cube_manipulator, fcube)
-
-@FlowEnvironment.static_decorate()
-@mcp.tool()
 def read_bader_acf(
-    fn: str
+    fn: Path
 ) -> List[float]:
     """
     Read Bader charges from a file.
@@ -204,69 +168,76 @@ def read_bader_acf(
     data = np.array(data, dtype=float)
     return data[:, 4].tolist()  # Return the Bader charges
 
-@FlowEnvironment.static_decorate()
-@mcp.tool()
 def calculate_bader_charges(
-    bader: str,
-    fcube: str
-) -> List[str]:
+    fcube: Path
+) -> List[Path]:
     """
     Calculate Bader charges using the bader executable.
     
     Parameters:
-    bader (str): Path to the bader executable.
     fcube (str): Path to the cube file containing charge density.
     
     Returns:
-    list: A list of file names generated by the Bader analysis.
+    list: A list of file paths generated by the Bader analysis.
     """
-    cmd = f'{bader} {fcube}'
+    fcube = Path(fcube).absolute()
+    
+    cmd = f'{BADER_EXE} {fcube}'
     print(f"Running command: {cmd}")
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"Bader command failed with error: {result.stderr}")
+    return_code, out, err = run_command(cmd, shell=True)
+    if return_code != 0:
+        raise RuntimeError(f"Bader command failed with error: {err}")
 
     with open('bader.out', 'w') as f:
-        f.write(result.stdout)
+        f.write(out)
         
     files = [os.path.join(os.getcwd(), f) 
              for f in ['ACF.dat', 'AVF.dat', 'BCF.dat', 'bader.out']]
     if not all(os.path.exists(f) for f in files):
         raise FileNotFoundError("Incomplete Bader analysis output files.")
+    files = [Path(f).absolute() for f in files]
+    
     
     return files
 
-@FlowEnvironment.static_decorate()
-@mcp.tool()
 def postprocess_charge_densities(
-    fcube: List[str]|str,
-    cube_manipulator: str,
-    bader: str
-) -> List[float]:
+    fcube: List[Path]|Path
+) -> Dict[str, Any]:
     """
     postprocess the charge density to obtain Bader charges.
     
     Parameters:
-    jobdir (list|str): List of file names for the cube files or a single file name.
-    cube_manipulator (str): Path to the cube manipulator executable.
-    bader (str): Path to the bader executable.
+    fcube (list|str): List of cube files or a single cube file path.
     
     Returns:
     list: A list of Bader charges.
     """
     
-    _ = merge_charge_densities_of_different_spin(cube_manipulator, fcube)
-    _ = calculate_bader_charges(bader, fcube)
+    merged_cube_file = merge_charge_densities_of_different_spin(fcube)
+    merged_cube_file = Path(merged_cube_file).absolute()
+    
+    cwd = os.getcwd()
+    work_path = generate_work_path()
+    os.chdir(work_path)
+    try:
+        _ = calculate_bader_charges(merged_cube_file)
+    except Exception as e:
+        os.chdir(cwd)
+        raise RuntimeError(f"Failed to calculate Bader charges: {e}")
+    os.chdir(cwd)
+    
+    bader_charges = read_bader_acf(Path(work_path) / 'ACF.dat')
 
-    return read_bader_acf(os.path.join(os.getcwd(), 'ACF.dat'))
+    return {
+        "bader_charges": bader_charges,
+        "work_path": Path(work_path).absolute(),
+        "cube_file": Path(merged_cube_file).absolute()
+    }
 
-@FlowEnvironment.static_decorate()
+
 @mcp.tool() # make it visible to the MCP server
-def calculate(
-    jobdir: str,
-    abacus: str,
-    cube_manipulator: str,
-    bader: str
+def abacus_badercharge_run(
+    jobdir: Path
 ) -> List[float]:
     """
     Calculate Bader charges for a given job directory, with ABACUS as
@@ -275,19 +246,37 @@ def calculate(
     
     Parameters:
     jobdir (str): Directory where the job files are located.
-    abacus (str): Path to the abacus executable.
-    cube_manipulator (str): Path to the cube manipulator executable.
-    bader (str): Path to the bader executable.
     
     Returns:
-    list: A list of Bader charges.
+    dict: A dictionary containing: 
+        - bader_charges: List of Bader charge for each atom.
+        - atom_labels: Labels of atoms in the structure.
+        - abacus_workpath: Absolute path to the ABACUS work directory.
+        - bader_workpath: Absolute path to the Bader analysis work directory.
+        - cube_file: Absolute path to the cube file used for Bader analysis.
     """
 
     # Run ABACUS to calculate charge density
-    jobdir = calculate_charge_densities_with_abacus(abacus=abacus, jobdir=jobdir)
+    results = calculate_charge_densities_with_abacus(jobdir)
+    abacus_jobpath = results["work_path"]
+    fcube = results["cube_files"]
+    
+    stru = AbacusStru.ReadStru(os.path.join(abacus_jobpath, "STRU"))
+    if stru is not None:
+        atom_labels = stru.get_label(total=True)
+    else:
+        atom_labels = None
     
     # Postprocess the charge density to obtain Bader charges
-    return postprocess_charge_densities(jobdir, cube_manipulator, bader)
+    bader_results = postprocess_charge_densities(fcube)
+    
+    return {
+        "bader_charges": bader_results["bader_charges"],
+        "atom_labels": atom_labels,
+        "abacus_workpath": Path(abacus_jobpath).absolute(),
+        "bader_workpath": Path(bader_results["work_path"]).absolute(),
+        "cube_file": Path(bader_results["cube_file"]).absolute()
+    }
 
 class TestBaderChargeWorkflow(unittest.TestCase):
     
