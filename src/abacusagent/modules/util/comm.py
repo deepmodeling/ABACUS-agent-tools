@@ -97,7 +97,8 @@ def get_physical_cores():
                 sockets = int(line.split(':')[1].strip())
         return cores_per_socket * sockets
 
-def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
+def run_abacus(job_paths: Union[str, List[str], Path, List[Path]],
+               log_file: Optional[str] = "abacus.log") -> None:
     """
     Run the Abacus on the given job paths.
     If job_paths is a list, it will run the command for each path.
@@ -117,7 +118,7 @@ def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
     
     if submit_type == "local":
         physical_cores = get_physical_cores()
-        command_cmd = os.environ.get("ABACUS_COMMAND", f"OMP_NUM_THREADS=1 mpirun -np {physical_cores} abacus") + " > abacus.log 2>&1"     
+        command_cmd = os.environ.get("ABACUS_COMMAND", f"OMP_NUM_THREADS=1 mpirun -np {physical_cores} abacus") + f" > {log_file} 2>&1"     
 
         for job_path in job_paths:
             if not job_path.is_dir():
@@ -164,7 +165,7 @@ def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
             "run_dft": 
                 {
                     "example": jobs,
-                    "command": f"{os.environ['BOHRIUM_ABACUS_COMMAND']} > abacus.log 2>&1",
+                    "command": f"{os.environ['BOHRIUM_ABACUS_COMMAND']} > {log_file} 2>&1",
                     "image": os.environ["BOHRIUM_ABACUS_IMAGE"],
                     "bohrium":{
                         "scass_type": os.environ["BOHRIUM_ABACUS_MACHINE"],
