@@ -5,8 +5,8 @@ import tempfile
 import shutil
 
 #sys.path.append(str(Path(__file__).parent.parent / "src" / "abacusagent" / "modules"))
-from abacusagent.modules.run_dos import run_dos, pygrep
-from abacusagent.modules.run_dos import plot_dos_pdos as mkplots 
+from abacusagent.modules.dos import run_dos, pygrep
+from abacusagent.modules.dos import plot_dos_pdos as mkplots 
 
 class TestRunDos(unittest.TestCase):
     def setUp(self):
