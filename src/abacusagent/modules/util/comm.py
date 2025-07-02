@@ -7,6 +7,9 @@ import time
 import json
 import traceback
 import uuid
+import glob
+
+from abacustest.lib_collectdata.abacus import ReadInput
 
 def run_command(
         cmd,
@@ -283,4 +286,44 @@ def generate_work_path(create: bool = True) -> str:
         os.makedirs(work_path, exist_ok=True)
     
     return work_path
+
+
+def has_chgfile(abacus_jobpath:Path) -> bool:
+    """
+    Check if the charge file exists in the given ABACUS job path. Used to determine if an abacus job has writen the charge file.
     
+    Parameters:
+        abacus_jobpath (Path): The path to the ABACUS job directory.
+        
+    Returns:
+        bool: True if the charge file exists, False otherwise.
+    """
+    input_file = os.path.join(abacus_jobpath, "INPUT")
+    if not os.path.isfile(input_file):
+        suffix = "ABACUS"
+    else:
+        suffix = ReadInput(input_file).get("suffix", "ABACUS")
+
+    chgfile = os.path.join(abacus_jobpath, "OUT." + suffix, "SPIN1_CHG.cube")
+    return os.path.isfile(chgfile)
+
+
+def has_pyatb_matrix_files(work_path: Path) -> bool:
+    """
+    Check if the necessary files for Pyatb calculation exist in the given work path.
+    
+    Parameters:
+        work_path (Path): The path to the working directory.
+        
+    Returns:
+        bool: True if the necessary files exist, False otherwise.
+    """
+    input_file = os.path.join(work_path, "INPUT")
+    if not os.path.isfile(input_file):
+        suffix = "ABACUS"
+    else:
+        suffix = ReadInput(input_file).get("suffix", "ABACUS")
+        
+    return (os.path.isfile(os.path.join(work_path, "OUT." + suffix, "data-HR-sparse_SPIN0.csr")) and
+            os.path.isfile(os.path.join(work_path, "OUT." + suffix, "data-SR-sparse_SPIN0.csr")) and 
+            os.path.isfile(os.path.join(work_path, "OUT." + suffix, "data-rR-sparse.csr")))
