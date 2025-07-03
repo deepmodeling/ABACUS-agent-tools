@@ -1,45 +1,25 @@
 import os
 import shutil
-import time
 from pathlib import Path
 from typing import Literal, Optional, TypedDict, Dict, Any, List
 from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
-from abacustest.lib_model.model_013_inputs import PrepInput
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.abacus import abacus_modify_input, abacus_collect_data
-from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path
+from abacusagent.modules.util.comm import run_abacus, run_command, get_physical_cores
+from abacusagent.modules.util.pyatb import property_calculation_scf
 
-@mcp.tool()
-def abacus_plot_band(abacusjob_dir: Path,
-                     energy_min: float = -10,
-                     energy_max: float = 10
-) -> Dict[str, Any]:
+
+def read_band_data(band_file: Path, efermi: float):
     """
-    Plot band after ABACUS SCF and NSCF calculation.
+    Read data in band file.
     Args:
-        abacusjob_dir (str): Absolute path to the ABACUS calculation directory.
-        energy_min (float): Lower bound of $E - E_F$ in the plotted band.
-        energy_max (float): Upper bound of $E - E_F$ in the plotted band.
+        band_file (Path): Absolute path to the band file.
     Returns:
-        A dictionary containing band gap of the system and path to the plotted band.
+        A dictionary containing band data.
     Raises:
-        NotImplementedError: If band plot for an nspin=4 calculation is requested
         RuntimeError: If read band data from BANDS_1.dat or BANDS_2.dat failed
     """
-    input_args = ReadInput(abacusjob_dir + "/INPUT")
-    suffix = input_args.get('suffix', 'ABACUS')
-    nspin = input_args.get('nspin', 1)
-    if nspin != 1 and nspin != 2:
-        raise NotImplementedError("Band plot for nspin=4 is not supported yet")
-    
-    metrics = abacus_collect_data(abacusjob_dir, ['efermi', 'nelec', 'band_gap'])['collected_metrics']
-    efermi, band_gap = metrics['efermi'], float(metrics['band_gap'])
-    band_file = abacusjob_dir + f"/OUT.{suffix}/BANDS_1.dat"
-    if nspin == 2:
-        band_file_dw = abacusjob_dir + f"/OUT.{suffix}/BANDS_2.dat"
-    
-    # Read band data
     bands, kline = [], []
     try:
         with open(band_file) as fin:
@@ -54,28 +34,39 @@ def abacus_plot_band(abacusjob_dir: Path,
                 for i in range(nbands):
                     bands[i].append(float(words[i+2]) - efermi)
     except Exception as e:
-        raise RuntimeError("Read data from BANDS_1.dat failed")
+        raise RuntimeError(f"Read data from {band_file} failed")
+    
+    return bands, kline, nbands
+    
+def split_array(array: List[Any], splits: List[int]):
+    """
+    Split band and kline by incontinuous points
+    """
+    splited_array = []
+    for i in range(len(splits)):
+        if i == 0:
+            start = 0
+        else:
+            start = splits[i-1]
+        
+        if i == len(splits) - 1:
+            end = splits[-1]
+        else:
+            end = splits[i]
+        
+        splited_array.append(array[start:end])
+    
+    splited_array.append(array[splits[-1]:])
+    return splited_array
 
-    if nspin == 2:
-        bands_dw = []
-        try:
-            with open(band_file_dw) as fin:
-                for lines in fin:
-                    words = lines.split()
-                    if len(bands_dw) == 0:
-                        for _ in range(nbands):
-                            bands_dw.append([])
-
-                    for i in range(nbands):
-                        bands_dw[i].append(float(words[i+2]) - efermi)
-        except Exception as e:
-            raise RuntimeError("Read data from BANDS_2.dat failed")
-
-    # Read high symmetry labels from KPT file
+def read_high_symmetry_labels(abacusjob_dir: Path):
+    """
+    Read high symmetry labels from INPUT file
+    """
     high_symm_labels = []
     band_point_nums = []
     band_point_num = 0
-    with open(abacusjob_dir + "/KPT") as fin:
+    with open(os.path.join(abacusjob_dir, "KPT")) as fin:
         for lines in fin:
             words = lines.split()
             if len(words) > 2:
@@ -86,7 +77,20 @@ def abacus_plot_band(abacusjob_dir: Path,
                         high_symm_labels.append(words[-1])
                     band_point_nums.append(band_point_num)
                     band_point_num += int(words[-3])
-        
+    
+    return high_symm_labels, band_point_nums
+
+def process_band_data(abacusjob_dir: Path, 
+                      nspin: Literal[1, 2], 
+                      efermi: float, 
+                      kline: List[float],
+                      bands: List[List[float]],  
+                      bands_dw: Optional[List[List[float]]] = None):
+    """
+    Process band data, including properly process incontinous points and label high symmetry points
+    """
+    high_symm_labels, band_point_nums = read_high_symmetry_labels(abacusjob_dir)
+    
     # Reduce extra kline length between incontinuous points
     modify_indexes = []
     for i in range(len(band_point_nums) - 1):
@@ -113,25 +117,7 @@ def abacus_plot_band(abacusjob_dir: Path,
             band_point_nums.append(band_point_nums_old[i])
             high_symm_labels.append(high_symm_labels_old[i])
     
-    # Split band and kline by incontinuous points
-    def split_array(array, splits):
-        splited_array = []
-        for i in range(len(splits)):
-            if i == 0:
-                start = 0
-            else:
-                start = splits[i-1]
-            
-            if i == len(splits) - 1:
-                end = splits[-1]
-            else:
-                end = splits[i]
-            
-            splited_array.append(array[start:end])
-        
-        splited_array.append(array[splits[-1]:])
-        return splited_array
-
+    # Split incontinuous bands to list of continous bands
     band_split_points = [band_point_nums_old[x]+1 for x in modify_indexes]
     kline_splited = split_array(kline, band_split_points)
     bands_splited = []
@@ -144,7 +130,56 @@ def abacus_plot_band(abacusjob_dir: Path,
 
     high_symm_poses = [kline[i] for i in band_point_nums]
     
+    if nspin == 1:
+        return high_symm_labels, high_symm_poses, kline_splited, bands_splited
+    else:
+        return high_symm_labels, high_symm_poses, kline_splited, bands_splited, bands_dw_splited
+
+#@mcp.tool()
+def abacus_plot_band_nscf(abacusjob_dir: Path,
+                          energy_min: float = -10,
+                          energy_max: float = 10
+) -> Dict[str, Any]:
+    """
+    Plot band after ABACUS SCF and NSCF calculation.
+    Args:
+        abacusjob_dir (str): Absolute path to the ABACUS calculation directory.
+        energy_min (float): Lower bound of $E - E_F$ in the plotted band.
+        energy_max (float): Upper bound of $E - E_F$ in the plotted band.
+    Returns:
+        A dictionary containing band gap of the system and path to the plotted band.
+    Raises:
+        NotImplementedError: If band plot for an nspin=4 calculation is requested
+        RuntimeError: If read band data from BANDS_1.dat or BANDS_2.dat failed
+    """
     import matplotlib.pyplot as plt
+
+    input_args = ReadInput(os.path.join(abacusjob_dir, "INPUT"))
+    suffix = input_args.get('suffix', 'ABACUS')
+    nspin = input_args.get('nspin', 1)
+    if nspin not in (1, 2):
+        raise NotImplementedError("Band plot for nspin=4 is not supported yet")
+    
+    metrics = abacus_collect_data(abacusjob_dir, ['efermi', 'nelec', 'band_gap'])['collected_metrics']
+    efermi, band_gap = metrics['efermi'], float(metrics['band_gap'])
+    band_file = os.path.join(abacusjob_dir, f"OUT.{suffix}/BANDS_1.dat")
+    if nspin == 2:
+        band_file_dw = os.path.join(abacusjob_dir, f"OUT.{suffix}/BANDS_2.dat")
+    
+    # Read band data
+    bands, kline, nbands = read_band_data(band_file, efermi)
+    if nspin == 2:
+        bands_dw, _, _ = read_band_data(band_file_dw, efermi)
+    
+    # Process band data
+    if nspin == 1:
+        high_symm_labels, high_symm_poses, kline_splited, bands_splited = \
+            process_band_data(abacusjob_dir, nspin, efermi, kline, bands)
+    else:
+        high_symm_labels, high_symm_poses, kline_splited, bands_splited, bands_dw_splited = \
+            process_band_data(abacusjob_dir, nspin, efermi, kline, bands, bands_dw)
+    
+    # Final band plot
     for i in range(nbands):
         for j in range(len(kline_splited)):
             plt.plot(kline_splited[j], bands_splited[i][j], 'r-', linewidth=1.0)
@@ -158,46 +193,21 @@ def abacus_plot_band(abacusjob_dir: Path,
     plt.xticks(high_symm_poses, high_symm_labels)
     plt.grid()
     plt.title(f"Band structure  (Gap = {band_gap:.2f} eV)")
-    plt.savefig(abacusjob_dir + '/band.png', dpi=300)
-    plt.show()
+    plt.savefig(os.path.join(abacusjob_dir, 'band.png'), dpi=300)
+    plt.close()
 
     return {'band_gap': band_gap,
-            'band_picture': Path(abacusjob_dir + '/band.png')}
+            'band_picture': Path(os.path.join(abacusjob_dir, 'band.png')).absolute()}
 
-@mcp.tool()
-def abacus_postprocess_band_pyatb(band_calc_path: Path,
-                                  energy_min: float = -10,
-                                  energy_max: float = 10,
-                                  connect_line_points=30
-) -> Dict[str, Any]:
+def write_pyatb_input(band_calc_path: Path, connect_line_points=30):
     """
-    Read result from self-consistent (scf) calculation of hybrid functional using uniform grid,
-    and calculate and plot band using PYATB.  
-
-    Currently supports only non-spin-polarized and collinear spin-polarized calculations.
-
-    Args:
-        band_calc_path (str): Absolute path to the band calculation directory.
-        energy_min (float): Lower bound of $E - E_F$ in the plotted band.
-        energy_max (float): Upper bound of $E - E_F$ in the plotted band.
-        connect_line_points (int): Number of inserted points between consecutive high-symmetry points in k-point path.
-
-    Returns:
-        dict: A dictionary containing:
-            - 'band_gap': Calculated band gap in eV. 
-            - 'band_picture': Path to the saved band structure plot image file.
-    Raises:
-        NotImplementedError: If requestes to plot band structure for a collinear or SOC calculation
-        RuntimeError: If read band gap from band_info.dat failed
+    Write Input file for PYATB
     """
-    input_args = ReadInput(band_calc_path + "/INPUT")
+    input_args = ReadInput(os.path.join(band_calc_path, "INPUT"))
     suffix = input_args.get('suffix', 'ABACUS')
     nspin = input_args.get('nspin', 1)
-    if nspin != 1 and nspin != 2:
-        raise NotImplementedError("Band plot for nspin=4 is not supported yet")
-    
     metrics = abacus_collect_data(band_calc_path, ['efermi', 'cell', 'band_gap'])['collected_metrics']
-    efermi, cell, band_gap = metrics['efermi'], metrics['cell'], float(metrics['band_gap'])
+    efermi, cell = metrics['efermi'], metrics['cell']
 
     input_parameters = {
         'nspin': nspin,
@@ -213,9 +223,9 @@ def abacus_postprocess_band_pyatb(band_calc_path: Path,
         input_parameters['HR_route'] += f' OUT.{suffix}/data-HR-sparse_SPIN1.csr'
         input_parameters['SR_route'] += f' OUT.{suffix}/data-SR-sparse_SPIN1.csr'
     
-    shutil.move(band_calc_path + "/INPUT", band_calc_path + "/INPUT_scf")
-    shutil.move(band_calc_path + "/KPT", band_calc_path + "/KPT_scf")
-    pyatb_input_file = open(band_calc_path + "/Input", "w")
+    shutil.move(os.path.join(band_calc_path, "INPUT"), os.path.join(band_calc_path, "INPUT_scf"))
+    shutil.move(os.path.join(band_calc_path, "KPT"),   os.path.join(band_calc_path, "KPT_scf"))
+    pyatb_input_file = open(os.path.join(band_calc_path, "Input"), "w")
     
     pyatb_input_file.write("INPUT_PARAMETERS\n{\n")
     for key, value in input_parameters.items():
@@ -229,8 +239,8 @@ def abacus_postprocess_band_pyatb(band_calc_path: Path,
     pyatb_input_file.write("}\n\nBAND_STRUCTURE\n{\n    kpoint_mode   line\n")
 
     # Get kline and write to pyatb Input file
-    stru_file = AbacusStru.ReadStru(band_calc_path + "/STRU")
-    kpt_file = band_calc_path + "/KPT"
+    stru_file = AbacusStru.ReadStru(os.path.join(band_calc_path, "STRU"))
+    kpt_file = os.path.join(band_calc_path, "KPT")
     stru_file.get_kline_ase(point_number=connect_line_points,kpt_file=kpt_file)
 
     kpt_file_content = []
@@ -255,13 +265,54 @@ def abacus_postprocess_band_pyatb(band_calc_path: Path,
 
     pyatb_input_file.close()
 
+    return True
+
+#@mcp.tool()
+def abacus_plot_band_pyatb(band_calc_path: Path,
+                           energy_min: float = -10,
+                           energy_max: float = 10,
+                           connect_line_points=30
+) -> Dict[str, Any]:
+    """
+    Read result from self-consistent (scf) calculation of hybrid functional using uniform grid,
+    and calculate and plot band using PYATB.  
+
+    Currently supports only non-spin-polarized and collinear spin-polarized calculations.
+
+    Args:
+        band_calc_path (str): Absolute path to the band calculation directory.
+        energy_min (float): Lower bound of $E - E_F$ in the plotted band.
+        energy_max (float): Upper bound of $E - E_F$ in the plotted band.
+        connect_line_points (int): Number of inserted points between consecutive high-symmetry points in k-point path.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'band_gap': Calculated band gap in eV. 
+            - 'band_picture': Path to the saved band structure plot image file.
+    Raises:
+        NotImplementedError: If requestes to plot band structure for a collinear or SOC calculation
+        RuntimeError: If read band gap from band_info.dat failed
+    """
+    input_args = ReadInput(os.path.join(band_calc_path, "INPUT"))
+    nspin = input_args.get('nspin', 1)
+    band_gap = float(abacus_collect_data(band_calc_path, ['band_gap'])['collected_metrics']['band_gap'])
+    if nspin not in (1, 2):
+        raise NotImplementedError("Band plot for nspin=4 is not supported yet")
+    
+    if write_pyatb_input(band_calc_path, connect_line_points=connect_line_points) is not True:
+        raise RuntimeError("Failed to write pyatb input file")
+    
     # Use pyatb to plot band
-    os.system(f"cd {band_calc_path}; OMP_NUM_THREADS=1 pyatb")
+    physical_cores = get_physical_cores()
+    pyatb_command = f"cd {band_calc_path}; export OMP_NUM_THREADS=1; mpirun -np {physical_cores} pyatb"
+    return_code, out, err = run_command(pyatb_command)
+    if return_code != 0:
+        raise RuntimeError(f"pyatb failed with return code {return_code}, out: {out}, err: {err}")
 
     # read band gap
     band_gaps = []
     try:
-        with open(band_calc_path + "/Out/Band_Structure/band_info.dat") as fin:
+        with open(os.path.join(band_calc_path, "Out/Band_Structure/band_info.dat")) as fin:
             for lines in fin:
                 if "Band gap" in lines:
                     band_gaps.append(float(lines.split()[-1]))
@@ -276,114 +327,64 @@ def abacus_postprocess_band_pyatb(band_calc_path: Path,
     os.system(f"cd {band_calc_path}/Out/Band_Structure; python plot_band.py; cd ../../")
     
     # Copy plotted band.pdf to given directory
-    band_picture = band_calc_path + "/band.png"
-    os.system(f"cp {band_calc_path + '/Out/Band_Structure/band.png'} {band_picture}")
+    band_picture = os.path.join(band_calc_path, "band.png")
+    os.system(f"cp {os.path.join(band_calc_path, 'Out/Band_Structure/band.png')} {band_picture}")
 
     return {'band_gap': band_gap,
-            'band_picture': Path(band_calc_path + '/band.png')}    
+            'band_picture': Path(band_picture).absolute()}    
 
 @mcp.tool()
 def abacus_cal_band(abacus_inputs_path: Path,
-                    dft_functional: str = 'pbe',
                     energy_min: float = -10,
                     energy_max: float = 10
 ) -> Dict[str, float|str]:
     """
     Calculate band using ABACUS based on prepared directory containing the INPUT, STRU, KPT, and pseudopotential or orbital files.
-    Currently calculating hybrid DFT band using this function is broken, and should not be used when a hybrid DFT band calculation is requested.
+    PYATB or ABACUS NSCF calculation will be used according to parameters in INPUT.
     Args:
         abacusjob_dir (str): Absolute path to a directory containing the INPUT, STRU, KPT, and pseudopotential or orbital files.
-        dft_functional (str): Density functional used to calculate the band
         energy_min (float): Lower bound of $E - E_F$ in the plotted band.
         energy_max (float): Upper bound of $E - E_F$ in the plotted band.
     Returns:
-        Band gap, work directory and plotted band.
+        A dictionary containing band gap, path to the work directory for calculating band and path to the plotted band.
     Raises:
     """
-    work_path = generate_work_path()
-    link_abacusjob(src=abacus_inputs_path,
-                    dst=work_path,
-                    copy_files=["INPUT", "STRU", "KPT"])
-    
-    # SCF calculation
-    modified_params = {'calculation': 'scf',
-                       'dft_functional': dft_functional,
-                       'out_chg': 1}
-    modified_input = abacus_modify_input(work_path + "/INPUT",
-                                         extra_input = modified_params)
+    scf_output = property_calculation_scf(abacus_inputs_path)
+    work_path, mode = scf_output["work_path"], scf_output["mode"]
+    if mode == 'pyatb':
+        # Obtain band using PYATB
+        postprocess_output = abacus_plot_band_pyatb(work_path,
+                                                    energy_min,
+                                                    energy_max)
 
-    run_abacus(work_path)
-    
-    # NSCF calculation
-    modified_params = {'calculation': 'nscf',
-                       'init_chg': 'file',
-                       'out_band': 1,
-                       'symmetry': 0}
-    remove_params = ['kspacing']
-    modified_input = abacus_modify_input(work_path + "/INPUT",
-                                         extra_input = modified_params,
-                                         remove_input = remove_params)
-    
-    # Prepare line-mode KPT file
-    nscf_stru = AbacusStru.ReadStru(work_path + "/STRU")
-    kpt_file = work_path + '/KPT'
-    nscf_stru.get_kline_ase(point_number=30,kpt_file=kpt_file)
+        return {'band_gap': postprocess_output['band_gap'],
+                'band_calc_dir': abacus_inputs_path,
+                'band_picture': postprocess_output['band_picture'],
+                "message": "The band is calculated using PYATB after SCF calculation using ABACUS"}
 
-    run_abacus(work_path)
+    elif mode == 'nscf':
+        modified_params = {'calculation': 'nscf',
+                           'init_chg': 'file',
+                           'out_band': 1,
+                           'symmetry': 0}
+        remove_params = ['kspacing']
+        modified_input = abacus_modify_input(work_path,
+                                             extra_input = modified_params,
+                                             remove_input = remove_params)
 
-    plot_output = abacus_plot_band(work_path, energy_min, energy_max)
+        # Prepare line-mode KPT file
+        nscf_stru = AbacusStru.ReadStru(os.path.join(work_path, "STRU"))
+        kpt_file = os.path.join(work_path, 'KPT')
+        nscf_stru.get_kline_ase(point_number=30,kpt_file=kpt_file)
 
-    return {'band_gap': plot_output['band_gap'],
-            'band_calc_dir': work_path,
-            'band_picture': Path(plot_output['band_picture'])}
+        run_abacus(work_path)
 
-@mcp.tool()
-def abacus_cal_band_pyatb(abacus_inputs_path: Path,
-                          dft_functional: str = 'pbe',
-                          energy_min: float = -10.0,
-                          energy_max: float =  10.0
-) -> Dict[str, float|str]:
-    """
-    Calculate GGA, meta-GGA and hybrid DFT band using PYATB based on results from SCF calculation using ABACUS.
-    For hybrid DFT band calculation, this function should be used. For GGA and meta-GGA DFT band calculations, 
-    This function can be used but not prior than other functions.
-    Args:
-        abacusjob_dir (str): Absolute path to a directory containing the INPUT, STRU, KPT, and pseudopotential or orbital files.
-        dft_functional (str): Density functional used to calculate the band. For example, 'hse' means HSE06 hybrid density functional.
-        energy_min (float): Lower bound of $E - E_F$ in the plotted band.
-        energy_max (float): Upper bound of $E - E_F$ in the plotted band.
-    Returns:
-        A dictionary containing band gap, work directory and plotted band.
-    Raises:
-    """
-    work_path = generate_work_path()
-    link_abacusjob(src=abacus_inputs_path,
-                    dst=work_path,
-                    copy_files=["INPUT", "STRU", "KPT"])
-    
-    extra_input = {'calculation': 'scf',
-                   'dft_functional': dft_functional,
-                   'out_mat_hs2': True,
-                   'out_mat_r': True}
-    
-    modified_input = abacus_modify_input(work_path + "/INPUT",
-                                         extra_input = extra_input)
-    run_abacus(work_path)
+        plot_output = abacus_plot_band_nscf(work_path, energy_min, energy_max)
 
-    postprocess_output = abacus_postprocess_band_pyatb(work_path,
-                                                       energy_min,
-                                                       energy_max)
-    
-    return {'band_gap': postprocess_output['band_gap'],
-            'band_calc_dir': abacus_inputs_path,
-            'band_picture': Path(postprocess_output['band_picture'])}
-
-if __name__ == '__main__':
-    from abacusagent.env import set_envs, create_workpath
-    set_envs()
-    create_workpath()
-    
-    abacusjob_dir = '/mnt/e/temp/abacus-agent-develop-7/abacus-agent/tests/band'
-    abacus_plot_band(abacusjob_dir,
-                          energy_min = -6.0,
-                          energy_max = 6.0)
+        return {'band_gap': plot_output['band_gap'],
+                'band_calc_dir': Path(work_path).absolute(),
+                'band_picture': Path(plot_output['band_picture']).absolute(),
+                "message": "The band structure is computed via a non-self-consistent field (NSCF) calculation using ABACUS, \
+                            following a converged self-consistent field (SCF) calculation."}
+    else:
+        raise ValueError(f"Calculation mode {mode} not in ('pyatb', 'nscf')")
