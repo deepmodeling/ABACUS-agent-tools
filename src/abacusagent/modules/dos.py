@@ -6,120 +6,150 @@ import shutil
 import subprocess
 import matplotlib.pyplot as plt
 from abacustest.lib_prepare.abacus import ReadInput, WriteInput
+from abacustest.lib_collectdata.collectdata import RESULT
+
+from pathlib import Path
+from typing import Dict, Any, List, Literal
+
 from abacusagent.init_mcp import mcp
 
+from abacusagent.modules.util.comm import generate_work_path, link_abacusjob, run_abacus, has_chgfile
+
 @mcp.tool()
-def run_dos(abacus_path: str,
-    test_mode: bool = False,
-) -> str:
+def abacus_dos_run(
+    abacus_inputs_path: Path,
+    dos_edelta_ev: float = None,
+    dos_sigma: float = None,
+    dos_scale: float = None,
+    dos_emin_ev: float = None,
+    dos_emax_ev: float = None,
+    dos_nche: int = None,
+) -> Dict[str, Any]:
     """
-    Run the DOS and PDOS calculation in the path called 'abacus_path'.
-    The function assumes that the calculation files for normal SCF calculations are ready in the directory
-    called 'abacus_path'. It generates a new input file for the DOS and PDOS calculation, runs the normal SCF
-    calculation, and then runs the DOS and PDOS calculation using the ABACUS code.
-    This function returns the string of the path for the DOS and PDOS plots if the calculation is successful,
-    otherwise it returns an error message.
+    Run the DOS and PDOS calculation. It will firstly run a SCF calculation with out_chg set to 1, 
+    then run a NSCF calculation with init_chg set to 'file' and out_dos set to 1 or 2.
+    If the INPUT parameter "basis" is "PW", then out_dos will be set to 1, and only DOS will be calculated.
+    If the INPUT parameter "basis" is "LCAO", then out_dos will be set to 2, and both DOS and PDOS will be calculated.
     
     Args:
-        abacus_path: the string for the path of the directary to run ABACUS DOS calcualtions
-        test_mode: the boolen-type function to determine whether this is run in a unit test or not,
-                   in the unit-test mode, skip the abacus calculations. Default: false.
+        abacus_inputs_path: Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
+        dos_edelta_ev: Step size in writing Density of States (DOS) in eV.
+        dos_sigma: Width of the Gaussian factor when obtaining smeared Density of States (DOS) in eV. 
+        dos_scale: Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. 
+                   This parameter will be used when dos_emin_ev and dos_emax_ev are not set.
+        dos_emin_ev: Minimal range for Density of States (DOS) in eV.
+        dos_emax_ev: Maximal range for Density of States (DOS) in eV.
+        dos_nche: The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
+        
     Returns:
-        str: The path to the DOS and PDOS plots if successful, otherwise an error code.
-    Raises:
-        FileNotFoundError: If the required input files are not found in the specified path.
-        ValueError: The first SCF calculation does not end normally.
+        Dict[str, Any]: A dictionary containing:
+            - results_scf: Results of the SCF calculation, including: work path, normal end status, SCF steps, convergence status, and energies.
+            - results_nscf: Results of the NSCF calculation, including work path and normal end status.
+            - fig_paths: List of paths to the generated figures for DOS and PDOS. DOS will be saved as "DOS.png" and PDOS will be saved as "species_atom_index_pdos.png" in the output directory.
     """
-
-    # Change to the abacus_path directory
-    os.chdir(abacus_path)
-
-    # Hard-coded file names
-    ab_input = 'INPUT'
-    ab_stru = 'STRU'
-
-    # Check if these files exists
-    inpfiles = [ ab_input, ab_stru ]
-    if not all(os.path.isfile(file) 
-               for file in inpfiles):
-        raise FileNotFoundError(
-            f"Required input files in {inpfiles} not found in the directory {abacus_path}."
-        )
-
-    # Save input info to variables
-    input_param = ReadInput(ab_input)
-    input_param_scf = ReadInput(ab_input)
-    input_param_dos = ReadInput(ab_input)
-    out_dir = "OUT." + input_param[ "suffix" ]
-
-    # Generate the input params for the SCF calculation
-    dos_keys = [ "calculation", "out_chg" ]
-    dos_vals = [ "scf"        , 1         ]
-    for key, value in zip(dos_keys, dos_vals):
-        input_param_scf[key] = value
-    # Generate the input params for the DOS and PDOS calculation
-    dos_keys = [ "calculation", "read_file_dir", "init_chg", "out_dos", "dos_sigma" ]
-    dos_vals = [ "nscf"       , f"./{out_dir}" , "file"    , 2        , 0.07        ]
-    for key, value in zip(dos_keys, dos_vals):
-        input_param_dos[key] = value
-
-    #run abacus SCF calculation
-    WriteInput(input_param_scf, ab_input)
-    if (not test_mode):
-        subprocess.run(["mpirun", "-np", "2", "abacus"], stdout=open("scf.log", "w"), stderr=subprocess.STDOUT)
-    line = pygrep("charge density convergence is achieved", f"{out_dir}/running_scf.log")
-    if not line:
-        # restore INPUT file for debugging purpose
-        WriteInput(input_param, ab_input)
-        raise ValueError("SCF calculation did not end normally.")
-
-    # run abacus DOS and PDOS calculation again with the same command
-    WriteInput(input_param_dos, ab_input)
-    if (not test_mode):
-        subprocess.run(["mpirun", "-np", "2", "abacus"], stdout=open("dos.log", "w"), stderr=subprocess.STDOUT)
-
-    # restore 'original INPUT'
-    WriteInput(input_param, ab_input)
-
-    # Generate the DOS and PDOS plots
-    plot_paths = plot_dos_pdos(out_dir, '.')
-
-    return plot_paths
-
-
-def pygrep(pattern: str, filename: str) -> str:
-    """
-    Check if a pattern exists in a file.
+    metrics_scf = abacus_dos_run_scf(abacus_inputs_path)
+    metrics_nscf = abacus_dos_run_nscf(metrics_scf["work_path"],
+                                       dos_edelta_ev=dos_edelta_ev,
+                                       dos_sigma=dos_sigma,
+                                       dos_scale=dos_scale, 
+                                       dos_emin_ev=dos_emin_ev,
+                                       dos_emax_ev=dos_emax_ev,
+                                       dos_nche=dos_nche)
     
-    Parameters:
-    pattern (str): The pattern to search for.
-    filename (str): The name of the file to search in.
+    fig_paths = plot_dos_pdos(metrics_nscf["work_path"], metrics_nscf["work_path"])
+    fig_paths = [Path(p).absolute() for p in fig_paths]
+
+    return {
+        "results_scf": metrics_scf,
+        "results_nscf": metrics_nscf,
+        "fig_paths": fig_paths
+    }
+
+def abacus_dos_run_scf(abacus_inputs_path: Path,
+                       force_run: bool = False) -> Dict[str, Any]:
+    """
+    Run the SCF calculation to generate the charge density file.
+    If the charge file already exists, it will skip the SCF calculation.
+    
+    Args:
+        abacus_inputs_path: Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
+        force_run: If True, it will run the SCF calculation even if the charge file already exists.
+    
     Returns:
-    str: The pattern if found, otherwise an empty string.
+        Dict[str, Any]: A dictionary containing the work path, normal end status, SCF steps, convergence status, and energies.
     """
-    with open(filename, 'r') as file:
-        for line in file:
-            if pattern in line:
-                return line
-    return ""
-
-
-if __name__ == '__main__':
-    import sys
-    if len(sys.argv) != 2:
-        print("Usage: python run_dos.py <abacus_path>")
-        sys.exit(1)
     
-    abacus_path = sys.argv[1]
-    try:
-        plot_paths = run_dos(abacus_path)
-        if abacus_path == '.':
-            print("DOS and PDOS calculation completed successfully in the current directory")
-        else:
-            print(f"DOS and PDOS calculation completed successfully in {abacus_path}.")
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    input_param = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+    # check if charge file has been generated
+    if has_chgfile(abacus_inputs_path) and not force_run:
+        print("Charge file already exists, skipping SCF calculation.")
+        work_path = abacus_inputs_path
+    else:
+        work_path = generate_work_path()
+        link_abacusjob(src=abacus_inputs_path,
+                       dst=work_path,
+                       copy_files=["INPUT"])
+
+        input_param = ReadInput(os.path.join(work_path, "INPUT"))
+        input_param["calculation"] = "scf"
+        input_param["out_chg"] = 1
+        WriteInput(input_param, os.path.join(work_path, "INPUT"))
+
+        run_abacus(work_path)
+
+    rs = RESULT(path=work_path, fmt="abacus")
+    
+    return {
+        "work_path": Path(work_path).absolute(),
+        "normal_end": rs["normal_end"],
+        "scf_steps": rs["scf_steps"],
+        "converge": rs["converge"],
+        "energies": rs["energies"]
+    }
+
+def abacus_dos_run_nscf(abacus_inputs_path: Path,
+                        dos_edelta_ev: float = None,
+                        dos_sigma: float = None,
+                        dos_scale: float = None,
+                        dos_emin_ev: float = None,
+                        dos_emax_ev: float = None,
+                        dos_nche: int = None,) -> Dict[str, Any]:
+    
+    work_path = generate_work_path()
+    link_abacusjob(src=abacus_inputs_path,
+                   dst=work_path,
+                   copy_files=["INPUT"])
+    
+    input_param = ReadInput(os.path.join(work_path, "INPUT"))
+    input_param["calculation"] = "nscf"
+    input_param["init_chg"] = "file"
+    if input_param.get("basis", "pw") == "lcao":
+        input_param["out_dos"] = 2 # only for LCAO basis, and will output DOS and PDOS
+    else:
+        input_param["out_dos"] = 1
+    
+    for dos_param, value in {
+        "dos_edelta_ev": dos_edelta_ev,
+        "dos_sigma": dos_sigma,
+        "dos_scale": dos_scale,
+        "dos_emin_ev": dos_emin_ev,
+        "dos_emax_ev": dos_emax_ev,
+        "dos_nche": dos_nche
+    }.items():
+        if value is not None:
+            input_param[dos_param] = value
+    
+    
+    WriteInput(input_param, os.path.join(work_path, "INPUT"))
+    
+    run_abacus(work_path)
+    
+    rs = RESULT(path=work_path, fmt="abacus")
+    
+    return {
+        "work_path": Path(work_path).absolute(),
+        "normal_end": rs["normal_end"]
+    }
 
 def parse_pdos_file(file_path):
     """Parse the PDOS file and extract energy values and orbital data."""
@@ -198,7 +228,7 @@ def parse_basref_file(file_path):
     
     return label_map
 
-def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir):
+def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, dpi=300):
     """Plot PDOS data separated by atom/species with custom labels."""
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -278,13 +308,13 @@ def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir):
         
         # Save plot with proper naming
         output_file = os.path.join(output_dir, f"{species}{atom_index}_pdos.png")
-        plt.savefig(output_file, dpi=300, bbox_inches='tight')
+        plt.savefig(output_file, dpi=dpi, bbox_inches='tight')
         plot_files.append(os.path.abspath(output_file))
         plt.close()
     
     return plot_files
 
-def plot_dos(file_path, fermi_level, output_file):
+def plot_dos(file_path, fermi_level, output_file, dpi=300):
     """Plot total DOS from DOS1_smearing.dat file."""
     # Read first two columns from file
     data = np.loadtxt(file_path, usecols=(0, 1))
@@ -315,13 +345,28 @@ def plot_dos(file_path, fermi_level, output_file):
     
     # Save plot
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    plt.savefig(output_file, dpi=300, bbox_inches='tight')
+    plt.savefig(output_file, dpi=dpi, bbox_inches='tight')
     plt.close()
     
     return os.path.abspath(output_file)
 
-def plot_dos_pdos(input_dir, output_dir):
+def plot_dos_pdos(nscf_job_path: Path, 
+                  output_dir: Path,
+                  dpi=300) -> List[str]:
+    """Plot DOS and PDOS from the NSCF job path.
     
+    Args:
+        nscf_job_path (Path): Path to the NSCF job directory containing the OUT.* files.
+        output_dir (Path): Directory where the output plots will be saved.
+        dpi (int): Dots per inch for the saved plots.
+    
+    Returns:
+        List[str]: List of paths to the generated plot files.
+    
+    """
+    input_param = ReadInput(os.path.join(nscf_job_path, "INPUT"))
+    input_dir = os.path.join(nscf_job_path, "OUT." + input_param.get("suffix","ABACUS"))
+
     # Construct file paths based on input directory
     input_file = os.path.join(input_dir, "PDOS")
     log_file = os.path.join(input_dir, "running_nscf.log")
@@ -333,28 +378,25 @@ def plot_dos_pdos(input_dir, output_dir):
     for file_path in [input_file, log_file, basref_file, dos_file]:
         if not os.path.exists(file_path):
             print(f"Error: File not found - {file_path}")
-            sys.exit(1)
+            raise FileNotFoundError(f"Required file not found: {file_path}")
     
-    try:
-        energy_values, orbitals = parse_pdos_file(input_file)
-        fermi_level = parse_log_file(log_file)
-        label_map = parse_basref_file(basref_file)
-        
-        # Plot DOS and get file path
-        dos_plot_file = plot_dos(dos_file, fermi_level, dos_output)
-        
-        # Plot PDOS and get file paths
-        pdos_plot_files = plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir)
-        
-        # Combine file paths into a single list
-        all_plot_files = [dos_plot_file] + pdos_plot_files
-        
-        print("Plots generated:")
-        for file in all_plot_files:
-            print(f"- {file}")
 
-        return all_plot_files
+    energy_values, orbitals = parse_pdos_file(input_file)
+    fermi_level = parse_log_file(log_file)
+    label_map = parse_basref_file(basref_file)
+    
+    # Plot DOS and get file path
+    dos_plot_file = plot_dos(dos_file, fermi_level, dos_output, dpi)
+    
+    # Plot PDOS and get file paths
+    pdos_plot_files = plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, dpi)
+    
+    # Combine file paths into a single list
+    all_plot_files = [dos_plot_file] + pdos_plot_files
+    
+    print("Plots generated:")
+    for file in all_plot_files:
+        print(f"- {file}")
+        
+    return all_plot_files
 
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        sys.exit(1)

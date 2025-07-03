@@ -7,6 +7,9 @@ import time
 import json
 import traceback
 import uuid
+import glob
+
+from abacustest.lib_prepare.abacus import ReadInput
 
 def run_command(
         cmd,
@@ -97,7 +100,8 @@ def get_physical_cores():
                 sockets = int(line.split(':')[1].strip())
         return cores_per_socket * sockets
 
-def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
+def run_abacus(job_paths: Union[str, List[str], Path, List[Path]],
+               log_file: Optional[str] = "abacus.log") -> None:
     """
     Run the Abacus on the given job paths.
     If job_paths is a list, it will run the command for each path.
@@ -117,7 +121,7 @@ def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
     
     if submit_type == "local":
         physical_cores = get_physical_cores()
-        command_cmd = os.environ.get("ABACUS_COMMAND", f"OMP_NUM_THREADS=1 mpirun -np {physical_cores} abacus") + " > abacus.log 2>&1"     
+        command_cmd = os.environ.get("ABACUS_COMMAND", f"OMP_NUM_THREADS=1 mpirun -np {physical_cores} abacus") + f" > {log_file} 2>&1"     
 
         for job_path in job_paths:
             if not job_path.is_dir():
@@ -164,7 +168,7 @@ def run_abacus(job_paths: Union[str, List[str], Path, List[Path]]):
             "run_dft": 
                 {
                     "example": jobs,
-                    "command": f"{os.environ['BOHRIUM_ABACUS_COMMAND']} > abacus.log 2>&1",
+                    "command": f"{os.environ['BOHRIUM_ABACUS_COMMAND']} > {log_file} 2>&1",
                     "image": os.environ["BOHRIUM_ABACUS_IMAGE"],
                     "bohrium":{
                         "scass_type": os.environ["BOHRIUM_ABACUS_MACHINE"],
@@ -200,7 +204,8 @@ def link_abacusjob(src: str,
                    include:Optional[List[str]]=None, 
                    exclude:Optional[List[str]]=None,
                    copy_files = ["INPUT", "STRU", "KPT"],
-                   overwrite: Optional[bool] = True
+                   overwrite: Optional[bool] = True,
+                   exclude_directories: Optional[bool] = False
                    ):
     """
     Link the ABACUS job files from src to dst.
@@ -212,6 +217,7 @@ def link_abacusjob(src: str,
     exclude (Optional[List[str]]): List of files to exclude. If None, no files are excluded.
     copy_files (List[str]): List of files to copy from src to dst. Default is ["INPUT", "STRU", "KPT"].
     overwrite (bool): If True, existing files in the destination will be overwritten. Default is True.
+    exclude_directories (bool): If True, directories will be excluded from linking. Default is False.
     
     Notes: 
         - If somes files are included in both include and exclude, the file will be excluded.
@@ -249,6 +255,9 @@ def link_abacusjob(src: str,
               )
     else:
         for file in include_files:
+            if exclude_directories and os.path.isdir(file):
+                continue
+            
             dst_file = dst / file.name
             if dst_file.exists():
                 if overwrite:
@@ -277,4 +286,44 @@ def generate_work_path(create: bool = True) -> str:
         os.makedirs(work_path, exist_ok=True)
     
     return work_path
+
+
+def has_chgfile(abacus_jobpath:Path) -> bool:
+    """
+    Check if the charge file exists in the given ABACUS job path. Used to determine if an abacus job has writen the charge file.
     
+    Parameters:
+        abacus_jobpath (Path): The path to the ABACUS job directory.
+        
+    Returns:
+        bool: True if the charge file exists, False otherwise.
+    """
+    input_file = os.path.join(abacus_jobpath, "INPUT")
+    if not os.path.isfile(input_file):
+        suffix = "ABACUS"
+    else:
+        suffix = ReadInput(input_file).get("suffix", "ABACUS")
+
+    chgfile = os.path.join(abacus_jobpath, "OUT." + suffix, "SPIN1_CHG.cube")
+    return os.path.isfile(chgfile)
+
+
+def has_pyatb_matrix_files(work_path: Path) -> bool:
+    """
+    Check if the necessary files for Pyatb calculation exist in the given work path.
+    
+    Parameters:
+        work_path (Path): The path to the working directory.
+        
+    Returns:
+        bool: True if the necessary files exist, False otherwise.
+    """
+    input_file = os.path.join(work_path, "INPUT")
+    if not os.path.isfile(input_file):
+        suffix = "ABACUS"
+    else:
+        suffix = ReadInput(input_file).get("suffix", "ABACUS")
+        
+    return (os.path.isfile(os.path.join(work_path, "OUT." + suffix, "data-HR-sparse_SPIN0.csr")) and
+            os.path.isfile(os.path.join(work_path, "OUT." + suffix, "data-SR-sparse_SPIN0.csr")) and 
+            os.path.isfile(os.path.join(work_path, "OUT." + suffix, "data-rR-sparse.csr")))
