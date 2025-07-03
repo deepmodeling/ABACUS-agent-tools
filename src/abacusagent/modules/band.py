@@ -66,7 +66,7 @@ def read_high_symmetry_labels(abacusjob_dir: Path):
     high_symm_labels = []
     band_point_nums = []
     band_point_num = 0
-    with open(abacusjob_dir / "KPT") as fin:
+    with open(os.path.join(abacusjob_dir, "KPT")) as fin:
         for lines in fin:
             words = lines.split()
             if len(words) > 2:
@@ -135,7 +135,7 @@ def process_band_data(abacusjob_dir: Path,
     else:
         return high_symm_labels, high_symm_poses, kline_splited, bands_splited, bands_dw_splited
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_plot_band_nscf(abacusjob_dir: Path,
                           energy_min: float = -10,
                           energy_max: float = 10
@@ -193,8 +193,8 @@ def abacus_plot_band_nscf(abacusjob_dir: Path,
     plt.xticks(high_symm_poses, high_symm_labels)
     plt.grid()
     plt.title(f"Band structure  (Gap = {band_gap:.2f} eV)")
-    plt.savefig(os.path.join(abacusjob_dir, 'band.png', dpi=300))
-    plt.show()
+    plt.savefig(os.path.join(abacusjob_dir, 'band.png'), dpi=300)
+    plt.close()
 
     return {'band_gap': band_gap,
             'band_picture': Path(os.path.join(abacusjob_dir, 'band.png')).absolute()}
@@ -267,7 +267,7 @@ def write_pyatb_input(band_calc_path: Path, connect_line_points=30):
 
     return True
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_plot_band_pyatb(band_calc_path: Path,
                            energy_min: float = -10,
                            energy_max: float = 10,
