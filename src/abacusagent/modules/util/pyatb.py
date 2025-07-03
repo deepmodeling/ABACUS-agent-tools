@@ -34,14 +34,14 @@ def property_calculation_scf(
     """
 
     input_param = ReadInput(os.path.join(abacus_inputs_path, 'INPUT'))
-    basis = input_param.get("basis", "pw")
+    basis_type = input_param.get("basis_type", "pw")
     if mode == "auto":
-        if basis.lower() == "lcao":
+        if basis_type.lower() == "lcao":
             mode = "pyatb"
         else:
             mode = "nscf"
     
-    if basis == "pw" and mode == "pyatb":
+    if basis_type == "pw" and mode == "pyatb":
         raise ValueError("Pyatb mode is not supported for PW basis. Please use 'nscf' mode instead.")
 
     if (mode == "nscf" and has_chgfile(abacus_inputs_path)) or (mode == "pyatb" and has_pyatb_matrix_files(abacus_inputs_path)):
