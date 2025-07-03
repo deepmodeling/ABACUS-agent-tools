@@ -9,7 +9,7 @@ import traceback
 import uuid
 import glob
 
-from abacustest.lib_collectdata.abacus import ReadInput
+from abacustest.lib_prepare.abacus import ReadInput
 
 def run_command(
         cmd,

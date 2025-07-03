@@ -13,7 +13,7 @@ from abacusagent.modules.util.comm import (
 )
 
 from abacustest.lib_prepare.abacus import ReadInput, WriteInput, AbacusStru
-from abacustest.lib_collectdata.abacus import RESULT
+from abacustest.lib_collectdata.collectdata import RESULT
 
 
 def property_calculation_scf(
@@ -44,7 +44,7 @@ def property_calculation_scf(
     if basis == "pw" and mode == "pyatb":
         raise ValueError("Pyatb mode is not supported for PW basis. Please use 'nscf' mode instead.")
 
-    if (mode == "nscf" and has_chgfile(work_path)) or (mode == "pyatb" and has_pyatb_matrix_files(work_path)):
+    if (mode == "nscf" and has_chgfile(abacus_inputs_path)) or (mode == "pyatb" and has_pyatb_matrix_files(abacus_inputs_path)):
         print("Charge or matrix files already exist, skipping SCF calculation.")
         work_path = abacus_inputs_path
     else:
@@ -72,7 +72,8 @@ def property_calculation_scf(
         "normal_end": rs["normal_end"],
         "scf_steps": rs["scf_steps"],
         "converge": rs["converge"],
-        "energies": rs["energies"]
+        "energies": rs["energies"],
+        "mode": mode
     }
         
     
