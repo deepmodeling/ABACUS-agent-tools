@@ -5,7 +5,6 @@ import os
 import re
 import glob
 import unittest
-import subprocess
 from typing import List, Dict, Optional, Any
 
 from pathlib import Path
@@ -19,7 +18,7 @@ from abacustest.lib_collectdata.collectdata import RESULT
 
 
 
-from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, run_command
+from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, run_command, has_chgfile
 
 BADER_EXE = os.environ.get("BADER_EXE", "bader") # use environment variable to specify the bader executable path
 
@@ -105,7 +104,7 @@ def calculate_charge_densities_with_abacus(
                    copy_files=["INPUT"])
     input_param = ReadInput(os.path.join(work_path, 'INPUT'))
     
-    if os.path.isfile(os.path.join(work_path, 'OUT.' + input_param.get("suffix", "ABACUS"), 'SPIN1_CHG.cube')):
+    if has_chgfile(work_path):
         print("Charge file already exists, skipping SCF calculation.") 
     else:
         input_param["calculation"] = "scf"

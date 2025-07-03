@@ -173,7 +173,7 @@ def abacus_prepare(
         os.chdir(pwd)
         raise RuntimeError("No job path returned from PrepInput.")
     
-    input_content = ReadInput(Path(job_path[0]) / "INPUT")
+    input_content = ReadInput(os.path.join(job_path[0], "INPUT"))
     input_files = os.listdir(job_path[0])
     job_path = Path(job_path[0]).absolute()
     os.chdir(pwd)
@@ -236,9 +236,9 @@ def abacus_modify_input(
         FileNotFoundError: If path of given INPUT file does not exist
         RuntimeError: If write modified INPUT file failed
     """
-    input_file = abacusjob_dir / "INPUT"
+    input_file = os.path.join(abacusjob_dir, "INPUT")
     if dft_plus_u_settings is not None:
-        stru_file = abacusjob_dir / "STRU"
+        stru_file = os.path.join(abacusjob_dir, "STRU")
     if not os.path.isfile(input_file):
         raise FileNotFoundError(f"INPUT file {input_file} does not exist.")
     
@@ -349,8 +349,8 @@ def abacus_modify_stru(
           or length of fixed_atoms_idx and movable_coords are not equal, or element in movable_coords are not a list with 3 bool elements
         KeyError: If pseudopotential or orbital are not provided for a element
     """
-    stru_file = abacusjob_dir / "STRU"
-    if stru_file.is_file():
+    stru_file = os.path.join(abacusjob_dir, "STRU")
+    if os.path.isfile(stru_file):
         stru = AbacusStru.ReadStru(stru_file)
     else:
         raise ValueError(f"{stru_file} is not path of a file")
@@ -416,7 +416,7 @@ def abacus_modify_stru(
     stru.write(stru_file)
     stru_content = Path(stru_file).read_text(encoding='utf-8')
     
-    return {'abacusjob_dir': abacusjob_dir,
+    return {'abacusjob_dir': Path(abacusjob_dir).absolute(),
             'stru_content': stru_content 
             }
 
@@ -545,7 +545,7 @@ def abacus_collect_data(
         except Exception as e:
             raise RuntimeError(f"Error during collecting {metric}")
     
-    metric_file_path = abacusjob / "metrics.json"
+    metric_file_path = os.path.join(abacusjob, "metrics.json")
     with open(metric_file_path, "w", encoding="UTF-8") as f:
         json.dump(collected_metrics, f, indent=4)
     

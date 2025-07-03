@@ -13,7 +13,7 @@ from typing import Dict, Any, List, Literal
 
 from abacusagent.init_mcp import mcp
 
-from abacusagent.modules.util.comm import generate_work_path, link_abacusjob, run_abacus
+from abacusagent.modules.util.comm import generate_work_path, link_abacusjob, run_abacus, has_chgfile
 
 @mcp.tool()
 def abacus_dos_run(
@@ -81,7 +81,7 @@ def abacus_dos_run_scf(abacus_inputs_path: Path,
     
     input_param = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
     # check if charge file has been generated
-    if os.path.isfile(os.path.join(abacus_inputs_path, "OUT." + input_param.get("suffix", "ABACUS") , "SPIN1_CHG.cube")) and not force_run:
+    if has_chgfile(abacus_inputs_path) and not force_run:
         print("Charge file already exists, skipping SCF calculation.")
         work_path = abacus_inputs_path
     else:
