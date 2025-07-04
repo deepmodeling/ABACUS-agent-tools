@@ -28,8 +28,8 @@ def prepare_deformed_stru(
     """
     Generate deformed structures
     """
-    temp = dpdata.System(input_stru_dir + "/STRU", fmt="abacus/stru")
-    dump_poscar_name = 'STRU-to-POSCAR-' + time.strftime("%Y%m%d%H%M%S")
+    temp = dpdata.System(os.path.join(input_stru_dir, "STRU"), fmt="abacus/stru")
+    dump_poscar_name = Path('STRU-to-POSCAR-' + time.strftime("%Y%m%d%H%M%S"))
     temp.to('vasp/poscar', dump_poscar_name)
     original_stru = Structure.from_file(dump_poscar_name)
     os.remove(dump_poscar_name)
@@ -54,27 +54,27 @@ def prepare_deformed_stru_inputs(
     abacusjob_dirs = []
     copy_files = []
     for item in os.listdir(input_stru_dir):
-        if os.path.isfile(input_stru_dir + "/" + item):
+        if os.path.isfile(os.path.join(input_stru_dir, item)):
             if item.endswith("INPUT") or item.endswith("KPT") or item.endswith(".orb")\
                     or item.endswith(".upf") or item.endswith(".UPF"):
                 copy_files.append(item)
     
-    original_stru = AbacusStru.ReadStru(input_stru_dir + "/STRU")
+    original_stru = AbacusStru.ReadStru(os.path.join(input_stru_dir, "STRU"))
 
     stru_counts = 1
     for deformed_stru in deformed_strus:
-        abacusjob_dir = work_path + "/" + f'deformed-stru-{stru_counts:0>3d}'
+        abacusjob_dir = os.path.join(work_path, f'deformed-stru-{stru_counts:0>3d}')
         os.mkdir(abacusjob_dir)
         for item in copy_files:
-            shutil.copy(input_stru_dir + "/" + item, abacusjob_dir + "/")
+            shutil.copy(os.path.join(input_stru_dir, item), abacusjob_dir)
         
         # Write deformed structure to ABACUS STRU format
-        dump_poscar_name = abacusjob_dir + '/deformed-STRU-POSCAR-' + time.strftime("%Y%m%d%H%M%S")
+        dump_poscar_name = os.path.join(abacusjob_dir, 'deformed-STRU-POSCAR-' + time.strftime("%Y%m%d%H%M%S"))
         deformed_stru.to(dump_poscar_name, fmt='vasp/poscar')
 
         deformed_stru_poscar = dpdata.System(dump_poscar_name, fmt='vasp/poscar')
         os.remove(dump_poscar_name)
-        first_dump_stru_name = abacusjob_dir + '/deformed-STRU-unmodified'
+        first_dump_stru_name = os.path.join(abacusjob_dir, 'deformed-STRU-unmodified')
         deformed_stru_poscar.to('abacus/stru', first_dump_stru_name)
 
         deformed_stru_abacus = AbacusStru.ReadStru(first_dump_stru_name)
@@ -82,7 +82,7 @@ def prepare_deformed_stru_inputs(
         deformed_stru_abacus.set_pp(original_stru.get_pp())
         deformed_stru_abacus.set_orb(original_stru.get_orb())
         deformed_stru_abacus.set_atommag(original_stru.get_atommag())
-        deformed_stru_abacus.write(abacusjob_dir + "/STRU")
+        deformed_stru_abacus.write(os.path.join(abacusjob_dir, "STRU"))
 
         abacusjob_dirs.append(Path(abacusjob_dir))
         stru_counts += 1
@@ -120,15 +120,15 @@ def abacus_cal_elastic(
     Raises:
         RuntimeError: If ABACUS calculation when calculating stress for input structure or deformed structures fails.
     """
-    work_path = generate_work_path()
-    input_stru_dir = work_path + "/input_stru"
+    work_path = Path(generate_work_path()).absolute()
+    input_stru_dir = os.path.join(work_path, "input_stru")
     link_abacusjob(src=abacus_inputs_path,
                    dst=input_stru_dir,
                    copy_files=["INPUT", "STRU", "KPT"])
     
     modified_params = {'calculation': 'scf',
                        'cal_stress': 1}
-    modified_input = abacus_modify_input(input_stru_dir + "/INPUT",
+    modified_input = abacus_modify_input(input_stru_dir,
                                          extra_input = modified_params)
     
     deformed_strus = prepare_deformed_stru(input_stru_dir, norm_strain, shear_strain)
@@ -169,10 +169,10 @@ def abacus_cal_elastic(
     uV = (3 * bv - 2 * gv) / (6 * bv + 2 * gv)
     
     return {
+        "elastic_cal_dir": Path(work_path).absolute(),
         "elastic_tensor": elastic_tensor,
         "bulk_modulus": bv,
         "shear_modulus": gv,
         "young_modulus": ev,
         "poisson_ratio": uV
     }
-
