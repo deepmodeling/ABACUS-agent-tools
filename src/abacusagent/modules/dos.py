@@ -25,8 +25,9 @@ def abacus_dos_run(
     dos_emax_ev: float = None,
     dos_nche: int = None,
 ) -> Dict[str, Any]:
-    """
-    Run the DOS and PDOS calculation. It will firstly run a SCF calculation with out_chg set to 1, 
+    """Run the DOS and PDOS calculation.
+    
+    This function will firstly run a SCF calculation with out_chg set to 1, 
     then run a NSCF calculation with init_chg set to 'file' and out_dos set to 1 or 2.
     If the INPUT parameter "basis" is "PW", then out_dos will be set to 1, and only DOS will be calculated.
     If the INPUT parameter "basis" is "LCAO", then out_dos will be set to 2, and both DOS and PDOS will be calculated.
