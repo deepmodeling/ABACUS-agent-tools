@@ -111,9 +111,9 @@ def calculate_charge_densities_with_abacus(
         input_param["out_chg"] = 1
         WriteInput(input_param, os.path.join(work_path, 'INPUT'))
 
-        run_abacus(job_paths=jobdir)
+        run_abacus(job_paths=work_path)
     
-    fcube = glob.glob(os.path.join(jobdir, 'OUT.*', '*.cube'))
+    fcube = glob.glob(os.path.join(work_path, 'OUT.*', '*.cube'))
     fcube.sort()
 
     return {
