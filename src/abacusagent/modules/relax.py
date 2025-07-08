@@ -100,19 +100,19 @@ def abacus_prepare_inputs_from_relax_results(
         - 'input_files': A list of files in the job directory.
     """
     rs = RESULT(path=relax_jobpath, fmt="abacus")
-    final_stru = os.path.join(relax_jobpath, f"OUT.{rs['suffix']}", "STRU_ION_D") # the structure file of the last relax step
+    final_stru = Path(os.path.join(relax_jobpath, f"OUT.{rs.SUFFIX}", "STRU_ION_D")).absolute() # the structure file of the last relax step
     
     if not os.path.isfile(final_stru):
         raise FileNotFoundError(f"We can not find the structure file of last relax step {final_stru}. \
             Please check the path and ensure the relaxation calculation has completed successfully.")
     
-    work_path = generate_work_path()
+    work_path = Path(generate_work_path()).absolute()
     
     link_abacusjob(
         src=relax_jobpath,
         dst=work_path,
         copy_files=["INPUT", "STRU", "KPT"],
-        exclude=["OUT.*", "*.log", "*.out"],
+        exclude=["OUT.*", "*.log", "*.out", "*.json", "log"],
         exclude_directories=True
     )
     if os.path.isfile(os.path.join(work_path, "STRU")):
@@ -120,9 +120,9 @@ def abacus_prepare_inputs_from_relax_results(
     os.symlink(final_stru, os.path.join(work_path, "STRU"))
 
     return {
-        "job_path": Path(work_path).absolute(),
+        "job_path": work_path,
         "input_content": ReadInput(os.path.join(work_path, "INPUT")),
-        "input_files": [f.name for f in work_path.iterdir()]
+        "input_files": [f.absolute() for f in Path(work_path).iterdir()]
     }
 
 
@@ -187,3 +187,10 @@ def relax_postprocess(work_path: Path) -> Dict[str, Any]:
     results = parse_value(rs, metrics)
     
     return results
+
+if __name__ == "__main__":
+    from abacusagent.env import set_envs, create_workpath
+    set_envs()
+    create_workpath()
+    
+    abacus_prepare_inputs_from_relax_results(Path("/personal/Si"))
