@@ -187,10 +187,3 @@ def relax_postprocess(work_path: Path) -> Dict[str, Any]:
     results = parse_value(rs, metrics)
     
     return results
-
-if __name__ == "__main__":
-    from abacusagent.env import set_envs, create_workpath
-    set_envs()
-    create_workpath()
-    
-    abacus_prepare_inputs_from_relax_results(Path("/personal/Si"))
