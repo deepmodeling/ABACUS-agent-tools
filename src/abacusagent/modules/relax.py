@@ -115,13 +115,13 @@ def abacus_prepare_inputs_from_relax_results(
         exclude=["OUT.*", "*.log", "*.out"],
         exclude_directories=True
     )
-    if os.path.isfile(work_path / "STRU"):
-        os.unlink(work_path / "STRU")
-    os.symlink(final_stru, work_path / "STRU")
+    if os.path.isfile(os.path.join(work_path, "STRU")):
+        os.unlink(os.path.join(work_path, "STRU"))
+    os.symlink(final_stru, os.path.join(work_path, "STRU"))
 
     return {
         "job_path": Path(work_path).absolute(),
-        "input_content": ReadInput(work_path / "INPUT"),
+        "input_content": ReadInput(os.path.join(work_path, "INPUT")),
         "input_files": [f.name for f in work_path.iterdir()]
     }
 
@@ -139,7 +139,7 @@ def prepare_relax_inputs(
     Prepare the ABACUS input files for relaxation calculations.
     """
     
-    input_param = ReadInput(work_path+"/INPUT")
+    input_param = ReadInput(os.path.join(work_path, "INPUT"))
     
     # check calculation type
     if relax_cell is None and "calculation" not in input_param:
@@ -159,7 +159,7 @@ def prepare_relax_inputs(
         input_param["stress_thr"] = stress_thr_kbar
     
     if max_steps is not None:
-        input_param["max_steps"] = max_steps
+        input_param["relax_nmax"] = max_steps
         
     if fixed_axes is not None:
         input_param["fixed_axes"] = fixed_axes
@@ -175,7 +175,7 @@ def prepare_relax_inputs(
     if relax_new is not None:
         input_param["relax_new"] = relax_new
     
-    WriteInput(input_param, work_path+"/INPUT")
+    WriteInput(input_param, os.path.join(work_path, "INPUT"))
     
 
 def relax_postprocess(work_path: Path) -> Dict[str, Any]:

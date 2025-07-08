@@ -148,7 +148,7 @@ def abacus_prepare(
     extra_input_file = None
     if extra_input is not None:
         # write extra input to the input file
-        extra_input_file = "INPUT.tmp"
+        extra_input_file = Path("INPUT.tmp").absolute()
         WriteInput(extra_input, extra_input_file)
     
     work_path = generate_work_path()
@@ -427,7 +427,7 @@ def abacus_collect_data(
                           "nbase", "nbands", "nkstot", "ibzk", "natom", "nelec", "nelec_dict", "point_group",
                           "point_group_in_space_group", "converge", "total_mag", "absolute_mag", "energy", 
                           "energy_ks", "energies", "volume", "efermi", "energy_per_atom", "force", "forces", 
-                          "stress", "virial", "pressure", "stresses", "virials", "pressures", "largest_gradient", 
+                          "stress", "virial", "pressure", "stresses", "virials", "pressures", "largest_gradient", "largest_gradient_stress",
                           "band", "band_weight", "band_plot", "band_gap", "total_time", "stress_time", "force_time", 
                           "scf_time", "scf_time_each_step", "step1_time", "scf_steps", "atom_mags", "atom_mag", 
                           "atom_elec", "atom_orb_elec", "atom_mag_u", "atom_elec_u", "drho", "drho_last", 
@@ -478,6 +478,7 @@ def abacus_collect_data(
                       virials: list of virial, the virial of each ION step. Dimension is [nstep,9]
                     pressures: list of pressure, the pressure of each ION step.
              largest_gradient: list, the largest gradient of each ION step. Unit in eV/Angstrom
+      largest_gradient_stress: list, the largest stress of each ION step. Unit in kbar
                          band: Band of system. Dimension is [nspin,nk,nband].
                   band_weight: Band weight of system. Dimension is [nspin,nk,nband].
                     band_plot: Will plot the band structure. Return the file name of the plot.

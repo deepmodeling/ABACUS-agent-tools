@@ -163,7 +163,7 @@ def abacus_cal_elastic(
                                                     eq_stress=input_stru_stress,
                                                     vasp=False)
     
-    elastic_tensor = result.voigt
+    elastic_tensor = result.voigt.tolist()
     bv, gv = result.k_voigt, result.g_voigt
     ev = 9 * bv * gv / (3 * bv + gv)
     uV = (3 * bv - 2 * gv) / (6 * bv + 2 * gv)
@@ -171,8 +171,8 @@ def abacus_cal_elastic(
     return {
         "elastic_cal_dir": Path(work_path).absolute(),
         "elastic_tensor": elastic_tensor,
-        "bulk_modulus": bv,
-        "shear_modulus": gv,
-        "young_modulus": ev,
-        "poisson_ratio": uV
+        "bulk_modulus": float(bv),
+        "shear_modulus": float(gv),
+        "young_modulus": float(ev),
+        "poisson_ratio": float(uV)
     }

@@ -124,7 +124,7 @@ def abacus_dos_run_nscf(abacus_inputs_path: Path,
     input_param = ReadInput(os.path.join(work_path, "INPUT"))
     input_param["calculation"] = "nscf"
     input_param["init_chg"] = "file"
-    if input_param.get("basis", "pw") == "lcao":
+    if input_param.get("basis_type", "pw") == "lcao":
         input_param["out_dos"] = 2 # only for LCAO basis, and will output DOS and PDOS
     else:
         input_param["out_dos"] = 1
