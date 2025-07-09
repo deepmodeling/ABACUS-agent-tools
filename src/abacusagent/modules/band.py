@@ -304,7 +304,7 @@ def abacus_plot_band_pyatb(band_calc_path: Path,
     
     # Use pyatb to plot band
     physical_cores = get_physical_cores()
-    pyatb_command = f"cd {band_calc_path}; export OMP_NUM_THREADS=1; mpirun -np {physical_cores} pyatb"
+    pyatb_command = f"cd {band_calc_path}; OMP_NUM_THREADS=1 mpirun -np {physical_cores} pyatb"
     return_code, out, err = run_command(pyatb_command)
     if return_code != 0:
         raise RuntimeError(f"pyatb failed with return code {return_code}, out: {out}, err: {err}")
