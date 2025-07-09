@@ -49,7 +49,7 @@ def abacus_dos_run(
             - fig_paths: List of paths to the generated figures for DOS and PDOS. DOS will be saved as "DOS.png" and PDOS will be saved as "species_atom_index_pdos.png" in the output directory.
     """
     metrics_scf = abacus_dos_run_scf(abacus_inputs_path)
-    metrics_nscf = abacus_dos_run_nscf(metrics_scf["work_path"],
+    metrics_nscf = abacus_dos_run_nscf(metrics_scf["scf_work_path"],
                                        dos_edelta_ev=dos_edelta_ev,
                                        dos_sigma=dos_sigma,
                                        dos_scale=dos_scale, 
@@ -57,14 +57,18 @@ def abacus_dos_run(
                                        dos_emax_ev=dos_emax_ev,
                                        dos_nche=dos_nche)
     
-    fig_paths = plot_dos_pdos(metrics_nscf["work_path"], metrics_nscf["work_path"])
-    fig_paths = [Path(p).absolute() for p in fig_paths]
+    fig_paths = plot_dos_pdos(metrics_scf["scf_work_path"], metrics_nscf["nscf_work_path"])
+    fig_paths = [p for p in fig_paths]
 
-    return {
-        "results_scf": metrics_scf,
-        "results_nscf": metrics_nscf,
-        "fig_paths": fig_paths
+    return_dict = {
+        "dos_picture": fig_paths[0],
+        'pdos_fig_paths': fig_paths[1:],
     }
+
+    return_dict.update(metrics_scf)
+    return_dict.update(metrics_nscf)
+
+    return return_dict
 
 def abacus_dos_run_scf(abacus_inputs_path: Path,
                        force_run: bool = False) -> Dict[str, Any]:
@@ -101,11 +105,11 @@ def abacus_dos_run_scf(abacus_inputs_path: Path,
     rs = RESULT(path=work_path, fmt="abacus")
     
     return {
-        "work_path": Path(work_path).absolute(),
-        "normal_end": rs["normal_end"],
+        "scf_work_path": Path(work_path).absolute(),
+        "scf_normal_end": rs["normal_end"],
         "scf_steps": rs["scf_steps"],
-        "converge": rs["converge"],
-        "energies": rs["energies"]
+        "scf_converge": rs["converge"],
+        "scf_energies": rs["energies"]
     }
 
 def abacus_dos_run_nscf(abacus_inputs_path: Path,
@@ -148,8 +152,8 @@ def abacus_dos_run_nscf(abacus_inputs_path: Path,
     rs = RESULT(path=work_path, fmt="abacus")
     
     return {
-        "work_path": Path(work_path).absolute(),
-        "normal_end": rs["normal_end"]
+        "nscf_work_path": Path(work_path).absolute(),
+        "nscf_normal_end": rs["normal_end"]
     }
 
 def parse_pdos_file(file_path):

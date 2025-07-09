@@ -57,10 +57,11 @@ def abacus_do_relax(
         FileNotFoundError: If the job directory does not exist or does not contain necessary files.
         RuntimeError: If the ABACUS calculation fails or returns an error.
     """
-    work_path = generate_work_path()
-    link_abacusjob(    src=abacus_inputs_path,
-                        dst=work_path,
-                        copy_files=["INPUT", "STRU", "KPT"])
+    abacus_inputs_path = Path(abacus_inputs_path).absolute()
+    work_path = Path(generate_work_path()).absolute()
+    link_abacusjob(src=abacus_inputs_path,
+                   dst=work_path,
+                   copy_files=["INPUT", "STRU", "KPT"])
     
     prepare_relax_inputs(
         work_path=work_path,
@@ -99,6 +100,7 @@ def abacus_prepare_inputs_from_relax_results(
         - 'input_content': The content of the generated INPUT file.
         - 'input_files': A list of files in the job directory.
     """
+    relax_jobpath = Path(relax_jobpath).absolute()
     rs = RESULT(path=relax_jobpath, fmt="abacus")
     final_stru = Path(os.path.join(relax_jobpath, f"OUT.{rs.SUFFIX}", "STRU_ION_D")).absolute() # the structure file of the last relax step
     
@@ -120,7 +122,7 @@ def abacus_prepare_inputs_from_relax_results(
     os.symlink(final_stru, os.path.join(work_path, "STRU"))
 
     return {
-        "job_path": work_path,
+        "job_path": Path(work_path).absolute(),
         "input_content": ReadInput(os.path.join(work_path, "INPUT")),
         "input_files": [f.absolute() for f in Path(work_path).iterdir()]
     }
@@ -138,6 +140,7 @@ def prepare_relax_inputs(
     """
     Prepare the ABACUS input files for relaxation calculations.
     """
+    work_path = Path(work_path).absolute()
     
     input_param = ReadInput(os.path.join(work_path, "INPUT"))
     
@@ -179,10 +182,10 @@ def prepare_relax_inputs(
     
 
 def relax_postprocess(work_path: Path) -> Dict[str, Any]:
-    
+    work_path = Path(work_path).absolute()
     rs = RESULT(path=work_path, fmt="abacus")
     
-    metrics = ["normal_end", "relax_steps", "largest_gradient", "relax_converge", "energies"]
+    metrics = ["normal_end", "relax_steps", "largest_gradient", "largest_gradient_stress", "relax_converge", "energies"]
     
     results = parse_value(rs, metrics)
     

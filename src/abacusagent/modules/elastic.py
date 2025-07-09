@@ -84,7 +84,7 @@ def prepare_deformed_stru_inputs(
         deformed_stru_abacus.set_atommag(original_stru.get_atommag())
         deformed_stru_abacus.write(os.path.join(abacusjob_dir, "STRU"))
 
-        abacusjob_dirs.append(Path(abacusjob_dir))
+        abacusjob_dirs.append(Path(abacusjob_dir).absolute())
         stru_counts += 1
 
     return abacusjob_dirs
@@ -120,8 +120,10 @@ def abacus_cal_elastic(
     Raises:
         RuntimeError: If ABACUS calculation when calculating stress for input structure or deformed structures fails.
     """
+    abacus_inputs_path = Path(abacus_inputs_path).absolute()
     work_path = Path(generate_work_path()).absolute()
-    input_stru_dir = os.path.join(work_path, "input_stru")
+    input_stru_dir = Path(os.path.join(work_path, "input_stru")).absolute()
+
     link_abacusjob(src=abacus_inputs_path,
                    dst=input_stru_dir,
                    copy_files=["INPUT", "STRU", "KPT"])
