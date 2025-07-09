@@ -124,7 +124,7 @@ def abacus_prepare_inputs_from_relax_results(
     return {
         "job_path": Path(work_path).absolute(),
         "input_content": ReadInput(os.path.join(work_path, "INPUT")),
-        "input_files": [f.absolute() for f in Path(work_path).iterdir()]
+        "input_files": [f for f in Path(work_path).iterdir()]
     }
 
 

@@ -145,17 +145,16 @@ def abacus_prepare(
     if lcao and orb_path is None:
         raise ValueError("LCAO basis set is selected but no orbital library path is provided.")
     
-    extra_input_file = None
-    if extra_input is not None:
-        # write extra input to the input file
-        extra_input_file = Path("INPUT.tmp").absolute()
-        WriteInput(extra_input, extra_input_file)
-    
     work_path = generate_work_path()
     pwd = os.getcwd()
     os.chdir(work_path)
     try:
-        
+        extra_input_file = None
+        if extra_input is not None:
+            # write extra input to the input file
+            extra_input_file = Path("INPUT.tmp").absolute()
+            WriteInput(extra_input, extra_input_file)
+    
         _, job_path = PrepInput(
             files=str(stru_file),
             filetype=stru_type,
