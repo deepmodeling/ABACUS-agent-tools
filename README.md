@@ -5,6 +5,14 @@ ABACUS-agent-tools is a Python package that provides the Model Context Protocol 
 ## Installation
 To use ABACUS agent tools with Google Agent Development Kit (ADK), follow the recommended installation process:
 
+### Configuring environment using uv.lock
+There's a `uv.lock` file in the root directory of this project. You can use it to prepare python packages that needed by running
+tools in ABACUS-agent-tools.
+
+For packages that cannot be installed by `pip` or `conda`, please refer to **Other dependencies`=**.
+
+### Install from scratch manually
+
 1. Create and activate a conda enviroment:
 ```bash
 conda create -n abacus-agent python=3.11
@@ -12,15 +20,9 @@ conda activate abacus-agent
 ```
 2. Install necessary dependencies:
 ```bash
-pip install mcp google-adk litellm science-agent-sdk
+pip install mcp google-adk litellm bohr-agent-sdk pymatgen abacustest==0.4.24
 ```
-3. Install abacustest
-```bash
-git clone -b develop https://github.com/pxlxingliang/abacus-test.git
-cd abacus-test
-pip install .
-```
-4. Install ABACUS-agent-tools:
+3. Install ABACUS-agent-tools:
 ```bash
 cd ..
 git clone -b develop https://github.com/pxlxingliang/ABACUS-agent-tools.git
@@ -30,6 +32,20 @@ pip install .
 If you haven't installed ABACUS, you can install ABACUS to the same environment by conda:
 ```bash
 conda install abacus "libblas=*=*mkl" mpich -c conda-forge
+```
+
+### Other dependencies
+
+#### Bader
+Follow the given step to download, compile and install `bader` executable required in Bader charge analysis:
+```bash
+apt install subversion
+svn co https://theory.cm.utexas.edu/svn/bader
+cd bader
+cp makefile.lnx_ifort makefile
+vi makefile # Choose `ifort` or `gfortran` as compiler
+make
+cp bader /usr/local/bin/bader
 ```
 
 ## Using ABACUS agent tools with Google ADK
