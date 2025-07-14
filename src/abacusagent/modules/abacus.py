@@ -7,6 +7,8 @@ from ase.io import read
 from ase.build import molecule
 from ase.data import chemical_symbols
 from ase.collections import g2
+import numpy as np
+
 from abacustest.lib_model.model_013_inputs import PrepInput
 from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
@@ -133,17 +135,17 @@ def generate_molecule_structure(
                            'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md',
                            'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl',
                            'Mc', 'Lv', 'Ts', 'Og'] = "H2O",
-    cell: Optional[List[List[float]]] = [[14.0, 0.0, 0.0], [0.0, 15.0, 0.0], [0.0, 0.0, 16.0]],
+    cell: Optional[List[List[float]]] = [[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]],
     vacuum: Optional[float] = 5.0,
-    output_file_format: Literal["cif", "poscar"] = "poscar") -> Dict[str, Any]:
+    output_file_format: Literal["cif", "poscar", "abacus"] = "abacus") -> Dict[str, Any]:
     """
     Generate molecule structure from ase's collection of molecules or single atoms.
     Args:
         molecule_name: The name of the molecule or atom to generate. It can be a chemical symbol (e.g., 'H', 'O', 'C') or
                        a molecule name in g2 collection contained in ASE's collections.
-        cell: The cell parameters for the generated structure. Default is a 10x11x12 Angstrom cell.
+        cell: The cell parameters for the generated structure. Default is a 10x10x10 Angstrom cell. Units in angstrom.
         vcuum: The vacuum space to add around the molecule. Default is 7.0 Angstrom.
-        output_file_format: The format of the output file. Default is 'poscar' which represents POSCAR format used by VASP.
+        output_file_format: The format of the output file. Default is 'abacus'. 'poscar' represents POSCAR format used by VASP.
     Returns:
         A dictionary containing:
         - structure_file: The absolute path to the generated structure file.
@@ -158,7 +160,12 @@ def generate_molecule_structure(
         atoms.center(vacuum=vacuum)
     elif molecule_name in chemical_symbols and molecule_name != "X":
         atoms = Atoms(symbol=molecule_name, positions=[[0, 0, 0]], cell=cell)
-    stru_file_path = Path(f"{molecule_name}.{output_file_format}").absolute()
+    
+    if output_file_format == "abacus":
+        stru_file_path = Path(f"{molecule_name}.stru").absolute()
+    else:
+        stru_file_path = Path(f"{molecule_name}.{output_file_format}").absolute()
+    
     atoms.write(stru_file_path, format=output_file_format)
 
     return {
@@ -384,6 +391,8 @@ def abacus_modify_stru(
     pp: Optional[Dict[str, str]] = None,
     orb: Optional[Dict[str, str]] = None,
     fix_atoms_idx: Optional[List[int]] = None,
+    cell: Optional[List[List[float]]] = None,
+    coord_change_type: Literal['scale', 'original'] = 'scale',
     movable_coords: Optional[List[bool]] = None,
     initial_magmoms: Optional[List[float]] = None,
     angle1: Optional[List[float]] = None,
@@ -398,6 +407,10 @@ def abacus_modify_stru(
         orb: Dictionary mapping element names to numerical orbital file paths.
             If not provided, the orbitals from the original STRU file are retained.
         fix_atoms_idx: List of indices of atoms to be fixed.
+        cell: New cell parameters to be set in the STRU file. Should be a list of 3 lists, each containing 3 floats.
+        coord_change_type: Type of coordinate change to apply.
+            - 'scale': Scale the coordinates by the cell parameters. Suitable for most cases.
+            - 'original': Use the original coordinates without scaling. Suitable for single atom or molecule in a large cell.
         movable_coords: For each fixed atom, specify which coordinates are allowed to move.
             Each entry is a list of 3 integers (0 or 1), where 1 means the corresponding coordinate (x/y/z) can move.
             Example: if `fix_atoms_idx = [1]` and `movable_coords = [[0, 1, 1]]`, the x-coordinate of atom 1 will be fixed.
@@ -444,6 +457,20 @@ def abacus_modify_stru(
                 raise KeyError(f"Orbital for element {element} is not provided")
 
         stru.set_orb(orb_list)
+    
+    # Set cell
+    if cell is not None:
+        if len(cell) != 3 or any(len(c) != 3 for c in cell):
+            raise ValueError("Cell should be a list of 3 lists, each containing 3 floats")
+
+        if np.allclose(np.linalg.det(np.array(cell)), 0) is True:
+            raise ValueError("Cell cannot be a singular matrix, please provide a valid cell")
+        if coord_change_type == "scale":
+            stru.set_cell(cell, bohr=False)
+        elif coord_change_type == "original":
+            stru.set_cell(cell, bohr=False, change_coord=False)
+        else:
+            raise ValueError("coord_change_type should be 'scale' or 'original'")
     
     # Set atomic magmom for every atom
     natoms = len(stru.get_coord())
