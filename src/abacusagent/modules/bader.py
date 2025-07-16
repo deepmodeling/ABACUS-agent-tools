@@ -10,6 +10,7 @@ from typing import List, Dict, Optional, Any
 from pathlib import Path
 
 import numpy as np
+import baderkit
 
 from abacusagent.init_mcp import mcp
 
@@ -266,15 +267,20 @@ def abacus_badercharge_run(
     else:
         atom_labels = None
     
-    # Postprocess the charge density to obtain Bader charges
-    bader_results = postprocess_charge_densities(fcube)
-    
+    # Postprocess the charge density to obtain Bader charges using baderkit
+    merged_cube_file = merge_charge_densities_of_different_spin(fcube)
+    merged_cube_file = Path(merged_cube_file).absolute()
+
+    bader = baderkit.Bader.from_dynamic(charge_filename = merged_cube_file,
+                                        directory = merged_cube_file.parent)
+    bader.run_bader()
+    bader_charges = bader.atom_charges.tolist()
     return {
-        "bader_charges": bader_results["bader_charges"],
+        "bader_charges": bader_charges,
         "atom_labels": atom_labels,
         "abacus_workpath": Path(abacus_jobpath).absolute(),
-        "bader_workpath": Path(bader_results["work_path"]).absolute(),
-        "cube_file": Path(bader_results["cube_file"]).absolute()
+        "bader_workpath": merged_cube_file.parent.absolute(),
+        "cube_file": Path(merged_cube_file).absolute()
     }
 
 class TestBaderChargeWorkflow(unittest.TestCase):
