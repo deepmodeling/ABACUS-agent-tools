@@ -78,11 +78,11 @@ def identify_complex_types(complex_array):
     return is_real, is_pure_imag, is_general
 
 @mcp.tool()
-def abacus_vibrations_fd(abacus_inputs_path: Path,
-                         selected_atoms: Optional[List[int]] = None,
-                         stepsize: float = 0.01,
-                         nfree: Literal[2, 4] = 2,
-                         temperature: Optional[float] = 298.15):
+def abacus_vibration_analysis(abacus_inputs_path: Path,
+                              selected_atoms: Optional[List[int]] = None,
+                              stepsize: float = 0.01,
+                              nfree: Literal[2, 4] = 2,
+                              temperature: Optional[float] = 298.15):
     """
     Performing vibrational analysis using finite displacement method.
     Args:
@@ -98,10 +98,10 @@ def abacus_vibrations_fd(abacus_inputs_path: Path,
         temperature (float): Temperature used to calculate thermodynamic quantities. Units in Kelvin.
     Returns:
         A dictionary containing the following keys:
-        - 'frequencies': List of frequencies from vibrational analysis. Imaginary frequencies will be a number followed by 'i'. Units in cm^{-1}.
+        - 'frequencies': List of frequencies from vibrational analysis. Imaginary frequencies will be a string ended with 'i'. Units in cm^{-1}.
         - 'work_path': Path to directory performing vibrational analysis. Containing animation of normal modes 
             with non-zero frequency in ASE traj format and `vib` directory containing collected forces.
-        - 'zero_point_energy': Zero-point energies. Units in eV.
+        - 'zero_point_energy': Zero-point energy summed over all modes. Units in eV.
         - 'vib_entropy': Vibrational entropy using harmonic approximation. Units in eV/K.
         - 'vib_free_energy': Vibrational Helmholtz free energy using harmonic approximation. Units in eV.
     """
@@ -139,8 +139,8 @@ def abacus_vibrations_fd(abacus_inputs_path: Path,
     vib.write_mode()
 
     # Thermochemistry calculations
-    # Vibrations.get_energies() gets `\hbar \nu` for each mode, which is from the eigenvalues of force constant
-    # matrix. The force constant matric should be a real symmetric matrix mathematically, but due to numerical
+    # Vibrations.get_energies() gets `h \nu` for each mode, which is from the eigenvalues of force constant
+    # matrix. The force constant matrix should be a real symmetric matrix mathematically, but due to numerical
     # errors during calculating its matrix element, it will deviate from symmetric matric slightly, and its eigenvalue
     # will have quite small imaginary parts. Magnitude of imaginary parts will decrease as the calculation accuracy
     # increases, and it's safe to use norm of the complex eigenvalue as vibration energy if the calculation is 
@@ -158,12 +158,3 @@ def abacus_vibrations_fd(abacus_inputs_path: Path,
             'vib_entropy': float(entropy),
             'vib_free_energy': float(free_energy)}
 
-
-if __name__ == "__main__":
-    from abacusagent.env import set_envs, create_workpath
-    set_envs()
-    create_workpath()
-
-    abacus_vibrations_fd(
-        abacus_inputs_path=Path("/personal/H2")
-    )
