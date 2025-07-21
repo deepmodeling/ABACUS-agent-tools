@@ -51,6 +51,7 @@ def abacus_phonon_dispersion(
     # Provide extra INPUT parameters necessary for calculating phonon dispersion
     extra_input_params = {'calculation': 'scf',
                           'cal_force': 1,
+                          'out_chg': 1,
                           'init_chg': 'auto'}
     if input_params.get('scf_thr', 1e-7) > 1e-7:
         extra_input_params['scf_thr'] = 1e-7
@@ -62,6 +63,7 @@ def abacus_phonon_dispersion(
         symbols=stru.get_chemical_symbols(),
         cell=stru.get_cell(),
         scaled_positions=stru.get_scaled_positions(),
+        magnetic_moments=stru.get_initial_magnetic_moments()
     )
 
     # Determine supercell if not provided
@@ -81,6 +83,7 @@ def abacus_phonon_dispersion(
             cell=sc.cell,
             symbols=sc.symbols,
             scaled_positions=sc.scaled_positions,
+            magmoms=sc.magnetic_moments,
             pbc=True,
         )
         sc_atoms.calc = calc
@@ -117,4 +120,3 @@ def abacus_phonon_dispersion(
         "max_frequency_THz": float(np.max(freqs)),
         "max_frequency_K": float(np.max(freqs) * THz_TO_K),
     }
-
