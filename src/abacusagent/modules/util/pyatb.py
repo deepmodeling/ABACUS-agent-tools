@@ -37,7 +37,10 @@ def property_calculation_scf(
     basis_type = input_param.get("basis_type", "pw")
     if mode == "auto":
         if basis_type.lower() == "lcao":
-            mode = "pyatb"
+            if input_param.get("out_chg", 0) == 1:
+                mode = "nscf"
+            else:
+                mode = "pyatb"
         else:
             mode = "nscf"
     
@@ -51,7 +54,7 @@ def property_calculation_scf(
         work_path = generate_work_path()
         link_abacusjob(src=abacus_inputs_path,
                        dst=work_path,
-                       copy_files=["INPUT"])
+                       copy_files=["INPUT", "STRU", "KPT"])
         if mode == "nscf":
             input_param["calculation"] = "scf"
             input_param["out_chg"] = 1

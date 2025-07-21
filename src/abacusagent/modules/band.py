@@ -1,12 +1,12 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Literal, Optional, TypedDict, Dict, Any, List
-from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
+from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple
+from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput, WriteKpt
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.abacus import abacus_modify_input, abacus_collect_data
-from abacusagent.modules.util.comm import run_abacus, run_command, get_physical_cores
+from abacusagent.modules.util.comm import run_abacus, run_command, get_physical_cores, generate_work_path, link_abacusjob
 from abacusagent.modules.util.pyatb import property_calculation_scf
 
 
@@ -70,13 +70,21 @@ def read_high_symmetry_labels(abacusjob_dir: Path):
         for lines in fin:
             words = lines.split()
             if len(words) > 2:
-                if words[-2] == '#':
+                if words[-2] == '#':  # "# G" form
                     if words[-1] == 'G':
                         high_symm_labels.append(r'$\Gamma$')
                     else:
                         high_symm_labels.append(words[-1])
                     band_point_nums.append(band_point_num)
                     band_point_num += int(words[-3])
+                elif words[-1].startswith("#"):  # "#G" form
+                    label = words[-1][1:].split()[0]
+                    if words[-1] == 'G':
+                        high_symm_labels.append(r'$\Gamma$')
+                    else:
+                        high_symm_labels.append(label)
+                    band_point_nums.append(band_point_num)
+                    band_point_num += int(words[-2])
     
     return high_symm_labels, band_point_nums
 
@@ -349,6 +357,14 @@ def abacus_cal_band(abacus_inputs_path: Path,
         A dictionary containing band gap, path to the work directory for calculating band and path to the plotted band.
     Raises:
     """
+    input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+    original_stru_file = os.path.join(abacus_inputs_path, input_params.get('stru_file', "STRU"))
+    original_stru = AbacusStru.ReadStru(original_stru_file)
+    band_kpt_file = os.path.join(abacus_inputs_path, "KPT_band")
+    new_stru, point_coords, path, kpath = original_stru.get_kline(point_number=30,
+                                                                  new_stru_file=original_stru_file,
+                                                                  kpt_file=band_kpt_file)
+
     scf_output = property_calculation_scf(abacus_inputs_path)
     work_path, mode = scf_output["work_path"], scf_output["mode"]
     if mode == 'pyatb':
@@ -373,9 +389,8 @@ def abacus_cal_band(abacus_inputs_path: Path,
                                              remove_input = remove_params)
 
         # Prepare line-mode KPT file
-        nscf_stru = AbacusStru.ReadStru(os.path.join(work_path, "STRU"))
-        kpt_file = os.path.join(work_path, 'KPT')
-        nscf_stru.get_kline_ase(point_number=30,kpt_file=kpt_file)
+        kpt_file = os.path.join(work_path, input_params.get('kpt_file', 'KPT'))
+        shutil.copy(band_kpt_file, kpt_file)
 
         run_abacus(work_path)
 
