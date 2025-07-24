@@ -47,6 +47,8 @@ def abacus_do_relax(
     Returns:
         A dictionary containing:
         - job_path: The job path of the relaxation calculation.
+        - new_abacus_inputs_path: The path to the new ABACUS input files using relaxed structure in STRU file from the relaxation results.
+                                  Property calculation should be performed using this new ABACUS input files.
         - result: The result of the relaxation calculation with a dictionary containing:
             - normal_end: Whether the relaxation calculation ended normally.
             - relax_steps: The number of relaxation steps taken.
@@ -78,8 +80,11 @@ def abacus_do_relax(
     
     results = relax_postprocess(work_path)
 
+    new_abacus_inputs_path = abacus_prepare_inputs_from_relax_results(work_path)['job_path']
+
     return {
         "job_path": Path(work_path).absolute(),
+        "new_abacus_inputs_path": Path(new_abacus_inputs_path).absolute(),
         "result": results
     }
 
