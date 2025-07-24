@@ -37,6 +37,9 @@ def abacus_phonon_dispersion(
         A dictionary containing:
             - phonon_work_path: Path to the directory containing phonon calculation results.
             - band_plot: Path to the phonon dispersion plot.
+            - dos_plot: Path to the phonon density of states plot.
+            - band_yaml: Path to the YAML file containing phonon band structure data.
+            - dos_dat_file: Path to the phonon density of states data file.
             - entropy: Entropy at the specified temperature.
             - free_energy: Free energy at the specified temperature.
             - heat_capacity: Heat capacity at the specified temperature.
@@ -76,8 +79,11 @@ def abacus_phonon_dispersion(
 
     phonon = Phonopy(ph_atoms, supercell_matrix=supercell)
     phonon.generate_displacements(distance=displacement_stepsize)
+    print("Generated {} supercell structures with displacements.".format(len(phonon.supercells_with_displacements)) +
+          "Doing SCF calculations for each supercell structure...")
     
     force_sets = []
+    structure_index = 1
     for sc in phonon.supercells_with_displacements:
         sc_atoms = Atoms(
             cell=sc.cell,
@@ -87,20 +93,22 @@ def abacus_phonon_dispersion(
             pbc=True,
         )
         sc_atoms.calc = calc
+        print(f"Doing SCF calculation for supercell structure {structure_index}...")
         force = sc_atoms.get_forces()
         force_sets.append(force - np.mean(force, axis=0))
+        structure_index += 1
 
     phonon.forces = force_sets
     phonon.produce_force_constants()
 
-    phonon.run_mesh([10, 10, 10])
+    phonon.run_mesh([20, 20, 20], with_eigenvectors=True, is_mesh_symmetry=False)
     phonon.run_thermal_properties(temperatures=[temperature])
     thermal = phonon.get_thermal_properties_dict()
 
     comm_q = get_commensurate_points(phonon.supercell_matrix)
     freqs = np.array([phonon.get_frequencies(q) for q in comm_q])
 
-    plot_path = os.path.join(work_path, "phonon_dispersion.png")
+    band_plot_path = os.path.join(work_path, "phonon_dispersion.png")
     yaml_path = os.path.join(work_path, "phonon_dispersion.yaml")
     phonon.auto_band_structure(
         npoints=101,
@@ -108,12 +116,21 @@ def abacus_phonon_dispersion(
         filename=str(yaml_path)
     )
 
-    plot = phonon.plot_band_structure()
-    plot.savefig(plot_path, dpi=300)
+    band_plot = phonon.plot_band_structure()
+    band_plot.savefig(band_plot_path, dpi=300)
+
+    dos_dat_path = (Path(work_path) / "phonon_dos.dat").absolute()
+    phonon.auto_total_dos(write_dat = True, filename=dos_dat_path)
+    dos_plot_path = os.path.join(work_path, "phonon_dos.png")
+    dos_plot = phonon.plot_total_dos(xlabel='Frequency (THz)')
+    dos_plot.savefig(dos_plot_path, dpi=300)
 
     return {
         "phonon_work_path": Path(work_path).absolute(),
-        "band_plot": Path(plot_path).absolute(),
+        "band_plot": Path(band_plot_path).absolute(),
+        "dos_plot": Path(dos_plot_path).absolute(),
+        'band_yaml': Path(yaml_path).absolute(),
+        'dos_dat_file': Path(dos_dat_path).absolute(),
         "entropy": float(thermal['entropy'][0]),
         "free_energy": float(thermal['free_energy'][0]),
         "heat_capacity": float(thermal['heat_capacity'][0]),
