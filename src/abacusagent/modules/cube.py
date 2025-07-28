@@ -5,7 +5,8 @@ Functions about cube files. Currently including:
 """
 import os
 from pathlib import Path
-from abacustest.lib_prepare.abacus import ReadInput, WriteInput
+from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple, Union
+from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import run_abacus, generate_work_path, link_abacusjob

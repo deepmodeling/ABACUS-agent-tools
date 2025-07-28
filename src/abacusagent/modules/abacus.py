@@ -182,17 +182,31 @@ def abacus_prepare(
     orb_path: Optional[str] = None,
     job_type: Literal["scf", "relax", "cell-relax", "md"] = "scf",
     lcao: bool = True,
+    nspin: Literal[1, 2, 4] = 1,
+    soc: bool = False,
+    dftu: bool = False,
+    dftu_param: Optional[Dict[str, Union[float, Tuple[Literal["p", "d", "f"], float]]]] = None,
+    init_mag: Optional[Dict[str, float]] = None,
+    afm: bool = False,
     extra_input: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Prepare input files for ABACUS calculation.
     Args:
-        stru_file: Structure file in cif, poscar, or abacus/stru format.
-        stru_type: Type of structure file, can be 'cif', 'poscar', or 'abacus/stru'. 'cif' is the default. 'poscar' is the VASP POSCAR format. 'abacus/stru' is the ABACUS structure format.
-        pp_path: The pseudopotential library directory, if is None, will use the value of environment variable ABACUS_PP_PATH.
-        orb_path: The orbital library directory, if is None, will use the value of environment variable ABACUS_ORB_PATH.
-        job_type: The type of job to be performed, can be 'scf', 'relax', 'cell-relax', or 'md'. 'scf' is the default.
-        lcao: Whether to use LCAO basis set, default is True. If True, the orbital library path must be provided.
+        stru_file (Path): Structure file in cif, poscar, or abacus/stru format.
+        stru_type (Literal["cif", "poscar", "abacus/stru"] = "cif"): Type of structure file, can be 'cif', 'poscar', or 'abacus/stru'. 'cif' is the default. 'poscar' is the VASP POSCAR format. 'abacus/stru' is the ABACUS structure format.
+        pp_path (Optional[str]): The pseudopotential library directory, if is None, will use the value of environment variable ABACUS_PP_PATH.
+        orb_path (Optional[str]): The orbital library directory, if is None, will use the value of environment variable ABACUS_ORB_PATH.
+        job_type (Literal["scf", "relax", "cell-relax", "md"] = "scf"): The type of job to be performed, can be 'scf', 'relax', 'cell-relax', or 'md'. 'scf' is the default.
+        lcao (bool): Whether to use LCAO basis set, default is True. If True, the orbital library path must be provided.
+        nspin (int): The number of spins, can be 1 (no spin), 2 (spin polarized), or 4 (non-collinear spin). Default is 1.
+        soc (bool): Whether to use spin-orbit coupling, if True, nspin should be 4.
+        dftu (bool): Whether to use DFT+U, default is False.
+        dftu_param (dict): The DFT+U parameters, should be a dict like {"Fe": 4, "Ti": 1}, where the key is the element symbol and the value is the U value.
+            Value can also be a list of two values, and the first value is the orbital (p, d, f) to apply DFT+U, and the second value is the U value.
+            For example, {"Fe": ["d", 4], "O": ["p", 1]} means applying DFT+U to Fe 3d orbital with U=4 eV and O 2p orbital with U=1 eV.
+        init_mag ( dict or None): The initial magnetic moment for magnetic elements, should be a dict like {"Fe": 4, "Ti": 1}, where the key is the element symbol and the value is the initial magnetic moment.
+        afm (bool): Whether to use antiferromagnetic calculation, default is False. If True, half of the magnetic elements will be set to negative initial magnetic moment.
         extra_input: Extra input parameters for ABACUS. 
     
     Returns:
@@ -238,7 +252,13 @@ def abacus_prepare(
             pp_path=pp_path,
             orb_path=orb_path,
             input_file=extra_input_file,
-            lcao=lcao
+            lcao=lcao,
+            nspin=nspin,
+            soc=soc,
+            dftu=dftu,
+            dftu_param=dftu_param,
+            init_mag=init_mag,
+            afm=afm
         ).run()  
     except Exception as e:
         os.chdir(pwd)
