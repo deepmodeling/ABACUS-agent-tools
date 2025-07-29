@@ -196,7 +196,7 @@ def abacus_cal_charge_density_difference(
 
     full_system_chg = get_total_charge_density(full_system_jobpath)
     subsys1_chg = get_total_charge_density(subsys1_jobpath)
-    subsys2_chg = get_total_charge_density(subsys1_jobpath)
+    subsys2_chg = get_total_charge_density(subsys2_jobpath)
     
     sum_subsys_chg = read_gaussian_cube(full_system_chgfile)  # Fetch the data structure. The volumeric data will be replaced later
     chg_density_difference = read_gaussian_cube(full_system_chgfile) # Fetch the data structure. The volumeric data will be replaced later
@@ -209,3 +209,44 @@ def abacus_cal_charge_density_difference(
     return {'work_path': Path(work_path).absolute(),
             'charge_density_difference_cube_file': chg_dens_diff_cube_file}
 
+@mcp.tool()
+def abacus_cal_spin_density(
+    abacusjob_dir: Path
+) -> Dict[str, Any]:
+    """
+    Calculate the spin density for collinear spin-polarized system (nspin=2).
+
+    Args:
+        abacusjob_dir (Path): Path to the ABACUS job directory.
+    
+    Returns:
+        A dictionary containing the following keys:
+        - work_path (Path): Path to the ABACUS job directory calculating spin density.
+        - spin_density (Path): Path to the cube file containing the spin density.
+    
+    Raises:
+        ValueError: If nspin in INPUT file is not 2.
+    """
+    work_path = Path(generate_work_path()).absolute()
+    link_abacusjob(src=abacusjob_dir,dst=work_path,copy_files=["INPUT", "STRU"], exclude_directories=True)
+    input_params = ReadInput(os.path.join(work_path, 'INPUT'))
+    if input_params.get('nspin', 1) not in [2]:
+        raise ValueError('Only collinear spin-polarized calculation is supported for calculating spin density')
+    
+    input_params['calculation'] = 'scf'
+    input_params['out_chg'] = '1'
+    WriteInput(input_params, os.path.join(work_path, 'INPUT'))
+
+    run_abacus(work_path)
+    chg_up_file = os.path.join(work_path, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN1_CHG.cube")
+    chg_dn_file = os.path.join(work_path, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN2_CHG.cube")
+
+    chg_up, chg_dn = read_gaussian_cube(chg_up_file), read_gaussian_cube(chg_dn_file)
+    spin_density = read_gaussian_cube(chg_up_file)
+    spin_density['data'] = axpy(chg_up['data'], chg_dn['data'], alpha=1.0, beta=-1.0)
+
+    spin_density_file = os.path.join(work_path, 'spin_density.cube')
+    write_gaussian_cube(spin_density, spin_density_file)
+
+    return {'work_path': Path(work_path).absolute(),
+            'spin_density': Path(spin_density_file).absolute()}
