@@ -4,6 +4,7 @@ workflow of calculating Bader charges.
 import os
 import re
 import glob
+import shutil
 import unittest
 from typing import List, Dict, Optional, Any
 
@@ -12,13 +13,12 @@ from pathlib import Path
 import numpy as np
 import baderkit
 
-from abacusagent.init_mcp import mcp
 
 from abacustest.lib_prepare.abacus import ReadInput, WriteInput, AbacusStru
 from abacustest.lib_collectdata.collectdata import RESULT
 
-
-
+from abacusagent.init_mcp import mcp
+from abacusagent.modules.abacus import abacus_collect_data
 from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, run_command, has_chgfile
 
 BADER_EXE = os.environ.get("BADER_EXE", "bader") # use environment variable to specify the bader executable path
@@ -219,8 +219,14 @@ def postprocess_charge_densities(
     cwd = os.getcwd()
     work_path = generate_work_path()
     os.chdir(work_path)
+
+    # Copy the merged cube file to the work path for Bader analysis to avoid too long path for `bader` executable
+    merged_cube_file_copy = Path("./merged_cube.cube")
+    shutil.copy(merged_cube_file, merged_cube_file_copy)
     try:
-        _ = calculate_bader_charges(merged_cube_file)
+        _ = calculate_bader_charges(merged_cube_file_copy)
+        merged_cube_file_copy = merged_cube_file_copy.absolute()
+        merged_cube_file_copy.unlink(missing_ok=True)  # Clean up the copied file
     except Exception as e:
         os.chdir(cwd)
         raise RuntimeError(f"Failed to calculate Bader charges: {e}")
@@ -267,20 +273,20 @@ def abacus_badercharge_run(
     else:
         atom_labels = None
     
-    # Postprocess the charge density to obtain Bader charges using baderkit
-    merged_cube_file = merge_charge_densities_of_different_spin(fcube)
-    merged_cube_file = Path(merged_cube_file).absolute()
+    # Postprocess the charge density to obtain Bader charges
+    bader_results = postprocess_charge_densities(fcube)
+    original_atom_electrons = abacus_collect_data(Path(abacus_jobpath),
+                                                  metrics=['nelec_dict'])['collected_metrics']['nelec_dict']
 
-    bader = baderkit.Bader.from_dynamic(charge_filename = merged_cube_file,
-                                        directory = merged_cube_file.parent)
-    bader.run_bader()
-    bader_charges = bader.atom_charges.tolist()
+    for i in range(len(bader_results['bader_charges'])):
+        bader_results["bader_charges"][i] = original_atom_electrons.get(atom_labels[i], 0) - bader_results["bader_charges"][i]
+    
     return {
-        "bader_charges": bader_charges,
+        "bader_charges": bader_results["bader_charges"],
         "atom_labels": atom_labels,
         "abacus_workpath": Path(abacus_jobpath).absolute(),
-        "bader_workpath": merged_cube_file.parent.absolute(),
-        "cube_file": Path(merged_cube_file).absolute()
+        "bader_workpath": Path(bader_results["work_path"]).absolute(),
+        "cube_file": Path(bader_results["cube_file"]).absolute()
     }
 
 class TestBaderChargeWorkflow(unittest.TestCase):
