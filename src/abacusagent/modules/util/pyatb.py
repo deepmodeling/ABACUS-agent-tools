@@ -35,23 +35,23 @@ def property_calculation_scf(
 
     input_param = ReadInput(os.path.join(abacus_inputs_path, 'INPUT'))
     basis_type = input_param.get("basis_type", "pw")
-    if mode == "auto":
-        if basis_type.lower() == "lcao":
-            if input_param.get("out_chg", 0) == 1:
-                mode = "nscf"
-            else:
-                mode = "pyatb"
-        else:
-            mode = "nscf"
-    
-    if basis_type == "pw" and mode == "pyatb":
-        raise ValueError("Pyatb mode is not supported for PW basis. Please use 'nscf' mode instead.")
-
-    if (mode == "nscf" and has_chgfile(abacus_inputs_path)) or (mode == "pyatb" and has_pyatb_matrix_files(abacus_inputs_path)):
-        print("Charge or matrix files already exist, skipping SCF calculation.")
+    if (mode == "nscf" and has_chgfile(abacus_inputs_path)):
+        print("Charge files already exist, skipping SCF calculation.")
+        work_path = abacus_inputs_path
+    elif (mode == "pyatb" and has_pyatb_matrix_files(abacus_inputs_path)):
+        print("Matrix files already exist, skipping SCF calculation.")
         work_path = abacus_inputs_path
     else:
-        work_path = generate_work_path()
+        if mode == "auto":
+            if basis_type.lower() == "lcao":
+                mode = "pyatb"
+            else:
+                mode = "nscf"
+
+        if basis_type == "pw" and mode == "pyatb":
+            raise ValueError("Pyatb mode is not supported for PW basis. Please use 'nscf' mode instead.")
+
+        work_path = Path(generate_work_path()).absolute()
         link_abacusjob(src=abacus_inputs_path,
                        dst=work_path,
                        copy_files=["INPUT", "STRU", "KPT"])
