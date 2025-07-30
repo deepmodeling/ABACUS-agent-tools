@@ -35,11 +35,11 @@ def property_calculation_scf(
 
     input_param = ReadInput(os.path.join(abacus_inputs_path, 'INPUT'))
     basis_type = input_param.get("basis_type", "pw")
-    if (mode == "nscf" and has_chgfile(abacus_inputs_path)):
-        print("Charge files already exist, skipping SCF calculation.")
-        work_path = abacus_inputs_path
-    elif (mode == "pyatb" and has_pyatb_matrix_files(abacus_inputs_path)):
+    if (mode in ["pyatb", "auto"] and has_pyatb_matrix_files(abacus_inputs_path)):
         print("Matrix files already exist, skipping SCF calculation.")
+        work_path = abacus_inputs_path
+    elif (mode in ["nscf", "auto"] and has_chgfile(abacus_inputs_path)):
+        print("Charge files already exist, skipping SCF calculation.")
         work_path = abacus_inputs_path
     else:
         if mode == "auto":
