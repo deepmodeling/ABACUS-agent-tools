@@ -85,6 +85,7 @@ def abacus_vibration_analysis(abacus_inputs_path: Path,
                               temperature: Optional[float] = 298.15):
     """
     Performing vibrational analysis using finite displacement method.
+    This tool function is usually followed by a relax calculation (`calculation` is set to `relax`).
     Args:
         abacus_inputs_path (Path): Path to the ABACUS input files directory.
         selected_atoms (Optional[List[int]]): Indices of atoms included in the vibrational analysis. If this

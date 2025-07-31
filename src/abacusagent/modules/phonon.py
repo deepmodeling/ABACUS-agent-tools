@@ -25,7 +25,8 @@ def abacus_phonon_dispersion(
     temperature: Optional[float] = 298.15,
 ):
     """
-    Calculate phonon dispersion using Phonopy with ABACUS as the calculator.
+    Calculate phonon dispersion using Phonopy with ABACUS as the calculator. 
+    This tool function is usually followed by a cell-relax calculation (`calculation` is set to `cell-relax`). 
     Args:
         abacus_inputs_path (Path): Path to the directory containing ABACUS input files.
         supercell (List[int], optional): Supercell matrix for phonon calculations. If default value None are used,

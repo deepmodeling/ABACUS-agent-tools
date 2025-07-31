@@ -3,10 +3,11 @@ import json
 from pathlib import Path
 from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple, Union
 from ase import Atoms
-from ase.io import read
+from ase.io import read, write
 from ase.build import molecule
 from ase.data import chemical_symbols
 from ase.collections import g2
+from pymatgen.core import Structure, Lattice
 import numpy as np
 
 from abacustest.lib_model.model_013_inputs import PrepInput
@@ -103,6 +104,49 @@ def generate_bulk_structure(element: str,
         "cell": structure.get_cell().tolist(),
         "coordinate": structure.get_positions().tolist()
     }
+
+@mcp.tool()
+def generate_bulk_structure_from_wyckoff_position(
+    a: float,
+    b: float,
+    c: float,
+    alpha: float,
+    beta: float,
+    gamma: float,
+    spacegroup: str | int,
+    wyckoff_positions: List[Tuple[str, List[float], str]],
+    crystal_name: str = 'crystal',
+    format: Literal["cif", "poscar"] = "cif"
+) -> Dict[str, Any]:
+    """
+    Generate crystal structure from lattice parameters, space group and wyckoff positions.
+
+    Args:
+        a, b, c (float): Length of 3 lattice vectors
+        alpha, beta, gamma (float): Angles between \vec{b} and \vec{c}, \vec{c} and \vec{a}, \vec{a} and \vec{b} respectively.
+        spacegroup (str | int): International space group names or index of space group in standard crystal tables. 
+        wyckoff_positions (List[Tuple[str, List[int], str]]): List of Wyckoff positions in the crystal. For each wyckoff position, 
+            the first is the symbol of the element, the second is the fractional coordinate, and the third is symbol of the wyckoff position.
+    
+    Returns:
+        Path to the generated crystal structure file.
+
+    Raises:
+    """
+    lattice = Lattice.from_parameters(a=a, b=b, c=c, alpha=alpha, beta=beta, gamma=gamma)
+    
+    crys_stru = Structure.from_spacegroup(
+        sg=spacegroup,
+        lattice=lattice,
+        species=[wyckoff_position[0] for wyckoff_position in wyckoff_positions],
+        coords=[wyckoff_position[1] for wyckoff_position in wyckoff_positions],
+        tol=0.001,
+    )
+
+    crys_file_name = Path(f"{crystal_name}.{format}").absolute()
+    write(crys_file_name, crys_stru.to_ase_atoms(), format)
+
+    return {"structure_file": crys_file_name}
 
 @mcp.tool()
 def generate_molecule_structure(
