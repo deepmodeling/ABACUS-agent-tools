@@ -15,7 +15,8 @@ from pymatgen.analysis.elasticity.elastic import ElasticTensor
 from pymatgen.analysis.elasticity.strain import DeformedStructureSet
 from pymatgen.analysis.elasticity.stress import Stress
 
-from abacustest.lib_prepare.abacus import AbacusStru
+from abacustest.lib_prepare.comm import kspacing2kpt
+from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteKpt
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.abacus import abacus_modify_input, abacus_collect_data
 from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path
@@ -128,10 +129,20 @@ def abacus_cal_elastic(
                    dst=input_stru_dir,
                    copy_files=["INPUT", "STRU", "KPT"])
     
+    input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+    stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_path, input_params.get("stru_file", "STRU")))
+    remove_input = []
+    if 'kspacing' in input_params.keys():
+        remove_input += ['kspacing']
+        kpt = kspacing2kpt(input_params['kspacing'], stru.get_cell())
+        WriteKpt(kpoint_list = kpt + [0, 0, 0],
+                 file_name = os.path.join(abacus_inputs_path, input_params.get('kpt_file', 'KPT')))
+
     modified_params = {'calculation': 'scf',
                        'cal_stress': 1}
     modified_input = abacus_modify_input(input_stru_dir,
-                                         extra_input = modified_params)
+                                         extra_input = modified_params,
+                                         remove_input = remove_input)
     
     deformed_strus = prepare_deformed_stru(input_stru_dir, norm_strain, shear_strain)
     strain = [Strain.from_deformation(d) for d in deformed_strus.deformations]
