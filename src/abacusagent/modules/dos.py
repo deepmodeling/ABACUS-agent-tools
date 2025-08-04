@@ -3,7 +3,6 @@ import re
 import sys
 import numpy as np
 import shutil
-import subprocess
 import matplotlib.pyplot as plt
 from abacustest.lib_prepare.abacus import ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
@@ -15,9 +14,39 @@ from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import generate_work_path, link_abacusjob, run_abacus, has_chgfile
 from abacusagent.modules.abacus import abacus_collect_data
 
+
+angular_momentum_map = ['s', 'p', 'd', 'f', 'g']
+color_map = {
+    's': '#FF5733',
+    'p': '#33FF57',
+    'd': '#3357FF',
+    'f': '#F033FF',
+    'g': '#33FFF0' 
+}
+
+orbital_rep_map = {
+    's': 's',
+    'px': r'$p_x$',
+    'py': r'$p_y$',
+    'pz': r'$p_z$',
+    'dz^2': r'$d_{z^2}$',
+    'dxz': r'$d_{xz}$',
+    'dyz': r'$d_{yz}$',
+    'dxy': r'$d_{xy}$',
+    'dx^2-y^2': r'$d_{x^2-y^2}$',
+    'fz^3': r'$f_{z^3}$',
+    'fxz^2': r'$f_{xz^2}$',
+    'fyx^2': r'$f_{yx^2}$',
+    'fzx^2-zy^2': r'$f_{zx^2-zy^2}$',
+    'fxyz': r'$f_{xyz}$',
+    'fx^3-3*xy^2': r'$f_{x^3-3xy^2}$',
+    'f3yx^2-y^3': r'$f_{3yx^2-y^3}$'
+}
+
 @mcp.tool()
 def abacus_dos_run(
     abacus_inputs_path: Path,
+    pdos_mode: Literal['species', 'species+shell', 'species+orbital'] = 'species+shell',
     dos_edelta_ev: float = None,
     dos_sigma: float = None,
     dos_scale: float = None,
@@ -34,6 +63,10 @@ def abacus_dos_run(
     
     Args:
         abacus_inputs_path: Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
+        pdos_mode: Mode of plotted PDOS file.
+            - "species": Total PDOS of any species will be plotted in a picture.
+            - "species+shell": PDOS for any shell (s, p, d, f, g,...) of any species will be plotted. PDOS of a shell of a species willbe plotted in a subplot.
+            - “species+orbital": Orbital-resolved PDOS will be plotted. PDOS of orbitals in the same shell of a species will be plotted in a subplot.
         dos_edelta_ev: Step size in writing Density of States (DOS) in eV.
         dos_sigma: Width of the Gaussian factor when obtaining smeared Density of States (DOS) in eV. 
         dos_scale: Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. 
@@ -63,12 +96,11 @@ def abacus_dos_run(
                                        dos_emax_ev=dos_emax_ev,
                                        dos_nche=dos_nche)
     
-    fig_paths = plot_dos_pdos(metrics_scf["scf_work_path"], metrics_nscf["nscf_work_path"], nspin)
-    fig_paths = [p for p in fig_paths]
+    fig_paths = plot_dos_pdos(metrics_scf["scf_work_path"], metrics_nscf["nscf_work_path"], nspin, pdos_mode)
 
     return_dict = {
-        "dos_picture": fig_paths[0],
-        'pdos_fig_paths': fig_paths[1:],
+        "dos_fig_path": fig_paths[0],
+        'pdos_fig_path': fig_paths[1],
     }
 
     return_dict.update(metrics_scf)
@@ -239,7 +271,7 @@ def parse_basref_file(file_path):
     
     return label_map
 
-def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, nspin, dpi=300):
+def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, nspin, mode, dpi=300):
     """Plot PDOS data separated by atom/species with custom labels."""
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -255,9 +287,50 @@ def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, nspin
             atom_species_groups[key] = []
         atom_species_groups[key].append(orbital)
     
-    angular_momentum_map = ['s', 'p', 'd', 'f', 'g']
+    if mode == "species":
+        pdos_pic_file = plot_pdos_species(shifted_energy, orbitals, output_dir, nspin, dpi)
+    elif mode == "species+shell":
+        pdos_pic_file = plot_pdos_species_shell(shifted_energy, orbitals, output_dir, nspin, dpi)
+    elif mode == "species+orbital":
+        pdos_pic_file = plot_pdos_species_orbital(shifted_energy, orbitals, output_dir, nspin, label_map, dpi)
+    else:
+        raise ValueError(f"Not allowed mode {mode}")
     
-    # Sum over m and z to get PDOS for each species and each shell
+    return pdos_pic_file
+
+def plot_pdos_species(shifted_energy, orbitals, output_dir, nspin, dpi):
+    species = {}
+    for orbital in orbitals:
+        species_one = orbital['species']
+        if species_one not in species.keys():
+            species[species_one] = orbital['data']
+        else:
+            species[species_one] += orbital['data']
+    
+    num_species = len(species)
+    plt.plot(figsize=(10, 6))
+    for species_name, pdos_data in species.items():
+        if nspin == 1:
+            plt.plot(shifted_energy, pdos_data, label=species_name, linewidth=1.0)
+        elif nspin == 2:
+            plt.plot(shifted_energy, pdos_data[::2], label=f'{species_name} ' + r'$\uparrow$', linestyle='-', linewidth=1.0)
+            plt.plot(shifted_energy, -pdos_data[1::2], label=f'{species_name} ' + r'$\downarrow$', linestyle='--', linewidth=1.0)
+    
+    plt.axvline(x=0, color='black', linestyle=':', linewidth=1.0)
+    plt.xlabel('Energy/', fontsize=10)
+    plt.ylabel(r'States/ev${^{-1}}$', fontsize=10)
+    plt.xlim(min(shifted_energy), max(shifted_energy))
+    plt.legend(fontsize=8, ncol=nspin)
+    plt.grid(alpha=0.3)
+    plt.title('Projected density of States of different species')
+
+    pdos_pic_file = os.path.join(output_dir, 'PDOS.png')
+    plt.savefig(pdos_pic_file, dpi=dpi)
+    plt.close()
+
+    return Path(pdos_pic_file).absolute()
+
+def plot_pdos_species_shell(shifted_energy, orbitals, output_dir, nspin, dpi):
     species_shells = {}
     for orbital in orbitals:
         species = orbital['species']
@@ -272,17 +345,9 @@ def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, nspin
     
     # Plot PDOS for each species and each shell
     num_species = len(species_shells)
-    fig, axes = plt.subplots(nrows=num_species, ncols=1, figsize=(6, 3*num_species))
+    fig, axes = plt.subplots(nrows=num_species, ncols=1, figsize=(8, 4*num_species))
     if num_species == 1:
         axes = [axes]
-
-    color_map = {
-        's': '#FF5733',
-        'p': '#33FF57',
-        'd': '#3357FF',
-        'f': '#F033FF',
-        'g': '#33FFF0' 
-    }
 
     for species_idx, (species, pdos_data_dict) in enumerate(species_shells.items()):
         ax = axes[species_idx]
@@ -296,20 +361,92 @@ def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, nspin
         
         ax.axvline(x=0, color='black', linestyle=':', linewidth=1.0)
         ax.set_title(f'PDOS for {species}', fontsize=12, pad=10)
-        ax.set_ylabel('Density of States', fontsize=10)
+        ax.set_ylabel(r'States/ev${^{-1}}$', fontsize=10)
+        ax.set_xlim(min(shifted_energy), max(shifted_energy))
         ax.legend(fontsize=8, ncol=nspin)
         ax.grid(alpha=0.3)
         
         #ax.set_ylim(bottom=0)
     
-    axes[-1].set_xlabel('Energy (eV)', fontsize=10)
+    axes[-1].set_xlabel('Energy/', fontsize=10)
 
     plt.tight_layout()
     pdos_pic_file = os.path.join(output_dir, 'PDOS.png')
     plt.savefig(pdos_pic_file, dpi=dpi, bbox_inches='tight')
     plt.close()
 
-    return pdos_pic_file
+    return Path(pdos_pic_file).absolute()
+
+def plot_pdos_species_orbital(shifted_energy, orbitals, output_dir, nspin, label_map, dpi):
+
+    plt.rcParams["text.usetex"] = False
+    plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab20.colors)
+
+    orbital_label = {}
+    for (atom_index, species, l, m, z), full_label in label_map.items():
+        if species not in orbital_label.keys():
+            orbital_label[species] = {}
+        if str(l) not in orbital_label[species].keys():
+            orbital_label[species][str(l)] = {}
+        if str(m) not in orbital_label[species][str(l)].keys():
+            orbital_name = full_label.split('(')[1].split(')')[0]
+            if orbital_name in orbital_rep_map.keys():
+                orbital_label[species][str(l)][str(m)] = orbital_rep_map[orbital_name]
+            else:
+                orbital_label[species][str(l)][str(m)] = orbital_name
+        else:
+            pass
+
+    species_orbitals = {}
+    for orbital in orbitals:
+        species = orbital['species']
+        if species not in species_orbitals.keys():
+            species_orbitals[species] = {}
+        
+        angular_momentum = angular_momentum_map[orbital['l']]
+        if angular_momentum not in species_orbitals[species].keys():
+            species_orbitals[species][angular_momentum] = {}
+        
+        mag_quantum_num = orbital['m']
+        if mag_quantum_num not in species_orbitals[species][angular_momentum].keys():
+            species_orbitals[species][angular_momentum][mag_quantum_num] = orbital['data']
+        else:
+            species_orbitals[species][angular_momentum][mag_quantum_num] += orbital['data']
+    
+    total_subplots = 0
+    for species, species_pdos in species_orbitals.items():
+        total_subplots += len(species_pdos)
+    fig, axes = plt.subplots(nrows=total_subplots, ncols=1, figsize=(8, 4*total_subplots))
+
+    subplot_count = 0
+    for species, species_pdos in species_orbitals.items():
+        for angular_momentum, species_shell_pdos in species_pdos.items():
+            for m, species_orbital_pdos in species_shell_pdos.items():
+                ax = axes[subplot_count]
+                orbital_name = orbital_label[species][str(angular_momentum_map.index(angular_momentum))][str(m)]
+                if nspin == 1:
+                    ax.plot(shifted_energy, species_orbital_pdos, label=f'{orbital_name}', linewidth=1.0)
+                elif nspin == 2:
+                    ax.plot(shifted_energy, species_orbital_pdos[::2], label=f'{orbital_name} '+r'$\uparrow$', linestyle='-', linewidth=1.0)
+                    ax.plot(shifted_energy, -species_orbital_pdos[1::2], label=f'{orbital_name} '+r'$\downarrow$', linestyle='--', linewidth=1.0)
+                    
+            ax.axvline(x=0, color='black', linestyle=':', linewidth=1.0)
+            ax.set_title(f'PDOS for {species}-{angular_momentum}', fontsize=12, pad=10)
+            ax.set_xlim(min(shifted_energy), max(shifted_energy))
+            ax.set_ylabel(r'States/ev${^{-1}}$', fontsize=10)
+            ax.legend(fontsize=8, ncol=nspin)
+            ax.grid(alpha=0.3)
+
+            subplot_count += 1
+        
+    axes[-1].set_xlabel('Energy/eV', fontsize=10)
+
+    plt.tight_layout()
+    pdos_pic_file = os.path.join(output_dir, 'PDOS.png')
+    plt.savefig(pdos_pic_file, dpi=dpi, bbox_inches='tight')
+    plt.close()
+
+    return Path(pdos_pic_file).absolute()
 
 def plot_dos(file_path: List[Path],
              fermi_level: float, 
@@ -336,15 +473,15 @@ def plot_dos(file_path: List[Path],
         y_max = 1.1 * np.max(dos[mask])
     
     # Create plot
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(8, 6))
     if nspin == 1:
         plt.plot(energy, dos, linestyle='-')
     elif nspin == 2:
         plt.plot(energy, dos, linestyle='-', label='spin up')
         plt.plot(energy, -dos_dn, linestyle='--', label='spin down')
     plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
-    plt.xlabel('Energy (eV)')
-    plt.ylabel('DOS')
+    plt.xlabel('Energy/eV')
+    plt.ylabel(r'States/ev${^{-1}}$')
     plt.title('Density of States')
     plt.grid(True, alpha=0.3)
     plt.xlim(x_min, x_max)
@@ -356,12 +493,13 @@ def plot_dos(file_path: List[Path],
     plt.savefig(output_file, dpi=dpi, bbox_inches='tight')
     plt.close()
     
-    return os.path.abspath(output_file)
+    return Path(output_file).absolute()
 
 def plot_dos_pdos(scf_job_path: Path,
                   nscf_job_path: Path, 
                   output_dir: Path,
                   nspin: Literal[1, 2] = 1,
+                  mode: Literal['species', 'species+shell', 'species+orbital'] = 'species+shell',
                   dpi=300) -> List[str]:
     """Plot DOS and PDOS from the NSCF job path.
     
@@ -405,7 +543,7 @@ def plot_dos_pdos(scf_job_path: Path,
     dos_plot_file = plot_dos(dos_file, fermi_level, dos_output, nspin, dpi)
     
     # Plot PDOS and get file paths
-    pdos_plot_file = plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, nspin, dpi)
+    pdos_plot_file = plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, nspin, mode, dpi)
     
     # Combine file paths into a single list
     all_plot_files = [dos_plot_file, pdos_plot_file]
