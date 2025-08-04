@@ -96,7 +96,11 @@ def abacus_dos_run(
                                        dos_emax_ev=dos_emax_ev,
                                        dos_nche=dos_nche)
     
-    fig_paths = plot_dos_pdos(metrics_scf["scf_work_path"], metrics_nscf["nscf_work_path"], nspin, pdos_mode)
+    fig_paths = plot_dos_pdos(metrics_scf["scf_work_path"],
+                              metrics_nscf["nscf_work_path"],
+                              metrics_nscf["nscf_work_path"],
+                              nspin,
+                              pdos_mode)
 
     return_dict = {
         "dos_fig_path": fig_paths[0],
