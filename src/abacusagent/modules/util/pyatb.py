@@ -66,7 +66,7 @@ def property_calculation_scf(
             raise ValueError(f"Invalid mode: {mode}. Use 'nscf', 'pyatb', or 'auto'.")
         
         WriteInput(input_param, os.path.join(work_path, 'INPUT'))
-        run_abacus(work_path, input_param.get("suffix", "ABACUS"))
+        run_abacus(work_path, "abacus.log")
         
     rs = RESULT(path=work_path, fmt="abacus")
 
