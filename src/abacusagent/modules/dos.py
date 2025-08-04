@@ -48,6 +48,12 @@ def abacus_dos_run(
             - results_nscf: Results of the NSCF calculation, including work path and normal end status.
             - fig_paths: List of paths to the generated figures for DOS and PDOS. DOS will be saved as "DOS.png" and PDOS will be saved as "species_atom_index_pdos.png" in the output directory.
     """
+    input_file = os.path.join(abacus_inputs_path, "INPUT")
+    input_params = ReadInput(input_file)
+    nspin = input_params.get("nspin", 1)
+    if nspin in [2, 4]:
+        raise ValueError("Currently DOS calculation can only be plotted using for nspin=1")
+
     metrics_scf = abacus_dos_run_scf(abacus_inputs_path)
     metrics_nscf = abacus_dos_run_nscf(metrics_scf["scf_work_path"],
                                        dos_edelta_ev=dos_edelta_ev,
@@ -249,75 +255,57 @@ def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, dpi=3
             atom_species_groups[key] = []
         atom_species_groups[key].append(orbital)
     
-    plot_files = []
+    angular_momentum_map = ['s', 'p', 'd', 'f', 'g']
     
-    # Generate plots for each atom/species group
-    for (atom_index, species), group_orbitals in atom_species_groups.items():
-        # Get the symbol from the first orbital's key in label_map
-        first_orbital = group_orbitals[0]
-        key = (atom_index, species, first_orbital['l'], first_orbital['m'], first_orbital['z'])
-        base_label = label_map.get(key, f"{species}{atom_index}")
+    # Sum over m and z to get PDOS for each species and each shell
+    species_shells = {}
+    for orbital in orbitals:
+        species = orbital['species']
+        if species not in species_shells.keys():
+            species_shells[species] = {}  # Initialize species kind
         
-        # Group orbitals by l and m quantum numbers
-        lm_groups = {}
-        for orbital in group_orbitals:
-            lm_key = (orbital['l'], orbital['m'])
-            if lm_key not in lm_groups:
-                lm_groups[lm_key] = []
-            lm_groups[lm_key].append(orbital)
-        
-        # Create a figure with subplots for each l,m group
-        n_subplots = len(lm_groups)
-        fig, axes = plt.subplots(n_subplots, 1, figsize=(10, 4 * n_subplots), sharex=True)
-        
-        if n_subplots == 1:
-            axes = [axes]  # Ensure axes is always a list
-        
-        # Determine global y limits for consistent scaling
-        all_data = []
-        for lm_key, orbitals_list in lm_groups.items():
-            l, m = lm_key
-            mask = (shifted_energy >= -fermi_level) & (shifted_energy <= fermi_level)
-            for orbital in orbitals_list:
-                all_data.extend(orbital['data'][mask])
-        
-        if not all_data:
-            y_min, y_max = 0, 1
+        angular_momentum = angular_momentum_map[orbital['l']]
+        if angular_momentum not in species_shells[species].keys():
+            species_shells[species][angular_momentum] = orbital['data'] # Initialize DOS for angular momentum of a species
         else:
-            y_min = -0.1 * max(all_data)
-            y_max = 1.1 * max(all_data)
-        
-        # Plot each l,m group in a subplot
-        for i, ((l, m), orbitals_list) in enumerate(lm_groups.items()):
-            ax = axes[i]
-            
-            for orbital in orbitals_list:
-                z = orbital['z']
-                ax.plot(shifted_energy, orbital['data'], label=f'z={z}')
-            
-            ax.axvline(x=0, color='k', linestyle='--', alpha=0.5)
-            ax.grid(True, alpha=0.3)
-            ax.set_ylabel('PDOS')
-            ax.set_ylim(y_min, y_max)
-            ax.legend(loc='best')
-            
-            # Get symbol from label_map
-            key = (atom_index, species, l, m, orbitals_list[0]['z'])
-            symbol = label_map.get(key, '').split('(')[-1].split(')')[0]
-            ax.set_title(f'Projected Density of States for {species}{atom_index}({symbol})')
-        
-        axes[-1].set_xlabel('Energy (eV)')
-        axes[-1].set_xlim(-fermi_level, fermi_level)
-        
-        plt.tight_layout()
-        
-        # Save plot with proper naming
-        output_file = os.path.join(output_dir, f"{species}{atom_index}_pdos.png")
-        plt.savefig(output_file, dpi=dpi, bbox_inches='tight')
-        plot_files.append(os.path.abspath(output_file))
-        plt.close()
+            species_shells[species][angular_momentum] += orbital['data'] # Add DOS of a angular momentum of a species
     
-    return plot_files
+    # Plot PDOS for each species and each shell
+    num_species = len(species_shells)
+    fig, axes = plt.subplots(nrows=num_species, ncols=1, figsize=(3*num_species, 6))
+    if num_species == 1:
+        axes = [axes]
+
+    color_map = {
+        's': '#FF5733',
+        'p': '#33FF57',
+        'd': '#3357FF',
+        'f': '#F033FF',
+        'g': '#33FFF0' 
+    }
+
+    for species_idx, (species, pdos_data_dict) in enumerate(species_shells.items()):
+        ax = axes[species_idx]
+        
+        for l, pdos_data in pdos_data_dict.items():
+            ax.plot(shifted_energy, pdos_data, color=color_map[l], label=f'{species}-{l}', linewidth=1.0)
+        
+        ax.axvline(x=0, color='black', linestyle=':', linewidth=1.0)
+        ax.set_title(f'PDOS for {species}', fontsize=12, pad=10)
+        ax.set_ylabel('Density of States', fontsize=10)
+        ax.legend(fontsize=8)
+        ax.grid(alpha=0.3)
+        
+        ax.set_ylim(bottom=0)
+    
+    axes[-1].set_xlabel('Energy (eV)', fontsize=10)
+
+    plt.tight_layout()
+    pdos_pic_file = os.path.join(output_dir, 'PDOS-2.png')
+    plt.savefig(pdos_pic_file, dpi=dpi, bbox_inches='tight')
+    plt.close()
+
+    return pdos_pic_file
 
 def plot_dos(file_path, fermi_level, output_file, dpi=300):
     """Plot total DOS from DOS1_smearing.dat file."""
@@ -394,10 +382,10 @@ def plot_dos_pdos(nscf_job_path: Path,
     dos_plot_file = plot_dos(dos_file, fermi_level, dos_output, dpi)
     
     # Plot PDOS and get file paths
-    pdos_plot_files = plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, dpi)
+    pdos_plot_file = plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, dpi)
     
     # Combine file paths into a single list
-    all_plot_files = [dos_plot_file] + pdos_plot_files
+    all_plot_files = [dos_plot_file, pdos_plot_file]
     
     print("Plots generated:")
     for file in all_plot_files:
