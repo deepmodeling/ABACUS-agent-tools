@@ -12,8 +12,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Literal
 
 from abacusagent.init_mcp import mcp
-
 from abacusagent.modules.util.comm import generate_work_path, link_abacusjob, run_abacus, has_chgfile
+from abacusagent.modules.abacus import abacus_collect_data
 
 @mcp.tool()
 def abacus_dos_run(
@@ -63,7 +63,7 @@ def abacus_dos_run(
                                        dos_emax_ev=dos_emax_ev,
                                        dos_nche=dos_nche)
     
-    fig_paths = plot_dos_pdos(metrics_scf["scf_work_path"], metrics_nscf["nscf_work_path"])
+    fig_paths = plot_dos_pdos(metrics_scf["scf_work_path"], metrics_nscf["nscf_work_path"], nspin)
     fig_paths = [p for p in fig_paths]
 
     return_dict = {
@@ -239,7 +239,7 @@ def parse_basref_file(file_path):
     
     return label_map
 
-def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, dpi=300):
+def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, nspin, dpi=300):
     """Plot PDOS data separated by atom/species with custom labels."""
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -272,7 +272,7 @@ def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, dpi=3
     
     # Plot PDOS for each species and each shell
     num_species = len(species_shells)
-    fig, axes = plt.subplots(nrows=num_species, ncols=1, figsize=(3*num_species, 6))
+    fig, axes = plt.subplots(nrows=num_species, ncols=1, figsize=(6, 3*num_species))
     if num_species == 1:
         axes = [axes]
 
@@ -288,31 +288,42 @@ def plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, dpi=3
         ax = axes[species_idx]
         
         for l, pdos_data in pdos_data_dict.items():
-            ax.plot(shifted_energy, pdos_data, color=color_map[l], label=f'{species}-{l}', linewidth=1.0)
+            if nspin == 1:
+                ax.plot(shifted_energy, pdos_data, color=color_map[l], label=f'{species}-{l}', linewidth=1.0)
+            elif nspin == 2:
+                ax.plot(shifted_energy, pdos_data[::2], color=color_map[l], label=f'{species}-{l}' + r' $\uparrow$', linestyle='-', linewidth=1.0)
+                ax.plot(shifted_energy, -pdos_data[1::2], color=color_map[l], label=f'{species}-{l}' + r' $\downarrow$', linestyle='--', linewidth=1.0)
         
         ax.axvline(x=0, color='black', linestyle=':', linewidth=1.0)
         ax.set_title(f'PDOS for {species}', fontsize=12, pad=10)
         ax.set_ylabel('Density of States', fontsize=10)
-        ax.legend(fontsize=8)
+        ax.legend(fontsize=8, ncol=nspin)
         ax.grid(alpha=0.3)
         
-        ax.set_ylim(bottom=0)
+        #ax.set_ylim(bottom=0)
     
     axes[-1].set_xlabel('Energy (eV)', fontsize=10)
 
     plt.tight_layout()
-    pdos_pic_file = os.path.join(output_dir, 'PDOS-2.png')
+    pdos_pic_file = os.path.join(output_dir, 'PDOS.png')
     plt.savefig(pdos_pic_file, dpi=dpi, bbox_inches='tight')
     plt.close()
 
     return pdos_pic_file
 
-def plot_dos(file_path, fermi_level, output_file, dpi=300):
-    """Plot total DOS from DOS1_smearing.dat file."""
+def plot_dos(file_path: List[Path],
+             fermi_level: float, 
+             output_file: str = 'DOS.png',
+             nspin: Literal[1, 2] = 1,
+             dpi: int=300):
+    """Plot total DOS from DOS1_smearing.dat and DOS2_smearing (if nspin=2) file."""
     # Read first two columns from file
-    data = np.loadtxt(file_path, usecols=(0, 1))
+    data = np.loadtxt(file_path[0], usecols=(0, 1))
     energy = data[:, 0] - fermi_level  # Shift by Fermi level
     dos = data[:, 1]
+    if nspin == 2:
+        data = np.loadtxt(file_path[1], usecols=(0, 1))
+        dos_dn = data[:, 1]
     
     # Determine y limits based on data within x range
     x_min, x_max = -fermi_level, fermi_level
@@ -326,14 +337,18 @@ def plot_dos(file_path, fermi_level, output_file, dpi=300):
     
     # Create plot
     plt.figure(figsize=(10, 6))
-    plt.plot(energy, dos)
-    plt.axvline(x=0, color='k', linestyle='--', alpha=0.5, label='Fermi Level')
+    if nspin == 1:
+        plt.plot(energy, dos, linestyle='-')
+    elif nspin == 2:
+        plt.plot(energy, dos, linestyle='-', label='spin up')
+        plt.plot(energy, -dos_dn, linestyle='--', label='spin down')
+    plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
     plt.xlabel('Energy (eV)')
     plt.ylabel('DOS')
     plt.title('Density of States')
     plt.grid(True, alpha=0.3)
     plt.xlim(x_min, x_max)
-    plt.ylim(y_min, y_max)
+    #plt.ylim(y_min, y_max)
     plt.legend()
     
     # Save plot
@@ -343,8 +358,10 @@ def plot_dos(file_path, fermi_level, output_file, dpi=300):
     
     return os.path.abspath(output_file)
 
-def plot_dos_pdos(nscf_job_path: Path, 
+def plot_dos_pdos(scf_job_path: Path,
+                  nscf_job_path: Path, 
                   output_dir: Path,
+                  nspin: Literal[1, 2] = 1,
                   dpi=300) -> List[str]:
     """Plot DOS and PDOS from the NSCF job path.
     
@@ -364,25 +381,31 @@ def plot_dos_pdos(nscf_job_path: Path,
     input_file = os.path.join(input_dir, "PDOS")
     log_file = os.path.join(input_dir, "running_nscf.log")
     basref_file = os.path.join(input_dir, "Orbital")
-    dos_file = os.path.join(input_dir, "DOS1_smearing.dat")
+    dos_file = [os.path.join(input_dir, "DOS1_smearing.dat")]
     dos_output = os.path.join(output_dir, "DOS.png")
+    if nspin == 2:
+        dos_file += [os.path.join(input_dir, "DOS2_smearing.dat")]
     
     # Validate input files exist
-    for file_path in [input_file, log_file, basref_file, dos_file]:
+    for file_path in [input_file, log_file, basref_file, dos_file[0]]:
         if not os.path.exists(file_path):
             print(f"Error: File not found - {file_path}")
             raise FileNotFoundError(f"Required file not found: {file_path}")
+    if nspin == 2:
+        if not os.path.exists(dos_file[1]):
+            print(f"Error: File not found - {dos_file[1]}")
+            raise FileNotFoundError(f"Required file not found: {dos_file[1]}")
     
 
     energy_values, orbitals = parse_pdos_file(input_file)
-    fermi_level = parse_log_file(log_file)
+    fermi_level = abacus_collect_data(scf_job_path, ['efermi'])['collected_metrics']['efermi']
     label_map = parse_basref_file(basref_file)
     
     # Plot DOS and get file path
-    dos_plot_file = plot_dos(dos_file, fermi_level, dos_output, dpi)
+    dos_plot_file = plot_dos(dos_file, fermi_level, dos_output, nspin, dpi)
     
     # Plot PDOS and get file paths
-    pdos_plot_file = plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, dpi)
+    pdos_plot_file = plot_pdos(energy_values, orbitals, fermi_level, label_map, output_dir, nspin, dpi)
     
     # Combine file paths into a single list
     all_plot_files = [dos_plot_file, pdos_plot_file]
