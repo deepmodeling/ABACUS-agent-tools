@@ -81,36 +81,41 @@ def abacus_dos_run(
             - results_nscf: Results of the NSCF calculation, including work path and normal end status.
             - fig_paths: List of paths to the generated figures for DOS and PDOS. DOS will be saved as "DOS.png" and PDOS will be saved as "species_atom_index_pdos.png" in the output directory.
     """
-    input_file = os.path.join(abacus_inputs_path, "INPUT")
-    input_params = ReadInput(input_file)
-    nspin = input_params.get("nspin", 1)
-    if nspin in [2, 4]:
-        raise ValueError("Currently DOS calculation can only be plotted using for nspin=1")
+    try:
+        input_file = os.path.join(abacus_inputs_path, "INPUT")
+        input_params = ReadInput(input_file)
+        nspin = input_params.get("nspin", 1)
+        if nspin in [2, 4]:
+            raise ValueError("Currently DOS calculation can only be plotted using for nspin=1")
 
-    metrics_scf = abacus_dos_run_scf(abacus_inputs_path)
-    metrics_nscf = abacus_dos_run_nscf(metrics_scf["scf_work_path"],
-                                       dos_edelta_ev=dos_edelta_ev,
-                                       dos_sigma=dos_sigma,
-                                       dos_scale=dos_scale, 
-                                       dos_emin_ev=dos_emin_ev,
-                                       dos_emax_ev=dos_emax_ev,
-                                       dos_nche=dos_nche)
-    
-    fig_paths = plot_dos_pdos(metrics_scf["scf_work_path"],
-                              metrics_nscf["nscf_work_path"],
-                              metrics_nscf["nscf_work_path"],
-                              nspin,
-                              pdos_mode)
+        metrics_scf = abacus_dos_run_scf(abacus_inputs_path)
+        metrics_nscf = abacus_dos_run_nscf(metrics_scf["scf_work_path"],
+                                           dos_edelta_ev=dos_edelta_ev,
+                                           dos_sigma=dos_sigma,
+                                           dos_scale=dos_scale, 
+                                           dos_emin_ev=dos_emin_ev,
+                                           dos_emax_ev=dos_emax_ev,
+                                           dos_nche=dos_nche)
 
-    return_dict = {
-        "dos_fig_path": fig_paths[0],
-        'pdos_fig_path': fig_paths[1],
-    }
+        fig_paths = plot_dos_pdos(metrics_scf["scf_work_path"],
+                                  metrics_nscf["nscf_work_path"],
+                                  metrics_nscf["nscf_work_path"],
+                                  nspin,
+                                  pdos_mode)
 
-    return_dict.update(metrics_scf)
-    return_dict.update(metrics_nscf)
+        return_dict = {
+            "dos_fig_path": fig_paths[0],
+            'pdos_fig_path': fig_paths[1],
+        }
 
-    return return_dict
+        return_dict.update(metrics_scf)
+        return_dict.update(metrics_nscf)
+
+        return return_dict
+    except Exception as e:
+        return {"dos_fig_path": Path(''),
+                "pdos_fig_path": Path(''),
+                "message": f"Calculating DOS and PDOS failed: {e}"}
 
 def abacus_dos_run_scf(abacus_inputs_path: Path,
                        force_run: bool = False) -> Dict[str, Any]:

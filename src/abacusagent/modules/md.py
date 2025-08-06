@@ -189,7 +189,3 @@ def abacus_run_md(
                 'md_last_stru': Path(""),
                 'md_traj_file': Path(""),
                 "message": f"Error occured during the running md: {e}"}
-
-if __name__ == '__main__':
-    get_last_md_stru(Path('/tmp/abacusagent/20250805162511/20250805162511.abacus_run_md.8eb74ccf/OUT.Si/STRU'))
-    convert_md_dump_to_ase_traj(Path('/tmp/abacusagent/20250805162511/20250805162511.abacus_run_md.8eb74ccf/OUT.Si/MD_dump'))

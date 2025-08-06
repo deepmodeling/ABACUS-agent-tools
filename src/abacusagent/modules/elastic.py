@@ -121,71 +121,82 @@ def abacus_cal_elastic(
     Raises:
         RuntimeError: If ABACUS calculation when calculating stress for input structure or deformed structures fails.
     """
-    abacus_inputs_path = Path(abacus_inputs_path).absolute()
-    work_path = Path(generate_work_path()).absolute()
-    input_stru_dir = Path(os.path.join(work_path, "input_stru")).absolute()
+    try:
+        abacus_inputs_path = Path(abacus_inputs_path).absolute()
+        work_path = Path(generate_work_path()).absolute()
+        input_stru_dir = Path(os.path.join(work_path, "input_stru")).absolute()
 
-    link_abacusjob(src=abacus_inputs_path,
-                   dst=input_stru_dir,
-                   copy_files=["INPUT", "STRU", "KPT"])
-    
-    input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
-    stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_path, input_params.get("stru_file", "STRU")))
-    remove_input = []
-    if 'kspacing' in input_params.keys():
-        remove_input += ['kspacing']
-        kpt = kspacing2kpt(input_params['kspacing'], stru.get_cell())
-        WriteKpt(kpoint_list = kpt + [0, 0, 0],
-                 file_name = os.path.join(abacus_inputs_path, input_params.get('kpt_file', 'KPT')))
+        link_abacusjob(src=abacus_inputs_path,
+                       dst=input_stru_dir,
+                       copy_files=["INPUT", "STRU", "KPT"])
 
-    modified_params = {'calculation': 'scf',
-                       'cal_stress': 1}
-    modified_input = abacus_modify_input(input_stru_dir,
-                                         extra_input = modified_params,
-                                         remove_input = remove_input)
-    
-    deformed_strus = prepare_deformed_stru(input_stru_dir, norm_strain, shear_strain)
-    strain = [Strain.from_deformation(d) for d in deformed_strus.deformations]
+        input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+        stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_path, input_params.get("stru_file", "STRU")))
+        remove_input = []
+        if 'kspacing' in input_params.keys():
+            remove_input += ['kspacing']
+            kpt = kspacing2kpt(input_params['kspacing'], stru.get_cell())
+            WriteKpt(kpoint_list = kpt + [0, 0, 0],
+                     file_name = os.path.join(abacus_inputs_path, input_params.get('kpt_file', 'KPT')))
 
-    deformed_stru_job_dirs = prepare_deformed_stru_inputs(deformed_strus, 
-                                                          work_path,
-                                                          input_stru_dir)
-    
-    all_dirs = [input_stru_dir] + deformed_stru_job_dirs
-    run_abacus(all_dirs)
+        modified_params = {'calculation': 'scf',
+                           'cal_stress': 1}
+        modified_input = abacus_modify_input(input_stru_dir,
+                                             extra_input = modified_params,
+                                             remove_input = remove_input)
 
-    collected_metrics = ["normal_end", "converge", "stress"]
+        deformed_strus = prepare_deformed_stru(input_stru_dir, norm_strain, shear_strain)
+        strain = [Strain.from_deformation(d) for d in deformed_strus.deformations]
 
-    input_stru_result = abacus_collect_data(input_stru_dir, collected_metrics)
-    if input_stru_result['collected_metrics']['converge'] is True:
-        input_stru_stress = collected_stress_to_pymatgen_stress(input_stru_result['collected_metrics']['stress'])
-    else:
-        raise RuntimeError("SCF calculation for input structure doesn't converge")
-    
-    deformed_stru_stresses = []
-    for idx, deformed_stru_job_dir in enumerate(deformed_stru_job_dirs):
-        deformed_stru_result = abacus_collect_data(deformed_stru_job_dir, collected_metrics)
-        if deformed_stru_result['collected_metrics']['converge'] is True:
-            deformed_stru_stress = collected_stress_to_pymatgen_stress(deformed_stru_result['collected_metrics']['stress'])
-            deformed_stru_stresses.append(deformed_stru_stress)
+        deformed_stru_job_dirs = prepare_deformed_stru_inputs(deformed_strus, 
+                                                              work_path,
+                                                              input_stru_dir)
+
+        all_dirs = [input_stru_dir] + deformed_stru_job_dirs
+        run_abacus(all_dirs)
+
+        collected_metrics = ["normal_end", "converge", "stress"]
+
+        input_stru_result = abacus_collect_data(input_stru_dir, collected_metrics)
+        if input_stru_result['collected_metrics']['converge'] is True:
+            input_stru_stress = collected_stress_to_pymatgen_stress(input_stru_result['collected_metrics']['stress'])
         else:
-            raise RuntimeError(f"SCF calculation for deformed structure {idx} doesn't converge")
-    
-    result = ElasticTensor.from_independent_strains(strain,
-                                                    deformed_stru_stresses,
-                                                    eq_stress=input_stru_stress,
-                                                    vasp=False)
-    
-    elastic_tensor = result.voigt.tolist()
-    bv, gv = result.k_voigt, result.g_voigt
-    ev = 9 * bv * gv / (3 * bv + gv)
-    uV = (3 * bv - 2 * gv) / (6 * bv + 2 * gv)
-    
-    return {
-        "elastic_cal_dir": Path(work_path).absolute(),
-        "elastic_tensor": elastic_tensor,
-        "bulk_modulus": float(bv),
-        "shear_modulus": float(gv),
-        "young_modulus": float(ev),
-        "poisson_ratio": float(uV)
-    }
+            raise RuntimeError("SCF calculation for input structure doesn't converge")
+
+        deformed_stru_stresses = []
+        for idx, deformed_stru_job_dir in enumerate(deformed_stru_job_dirs):
+            deformed_stru_result = abacus_collect_data(deformed_stru_job_dir, collected_metrics)
+            if deformed_stru_result['collected_metrics']['converge'] is True:
+                deformed_stru_stress = collected_stress_to_pymatgen_stress(deformed_stru_result['collected_metrics']['stress'])
+                deformed_stru_stresses.append(deformed_stru_stress)
+            else:
+                raise RuntimeError(f"SCF calculation for deformed structure {idx} doesn't converge")
+
+        result = ElasticTensor.from_independent_strains(strain,
+                                                        deformed_stru_stresses,
+                                                        eq_stress=input_stru_stress,
+                                                        vasp=False)
+
+        elastic_tensor = result.voigt.tolist()
+        bv, gv = result.k_voigt, result.g_voigt
+        ev = 9 * bv * gv / (3 * bv + gv)
+        uV = (3 * bv - 2 * gv) / (6 * bv + 2 * gv)
+
+        return {
+            "elastic_cal_dir": Path(work_path).absolute(),
+            "elastic_tensor": elastic_tensor,
+            "bulk_modulus": float(bv),
+            "shear_modulus": float(gv),
+            "young_modulus": float(ev),
+            "poisson_ratio": float(uV)
+        }
+    except Exception as e:
+        return {
+            "elastic_cal_dir": Path(''),
+            "elastic_tensor": None,
+            "bulk_modulus": None,
+            "shear_modulus": None,
+            "young_modulus": None,
+            "poisson_ratio": None,
+            "message": f"Calculating elastic properties failed: {e}"
+        }

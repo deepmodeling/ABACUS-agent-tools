@@ -59,34 +59,41 @@ def abacus_do_relax(
         FileNotFoundError: If the job directory does not exist or does not contain necessary files.
         RuntimeError: If the ABACUS calculation fails or returns an error.
     """
-    abacus_inputs_path = Path(abacus_inputs_path).absolute()
-    work_path = Path(generate_work_path()).absolute()
-    link_abacusjob(src=abacus_inputs_path,
-                   dst=work_path,
-                   copy_files=["INPUT", "STRU", "KPT"])
-    
-    prepare_relax_inputs(
-        work_path=work_path,
-        force_thr_ev=force_thr_ev,
-        stress_thr_kbar=stress_thr_kbar,
-        max_steps=max_steps,
-        relax_cell=relax_cell,
-        fixed_axes=fixed_axes,
-        relax_method=relax_method,
-        relax_new=relax_new,
-    )
-    
-    run_abacus(work_path)
-    
-    results = relax_postprocess(work_path)
+    try:
+        abacus_inputs_path = Path(abacus_inputs_path).absolute()
+        work_path = Path(generate_work_path()).absolute()
+        link_abacusjob(src=abacus_inputs_path,
+                       dst=work_path,
+                       copy_files=["INPUT", "STRU", "KPT"])
 
-    new_abacus_inputs_path = abacus_prepare_inputs_from_relax_results(work_path)['job_path']
+        prepare_relax_inputs(
+            work_path=work_path,
+            force_thr_ev=force_thr_ev,
+            stress_thr_kbar=stress_thr_kbar,
+            max_steps=max_steps,
+            relax_cell=relax_cell,
+            fixed_axes=fixed_axes,
+            relax_method=relax_method,
+            relax_new=relax_new,
+        )
 
-    return {
-        "job_path": Path(work_path).absolute(),
-        "new_abacus_inputs_path": Path(new_abacus_inputs_path).absolute(),
-        "result": results
-    }
+        run_abacus(work_path)
+
+        results = relax_postprocess(work_path)
+
+        new_abacus_inputs_path = abacus_prepare_inputs_from_relax_results(work_path)['job_path']
+
+        return {
+            "job_path": Path(work_path).absolute(),
+            "new_abacus_inputs_path": Path(new_abacus_inputs_path).absolute(),
+            "result": results
+        }
+    except Exception as e:
+        return {
+            "job_path": Path(''),
+            "new_abacus_inputs_path": Path(''),
+            "result": None
+        }
 
 @mcp.tool()
 def abacus_prepare_inputs_from_relax_results(
@@ -105,32 +112,40 @@ def abacus_prepare_inputs_from_relax_results(
         - 'input_content': The content of the generated INPUT file.
         - 'input_files': A list of files in the job directory.
     """
-    relax_jobpath = Path(relax_jobpath).absolute()
-    rs = RESULT(path=relax_jobpath, fmt="abacus")
-    final_stru = Path(os.path.join(relax_jobpath, f"OUT.{rs.SUFFIX}", "STRU_ION_D")).absolute() # the structure file of the last relax step
-    
-    if not os.path.isfile(final_stru):
-        raise FileNotFoundError(f"We can not find the structure file of last relax step {final_stru}. \
-            Please check the path and ensure the relaxation calculation has completed successfully.")
-    
-    work_path = Path(generate_work_path()).absolute()
-    
-    link_abacusjob(
-        src=relax_jobpath,
-        dst=work_path,
-        copy_files=["INPUT", "STRU", "KPT"],
-        exclude=["OUT.*", "*.log", "*.out", "*.json", "log"],
-        exclude_directories=True
-    )
-    if os.path.isfile(os.path.join(work_path, "STRU")):
-        os.unlink(os.path.join(work_path, "STRU"))
-    os.symlink(final_stru, os.path.join(work_path, "STRU"))
+    try:
+        relax_jobpath = Path(relax_jobpath).absolute()
+        rs = RESULT(path=relax_jobpath, fmt="abacus")
+        final_stru = Path(os.path.join(relax_jobpath, f"OUT.{rs.SUFFIX}", "STRU_ION_D")).absolute() # the structure file of the last relax step
 
-    return {
-        "job_path": Path(work_path).absolute(),
-        "input_content": ReadInput(os.path.join(work_path, "INPUT")),
-        "input_files": [f for f in Path(work_path).iterdir()]
-    }
+        if not os.path.isfile(final_stru):
+            raise FileNotFoundError(f"We can not find the structure file of last relax step {final_stru}. \
+                Please check the path and ensure the relaxation calculation has completed successfully.")
+
+        work_path = Path(generate_work_path()).absolute()
+
+        link_abacusjob(
+            src=relax_jobpath,
+            dst=work_path,
+            copy_files=["INPUT", "STRU", "KPT"],
+            exclude=["OUT.*", "*.log", "*.out", "*.json", "log"],
+            exclude_directories=True
+        )
+        if os.path.isfile(os.path.join(work_path, "STRU")):
+            os.unlink(os.path.join(work_path, "STRU"))
+        os.symlink(final_stru, os.path.join(work_path, "STRU"))
+
+        return {
+            "job_path": Path(work_path).absolute(),
+            "input_content": ReadInput(os.path.join(work_path, "INPUT")),
+            "input_files": [f for f in Path(work_path).iterdir()]
+        }
+    except Exception as e:
+        return {
+            "job_path": Path(''),
+            "input_content": None,
+            "input_files": [Path('')],
+            "message": f"Prepare new ABACUS input files from relax or cell-relax calculation output files failed: {e}"
+        }
 
 
 def prepare_relax_inputs(
