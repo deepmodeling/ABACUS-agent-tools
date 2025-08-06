@@ -209,7 +209,7 @@ def abacus_cal_charge_density_difference(
         sum_subsys_chg = read_gaussian_cube(full_system_chgfile)  # Fetch the data structure. The volumeric data will be replaced later
         chg_density_difference = read_gaussian_cube(full_system_chgfile) # Fetch the data structure. The volumeric data will be replaced later
         sum_subsys_chg['data'] = axpy(subsys1_chg['data'], subsys2_chg['data'])
-        chg_density_difference['data'] = axpy(sum_subsys_chg['data'], full_system_chg['data'], alpha=1.0, beta=-1.0)
+        chg_density_difference['data'] = axpy(full_system_chg['data'], sum_subsys_chg['data'], alpha=1.0, beta=-1.0)
 
         chg_dens_diff_cube_file = Path(os.path.join(work_path, 'chg_density_diff.cube')).absolute()
         write_gaussian_cube(chg_density_difference, chg_dens_diff_cube_file)

@@ -47,9 +47,9 @@ orbital_rep_map = {
 def abacus_dos_run(
     abacus_inputs_path: Path,
     pdos_mode: Literal['species', 'species+shell', 'species+orbital'] = 'species+shell',
-    dos_edelta_ev: float = None,
-    dos_sigma: float = None,
-    dos_scale: float = None,
+    dos_edelta_ev: float = 0.01,
+    dos_sigma: float = 0.07,
+    dos_scale: float = 0.01,
     dos_emin_ev: float = None,
     dos_emax_ev: float = None,
     dos_nche: int = None,
@@ -326,9 +326,9 @@ def plot_pdos_species(shifted_energy, orbitals, output_dir, nspin, dpi):
             plt.plot(shifted_energy, -pdos_data[1::2], label=f'{species_name} ' + r'$\downarrow$', linestyle='--', linewidth=1.0)
     
     plt.axvline(x=0, color='black', linestyle=':', linewidth=1.0)
-    plt.xlabel('Energy/', fontsize=10)
+    plt.xlabel('Energy/eV', fontsize=10)
     plt.ylabel(r'States/ev${^{-1}}$', fontsize=10)
-    plt.xlim(min(shifted_energy), max(shifted_energy))
+    plt.xlim(max(min(shifted_energy), -20), min(20, max(shifted_energy)))
     plt.legend(fontsize=8, ncol=nspin)
     plt.grid(alpha=0.3)
     plt.title('Projected density of States of different species')
@@ -371,7 +371,7 @@ def plot_pdos_species_shell(shifted_energy, orbitals, output_dir, nspin, dpi):
         ax.axvline(x=0, color='black', linestyle=':', linewidth=1.0)
         ax.set_title(f'PDOS for {species}', fontsize=12, pad=10)
         ax.set_ylabel(r'States/ev${^{-1}}$', fontsize=10)
-        ax.set_xlim(min(shifted_energy), max(shifted_energy))
+        ax.set_xlim(max(min(shifted_energy), -20), min(20, max(shifted_energy)))
         ax.legend(fontsize=8, ncol=nspin)
         ax.grid(alpha=0.3)
         
@@ -441,7 +441,7 @@ def plot_pdos_species_orbital(shifted_energy, orbitals, output_dir, nspin, label
                     
             ax.axvline(x=0, color='black', linestyle=':', linewidth=1.0)
             ax.set_title(f'PDOS for {species}-{angular_momentum}', fontsize=12, pad=10)
-            ax.set_xlim(min(shifted_energy), max(shifted_energy))
+            ax.set_xlim(max(min(shifted_energy), -20), min(20, max(shifted_energy)))
             ax.set_ylabel(r'States/ev${^{-1}}$', fontsize=10)
             ax.legend(fontsize=8, ncol=nspin)
             ax.grid(alpha=0.3)
