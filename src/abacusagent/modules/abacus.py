@@ -752,7 +752,7 @@ def abacus_collect_data(
         return {'collected_metrics': None,
                 'message': f'Collectiong results from ABACUS output files failed: {e}'}
 
-@mcp.tool()
+#@mcp.tool()
 def run_abacus_onejob(
     abacusjob: Path,
 ) -> Dict[str, Any]:
