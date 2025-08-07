@@ -329,6 +329,8 @@ def plot_pdos_species(shifted_energy, orbitals, output_dir, nspin, dpi):
     plt.xlabel('Energy/eV', fontsize=10)
     plt.ylabel(r'States/ev${^{-1}}$', fontsize=10)
     plt.xlim(max(min(shifted_energy), -20), min(20, max(shifted_energy)))
+    if nspin == 1:
+        plt.ylim(bottom=0)
     plt.legend(fontsize=8, ncol=nspin)
     plt.grid(alpha=0.3)
     plt.title('Projected density of States of different species')
@@ -372,6 +374,8 @@ def plot_pdos_species_shell(shifted_energy, orbitals, output_dir, nspin, dpi):
         ax.set_title(f'PDOS for {species}', fontsize=12, pad=10)
         ax.set_ylabel(r'States/ev${^{-1}}$', fontsize=10)
         ax.set_xlim(max(min(shifted_energy), -20), min(20, max(shifted_energy)))
+        if nspin == 1:
+            ax.set_ylim(bottom=0)
         ax.legend(fontsize=8, ncol=nspin)
         ax.grid(alpha=0.3)
         
@@ -442,6 +446,8 @@ def plot_pdos_species_orbital(shifted_energy, orbitals, output_dir, nspin, label
             ax.axvline(x=0, color='black', linestyle=':', linewidth=1.0)
             ax.set_title(f'PDOS for {species}-{angular_momentum}', fontsize=12, pad=10)
             ax.set_xlim(max(min(shifted_energy), -20), min(20, max(shifted_energy)))
+            if nspin == 1:
+                ax.set_ylim(bottom=0)
             ax.set_ylabel(r'States/ev${^{-1}}$', fontsize=10)
             ax.legend(fontsize=8, ncol=nspin)
             ax.grid(alpha=0.3)
