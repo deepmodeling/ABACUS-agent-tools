@@ -23,12 +23,14 @@ class TestPlotDos(unittest.TestCase):
         sys.stdout = open(os.devnull, 'w')
 
         # Call the run_dos function
-        results_test = mkplots(self.data_dir,self.data_dir, dpi=20)
+        results_test = mkplots(self.data_dir, self.data_dir, self.data_dir, dpi=20)
         results_ref = [Path(self.data_dir) / "DOS.png",
-                       Path(self.data_dir) / "Si1_pdos.png",
-                       Path(self.data_dir) / "Si2_pdos.png"]
+                       Path(self.data_dir) / "PDOS.png"]
     
         self.assertListEqual([Path(p) for p in results_test], results_ref)
+
+        if os.path.exists(self.data_dir / "metrics.json"):
+            os.remove(self.data_dir / "metrics.json")
         
         
 

@@ -374,8 +374,8 @@ def plot_pdos_species_shell(shifted_energy, orbitals, output_dir, nspin, dpi):
         ax.set_title(f'PDOS for {species}', fontsize=12, pad=10)
         ax.set_ylabel(r'States/ev${^{-1}}$', fontsize=10)
         ax.set_xlim(max(min(shifted_energy), -20), min(20, max(shifted_energy)))
-        if nspin == 1:
-            ax.set_ylim(bottom=0)
+        #if nspin == 1:
+        #    ax.set_ylim(bottom=0)
         ax.legend(fontsize=8, ncol=nspin)
         ax.grid(alpha=0.3)
         
@@ -501,7 +501,7 @@ def plot_dos(file_path: List[Path],
     plt.grid(True, alpha=0.3)
     plt.xlim(x_min, x_max)
     #plt.ylim(y_min, y_max)
-    plt.legend()
+    #plt.legend()
     
     # Save plot
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
