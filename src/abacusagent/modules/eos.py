@@ -61,88 +61,99 @@ def abacus_eos(
             - "B0" (float): Bulk modulus (in GPa) at equilibrium volume.
             - "B0_deriv" (float): Pressure derivative of the bulk modulus.
     """
-    work_path = Path(generate_work_path()).absolute()
+    try:
+        work_path = Path(generate_work_path()).absolute()
 
-    input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
-    input_stru_file = input_params.get('stru_file', 'STRU')
-    input_stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_path, input_stru_file))
-    if is_cubic(input_stru.get_cell()) is False:
-        raise ValueError("The structure is not cubic. Implemented EOS calculation requires a cubic structure.")
-    
-    # Generated lattice parameters for EOS calculation
-    original_cell_param = input_stru.get_cell()[0][0]  # Assuming cubic structure, take one cell parameter
-    if stru_scale_type == 'percentage':
-        scales = [1 + i * scale_stepsize for i in range(-stru_scale_number, stru_scale_number + 1)]
-    elif stru_scale_type == 'angstrom':
-        scales = [1 + i * scale_stepsize / original_cell_param for i in range(-stru_scale_number, stru_scale_number + 1)]
-    else:
-        raise ValueError("Invalid stru_scale_type. Use 'percentage' or 'angstrom'.")
-    
-    scaled_lat_params = [original_cell_param * scale for scale in scales]
-    
-    output = abacus_modify_input(abacus_inputs_path, extra_input={'calculation': 'scf'})
+        input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+        input_stru_file = input_params.get('stru_file', 'STRU')
+        input_stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_path, input_stru_file))
+        if is_cubic(input_stru.get_cell()) is False:
+            raise ValueError("The structure is not cubic. Implemented EOS calculation requires a cubic structure.")
 
-    scale_cell_job_dirs = []
-    for i in range(len(scales)):
-        dir_name = Path(os.path.join(work_path, f"scale_cell_{i}")).absolute()
-        os.makedirs(dir_name, exist_ok=True)
-        scale_cell_job_dirs.append(dir_name)
+        # Generated lattice parameters for EOS calculation
+        original_cell_param = input_stru.get_cell()[0][0]  # Assuming cubic structure, take one cell parameter
+        if stru_scale_type == 'percentage':
+            scales = [1 + i * scale_stepsize for i in range(-stru_scale_number, stru_scale_number + 1)]
+        elif stru_scale_type == 'angstrom':
+            scales = [1 + i * scale_stepsize / original_cell_param for i in range(-stru_scale_number, stru_scale_number + 1)]
+        else:
+            raise ValueError("Invalid stru_scale_type. Use 'percentage' or 'angstrom'.")
 
+        scaled_lat_params = [original_cell_param * scale for scale in scales]
+
+        output = abacus_modify_input(abacus_inputs_path, extra_input={'calculation': 'scf'})
+
+        scale_cell_job_dirs = []
+        for i in range(len(scales)):
+            dir_name = Path(os.path.join(work_path, f"scale_cell_{i}")).absolute()
+            os.makedirs(dir_name, exist_ok=True)
+            scale_cell_job_dirs.append(dir_name)
+
+            link_abacusjob(
+                src=abacus_inputs_path,
+                dst=Path(dir_name).absolute(),
+                copy_files=["INPUT", input_stru_file],
+                exclude=["OUT.*", "*.log", "*.out", "*.json", "log"],
+                exclude_directories=True
+            )
+
+            new_cell = (np.array(input_stru.get_cell()) * scales[i]).tolist()
+            output = abacus_modify_stru(dir_name, cell=new_cell, coord_change_type='scale')
+
+        run_abacus(scale_cell_job_dirs)
+
+        energies = []
+        for i, job_dir in enumerate(scale_cell_job_dirs):
+            metrics = abacus_collect_data(job_dir)['collected_metrics']
+            if metrics['normal_end'] is not True or metrics['converge'] is not True:
+                raise RuntimeError(f"Job {i} did not end normally or did not converge. Please check the job directory: {job_dir}")
+            energies.append(metrics['energy'])
+
+        volumes = [x**3 for x in scaled_lat_params]
+        V0, E0, fit_volume, fit_energy, B0, B0_deriv, residual0 = eos_fit(volumes, energies)
+        lat_params = np.cbrt(np.array(fit_volume))
+
+        plt.figure(figsize=(8, 6))
+        plt.plot(lat_params, fit_energy, label='Fitted Birch-Murnaghan EOS', color='red')
+        plt.scatter(scaled_lat_params, energies, label='Calculated Energies', color='blue')
+        plt.xlabel('Lattice Parameter (Angstrom)')
+        plt.ylabel('Energy (eV)')
+        plt.title('Birch-Murnaghan EOS Fit')
+        plt.legend()
+        plt.grid()
+        plt.savefig('birch_murnaghan_eos_fit.png', dpi=300)
+        fig_path = Path('birch_murnaghan_eos_fit.png').absolute()
+
+        optimal_stru_abacusjob_dir = Path(os.path.join(work_path, "optimal_stru_abacusjob_dir")).absolute()
         link_abacusjob(
-            src=abacus_inputs_path,
-            dst=Path(dir_name).absolute(),
-            copy_files=["INPUT", input_stru_file],
-            exclude=["OUT.*", "*.log", "*.out", "*.json", "log"],
-            exclude_directories=True
-        )
+                src=abacus_inputs_path,
+                dst=optimal_stru_abacusjob_dir,
+                copy_files=["INPUT", input_stru_file],
+                exclude=["OUT.*", "*.log", "*.out", "*.json", "log"],
+                exclude_directories=True
+            )
+        optimal_lat_param = V0 ** (1.0 / 3)
+        optimal_cell = (np.array(input_stru.get_cell()) * optimal_lat_param / original_cell_param).tolist()
+        output = abacus_modify_stru(optimal_stru_abacusjob_dir,
+                                    cell = optimal_cell,
+                                    coord_change_type = 'scale')
 
-        new_cell = (np.array(input_stru.get_cell()) * scales[i]).tolist()
-        output = abacus_modify_stru(dir_name, cell=new_cell, coord_change_type='scale')
-    
-    run_abacus(scale_cell_job_dirs)
-
-    energies = []
-    for i, job_dir in enumerate(scale_cell_job_dirs):
-        metrics = abacus_collect_data(job_dir)['collected_metrics']
-        if metrics['normal_end'] is not True or metrics['converge'] is not True:
-            raise RuntimeError(f"Job {i} did not end normally or did not converge. Please check the job directory: {job_dir}")
-        energies.append(metrics['energy'])
-    
-    volumes = [x**3 for x in scaled_lat_params]
-    V0, E0, fit_volume, fit_energy, B0, B0_deriv, residual0 = eos_fit(volumes, energies)
-    lat_params = np.cbrt(np.array(fit_volume))
-
-    plt.figure(figsize=(8, 6))
-    plt.plot(lat_params, fit_energy, label='Fitted Birch-Murnaghan EOS', color='red')
-    plt.scatter(scaled_lat_params, energies, label='Calculated Energies', color='blue')
-    plt.xlabel('Lattice Parameter (Angstrom)')
-    plt.ylabel('Energy (eV)')
-    plt.title('Birch-Murnaghan EOS Fit')
-    plt.legend()
-    plt.grid()
-    plt.savefig('birch_murnaghan_eos_fit.png', dpi=300)
-    fig_path = Path('birch_murnaghan_eos_fit.png').absolute()
-
-    optimal_stru_abacusjob_dir = Path(os.path.join(work_path, "optimal_stru_abacusjob_dir")).absolute()
-    link_abacusjob(
-            src=abacus_inputs_path,
-            dst=optimal_stru_abacusjob_dir,
-            copy_files=["INPUT", input_stru_file],
-            exclude=["OUT.*", "*.log", "*.out", "*.json", "log"],
-            exclude_directories=True
-        )
-    optimal_lat_param = V0 ** (1.0 / 3)
-    optimal_cell = (np.array(input_stru.get_cell()) * optimal_lat_param / original_cell_param).tolist()
-    output = abacus_modify_stru(optimal_stru_abacusjob_dir,
-                                cell = optimal_cell,
-                                coord_change_type = 'scale')
-
-    return {
-        "eos_work_path": work_path.absolute(),
-        "optimal_stru_abacusjob_dir": Path(optimal_stru_abacusjob_dir).absolute(),
-        "eos_fig_path": fig_path,
-        "E0": E0,
-        "V0": V0,
-        "B0": B0,
-        "B0_deriv": B0_deriv, }
+        return {
+            "eos_work_path": work_path.absolute(),
+            "optimal_stru_abacusjob_dir": Path(optimal_stru_abacusjob_dir).absolute(),
+            "eos_fig_path": fig_path,
+            "E0": E0,
+            "V0": V0,
+            "B0": B0,
+            "B0_deriv": B0_deriv, }
+    except Exception as e:
+        return {
+            "eos_work_path": Path(''),
+            "optimal_stru_abacusjob_dir": Path(''),
+            "eos_fig_path": Path(''),
+            "E0": None,
+            "V0": None,
+            "B0": None,
+            "B0_deriv": None,
+            "message": f"Fitting EOS failed: {e}"}
 
