@@ -79,16 +79,13 @@ def generate_bulk_structure(element: str,
 
         if crystal_structure in ['fcc', 'bcc', 'diamond', 'zincblende']:
             special_params['cubic'] = cubic
-        try:
-            structure = bulk(
-                name=element,
-                crystalstructure=crystal_structure,
-                a=a,
-                **special_params
-            )
-        except Exception as e:
-            raise ValueError(f"Generate structure failed: {str(e)}") from e
 
+        structure = bulk(
+            name=element,
+            crystalstructure=crystal_structure,
+            a=a,
+            **special_params
+        )
         work_path = generate_work_path(create=True)
 
         if file_format == "cif":
@@ -113,7 +110,7 @@ def generate_bulk_structure(element: str,
             "message": f"Generating bulk structure failed: {e}"
         }
 
-@mcp.tool()
+#@mcp.tool()
 def generate_bulk_structure_from_wyckoff_position(
     a: float,
     b: float,
@@ -468,10 +465,7 @@ def abacus_modify_input(
             input_param['orbital_corr'] = orbital_corr_param.strip()
             input_param['hubbard_u'] = hubbard_u_param.strip()
 
-        try:
-            WriteInput(input_param, input_file)
-        except Exception as e:
-            raise RuntimeError("Error occured during writing modified INPUT file")
+        WriteInput(input_param, input_file)
 
         return {'abacusjob_dir': abacusjob_dir,
                 'input_content': input_param}
