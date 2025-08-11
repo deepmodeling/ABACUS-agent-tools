@@ -185,7 +185,7 @@ def abacus_run_md(
                 'md_traj_file': convert_md_dump_to_ase_traj(Path(os.path.join(work_path, f'OUT.{suffix}/MD_dump')).absolute())}
 
     except Exception as e:
-        return {'md_work_path': Path(""),
-                'md_last_stru': Path(""),
-                'md_traj_file': Path(""),
+        return {'md_work_path': None,
+                'md_last_stru': None,
+                'md_traj_file': None,
                 "message": f"Error occured during the running md: {e}"}

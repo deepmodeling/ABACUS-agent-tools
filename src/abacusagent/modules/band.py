@@ -405,7 +405,7 @@ def abacus_cal_band(abacus_inputs_path: Path,
         else:
             raise ValueError(f"Calculation mode {mode} not in ('pyatb', 'nscf')")
     except Exception as e:
-            return {'band_gap': plot_output['band_gap'],
-                    'band_calc_dir': Path(work_path).absolute(),
-                    'band_picture': Path(plot_output['band_picture']).absolute(),
-                    'messsage': f"Calculating band failed: {e}"}
+        return {'band_gap': None,
+                'band_calc_dir': None,
+                'band_picture': None,
+                'messsage': f"Calculating band failed: {e}"}

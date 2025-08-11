@@ -104,7 +104,7 @@ def generate_bulk_structure(element: str,
         }
     except Exception as e:
         return {
-            "structure_file": Path(''),
+            "structure_file": None,
             "cell": None,
             "coordinate": None,
             "message": f"Generating bulk structure failed: {e}"
@@ -229,7 +229,7 @@ def generate_molecule_structure(
         }
     except Exception as e:
         return {
-            "structure_file": Path(''),
+            "structure_file": None,
             "cell": None,
             "coordinate": None,
             "message": f"Generating molecule structure failed: {e}"
@@ -339,7 +339,7 @@ def abacus_prepare(
                 "input_content": input_content,
                 "input_files": input_files}
     except Exception as e:
-        return {"job_path": Path(''),
+        return {"job_path": None,
                 "input_content": None,
                 "input_files": None,
                 "message": f"Prepare ABACUS input files from given structure failed: {e}"}
@@ -470,7 +470,7 @@ def abacus_modify_input(
         return {'abacusjob_dir': abacusjob_dir,
                 'input_content': input_param}
     except Exception as e:
-        return {'abacusjob_dir': Path(''),
+        return {'abacusjob_dir': None,
                 'input_content': None,
                 'message': f"Modify ABACUS INPUT file failed: {e}"}
 
@@ -605,7 +605,7 @@ def abacus_modify_stru(
                 'stru_content': stru_content 
                 }
     except Exception as e:
-        return {'abacusjob_dir': Path(''),
+        return {'abacusjob_dir': None,
                 'stru_content': None,
                 'message': f"Modify ABACUS STRU file failed: {e}"
                 }
@@ -725,18 +725,15 @@ def abacus_collect_data(
     """
     try:
         abacusjob = Path(abacusjob)
-        try:
-            abacusresult = RESULT(fmt="abacus", path=abacusjob)
-        except:
-            raise IOError("Read abacus result failed")
-
+        abacusresult = RESULT(fmt="abacus", path=abacusjob)
+        
         collected_metrics = {}
         for metric in metrics:
             try:
                 collected_metrics[metric] = abacusresult[metric]
             except Exception as e:
-                raise RuntimeError(f"Error during collecting {metric}")
-
+                collected_metrics[metric] = None
+                
         metric_file_path = os.path.join(abacusjob, "metrics.json")
         with open(metric_file_path, "w", encoding="UTF-8") as f:
             json.dump(collected_metrics, f, indent=4)

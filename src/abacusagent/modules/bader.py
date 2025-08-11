@@ -292,9 +292,9 @@ def abacus_badercharge_run(
         return {
             "bader_charges": None,
             "atom_labels": None,
-            "abacus_workpath": Path(''),
-            "bader_workpath": Path(''),
-            "cube_file": Path(''),
+            "abacus_workpath": None,
+            "bader_workpath": None,
+            "cube_file": None,
             "message": f"Calculating Bader charge failed: {e}"
         }
 

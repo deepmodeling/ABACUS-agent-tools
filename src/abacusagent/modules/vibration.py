@@ -161,7 +161,7 @@ def abacus_vibration_analysis(abacus_inputs_path: Path,
                 'vib_free_energy': float(free_energy)}
     except Exception as e:
         return {'frequencies': None,
-                'work_dir': Path(''),
+                'work_dir': None,
                 'zero_point_energy': None,
                 'vib_entropy': None,
                 'vib_free_energy': None,

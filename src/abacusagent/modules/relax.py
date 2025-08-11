@@ -90,8 +90,8 @@ def abacus_do_relax(
         }
     except Exception as e:
         return {
-            "job_path": Path(''),
-            "new_abacus_inputs_path": Path(''),
+            "job_path": None,
+            "new_abacus_inputs_path": None,
             "result": None
         }
 
@@ -137,13 +137,11 @@ def abacus_prepare_inputs_from_relax_results(
         return {
             "job_path": Path(work_path).absolute(),
             "input_content": ReadInput(os.path.join(work_path, "INPUT")),
-            "input_files": [f for f in Path(work_path).iterdir()]
         }
     except Exception as e:
         return {
-            "job_path": Path(''),
+            "job_path": None,
             "input_content": None,
-            "input_files": [Path('')],
             "message": f"Prepare new ABACUS input files from relax or cell-relax calculation output files failed: {e}"
         }
 

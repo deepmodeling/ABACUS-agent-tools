@@ -57,8 +57,8 @@ def abacus_cal_elf(abacusjob_dir: Path):
         }
     except Exception as e:
         return {
-            "work_path": Path(''),
-            "elf_file": Path(''),
+            "work_path": None,
+            "elf_file": None,
             'message': f"Calculating electron localization function failed: {e}"
         }
 
@@ -217,8 +217,8 @@ def abacus_cal_charge_density_difference(
         return {'work_path': Path(work_path).absolute(),
                 'charge_density_difference_cube_file': chg_dens_diff_cube_file}
     except Exception as e:
-        return {'work_path': Path(''),
-                'charge_density_difference_cube_file': Path(''),
+        return {'work_path': None,
+                'charge_density_difference_cube_file': None,
                 'message': f'Calculaing charge density difference failed: {e}'}
 
 @mcp.tool()
@@ -264,6 +264,6 @@ def abacus_cal_spin_density(
         return {'work_path': Path(work_path).absolute(),
                 'spin_density': Path(spin_density_file).absolute()}
     except Exception as e:
-        return {'work_path': Path(work_path).absolute(),
-                'spin_density': Path(spin_density_file).absolute(),
+        return {'work_path': None,
+                'spin_density': None,
                 'message': f"Calculating spin density failed: {e}"}

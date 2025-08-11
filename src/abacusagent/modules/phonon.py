@@ -141,11 +141,11 @@ def abacus_phonon_dispersion(
         }
     except Exception as e:
         return {
-            "phonon_work_path": Path(''),
-            "band_plot": Path(''),
-            "dos_plot": Path(''),
-            'band_yaml': Path(''),
-            'dos_dat_file': Path(''),
+            "phonon_work_path": None,
+            "band_plot": None,
+            "dos_plot": None,
+            'band_yaml': None,
+            'dos_dat_file': None,
             "entropy": None,
             "free_energy": None,
             "heat_capacity": None,

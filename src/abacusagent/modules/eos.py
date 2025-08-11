@@ -148,9 +148,9 @@ def abacus_eos(
             "B0_deriv": B0_deriv, }
     except Exception as e:
         return {
-            "eos_work_path": Path(''),
-            "optimal_stru_abacusjob_dir": Path(''),
-            "eos_fig_path": Path(''),
+            "eos_work_path": None,
+            "optimal_stru_abacusjob_dir": None,
+            "eos_fig_path": None,
             "E0": None,
             "V0": None,
             "B0": None,

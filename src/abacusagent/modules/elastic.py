@@ -192,7 +192,7 @@ def abacus_cal_elastic(
         }
     except Exception as e:
         return {
-            "elastic_cal_dir": Path(''),
+            "elastic_cal_dir": None,
             "elastic_tensor": None,
             "bulk_modulus": None,
             "shear_modulus": None,

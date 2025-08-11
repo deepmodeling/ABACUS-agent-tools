@@ -113,8 +113,8 @@ def abacus_dos_run(
 
         return return_dict
     except Exception as e:
-        return {"dos_fig_path": Path(''),
-                "pdos_fig_path": Path(''),
+        return {"dos_fig_path": None,
+                "pdos_fig_path": None,
                 "message": f"Calculating DOS and PDOS failed: {e}"}
 
 def abacus_dos_run_scf(abacus_inputs_path: Path,
