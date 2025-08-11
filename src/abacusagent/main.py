@@ -56,6 +56,14 @@ def parse_args():
         default=None,
         help="Host to run the MCP server on (default: localhost)"
     )
+    parser.add_argument(
+        "--create",
+        type=str,
+        nargs='?',
+        default=None,
+        const=".",
+        help="Create a template for Google ADK agent in the specified directory (default: current directory)"
+    )
     
     args = parser.parse_args()
     
@@ -93,6 +101,13 @@ def main():
         model_input=args.model,
         port_input=args.port, 
         host_input=args.host)
+    
+    if args.create is not None:
+        from abacusagent.create_template import create_google_adk_template
+        create_google_adk_template(args.create)
+        print(f"Google ADK agent template created at {args.create}/abacus-agent/agent.py")
+        return
+    
     create_workpath()
 
     from abacusagent.init_mcp import mcp

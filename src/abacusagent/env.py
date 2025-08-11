@@ -11,6 +11,11 @@ ENVS = {
     "ABACUSAGENT_HOST": "localhost",
     "ABACUSAGENT_PORT": "50001", 
     "ABACUSAGENT_MODEL": "dp",  # fastmcp, abacus, dp
+    
+    # LLM settings
+    "LLM_MODEL": "",
+    "LLM_API_KEY": "",
+    "LLM_BASE_URL": "",
 
     # bohrium settings
     "BOHRIUM_USERNAME": "",
@@ -32,6 +37,9 @@ ENVS = {
         "ABACUSAGENT_HOST": "The host address for the AbacusAgent server.",
         "ABACUSAGENT_PORT": "The port number for the AbacusAgent server.",
         "ABACUSAGENT_MODEL": "The model to use for AbacusAgent, can be 'fastmcp', 'test', or 'dp'.",
+        "LLM_MODEL": "The model name for the LLM to use. Like: openai/qwen-turbo, deepseek/deepseek-chat",
+        "LLM_API_KEY": "The API key for the LLM service.",
+        "LLM_BASE_URL": "The base URL for the LLM service, if applicable.",
         "BOHRIUM_USERNAME": "The username for Bohrium.",        
         "BOHRIUM_PASSWORD": "The password for Bohrium.",
         "BOHRIUM_PROJECT_ID": "The project ID for Bohrium.",
