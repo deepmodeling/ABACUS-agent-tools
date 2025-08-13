@@ -320,7 +320,8 @@ def abacus_prepare(
                 dftu=dftu,
                 dftu_param=dftu_param,
                 init_mag=init_mag,
-                afm=afm
+                afm=afm,
+                copy_pp_orb=True
             ).run()  
         except Exception as e:
             os.chdir(pwd)
