@@ -99,14 +99,10 @@ def generate_bulk_structure(element: str,
 
         return {
             "structure_file": Path(structure_file).absolute(),
-            "cell": structure.get_cell().tolist(),
-            "coordinate": structure.get_positions().tolist()
         }
     except Exception as e:
         return {
             "structure_file": None,
-            "cell": None,
-            "coordinate": None,
             "message": f"Generating bulk structure failed: {e}"
         }
 
@@ -154,7 +150,7 @@ def generate_bulk_structure_from_wyckoff_position(
 
         return {"structure_file": crys_file_name}
     except Exception as e:
-        return {"structure_file": Path(''),
+        return {"structure_file": None,
                 "message": f"Generating bulk structure from Wyckoff position failed: {e}"}
 
 @mcp.tool()
@@ -224,14 +220,10 @@ def generate_molecule_structure(
 
         return {
             "structure_file": Path(stru_file_path).absolute(),
-            "cell": atoms.get_cell().tolist(),
-            "coordinate": atoms.get_positions().tolist()
         }
     except Exception as e:
         return {
             "structure_file": None,
-            "cell": None,
-            "coordinate": None,
             "message": f"Generating molecule structure failed: {e}"
         }
 
@@ -337,12 +329,10 @@ def abacus_prepare(
         os.chdir(pwd)
 
         return {"job_path": job_path,
-                "input_content": input_content,
-                "input_files": input_files}
+                "input_content": input_content}
     except Exception as e:
         return {"job_path": None,
                 "input_content": None,
-                "input_files": None,
                 "message": f"Prepare ABACUS input files from given structure failed: {e}"}
 
 #@mcp.tool()
@@ -761,6 +751,6 @@ def run_abacus_onejob(
         return {'abacusjob_dir': abacusjob,
                 'metrics': abacus_collect_data(abacusjob)}
     except Exception as e:
-        return {'abacusjob_dir': Path(''),
+        return {'abacusjob_dir': None,
                 'metrics': None,
                 'message': f"Run ABACUS using given input file failed: {e}"}

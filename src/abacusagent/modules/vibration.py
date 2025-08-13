@@ -99,7 +99,8 @@ def abacus_vibration_analysis(abacus_inputs_path: Path,
         temperature (float): Temperature used to calculate thermodynamic quantities. Units in Kelvin.
     Returns:
         A dictionary containing the following keys:
-        - 'frequencies': List of frequencies from vibrational analysis. Imaginary frequencies will be a string ended with 'i'. Units in cm^{-1}.
+        - 'real_frequencies': List of real frequencies from vibrational analysis. Units in cm^{-1}.
+        - 'imaginary_frequencies': Imaginary frequencies will be a string ended with 'i'. Units in cm^{-1}.
         - 'work_path': Path to directory performing vibrational analysis. Containing animation of normal modes 
             with non-zero frequency in ASE traj format and `vib` directory containing collected forces.
         - 'zero_point_energy': Zero-point energy summed over all modes. Units in eV.
@@ -154,13 +155,15 @@ def abacus_vibration_analysis(abacus_inputs_path: Path,
         entropy = thermo.get_entropy(temperature)
         free_energy = thermo.get_helmholtz_energy(temperature)
 
-        return {'frequencies': freqs,
+        return {'real_frequencies': real_freq,
+                'imaginary_frequencies': imag_freq,
                 'work_dir': Path(work_path).absolute(),
                 'zero_point_energy': float(zero_point_energy),
                 'vib_entropy': float(entropy),
                 'vib_free_energy': float(free_energy)}
     except Exception as e:
-        return {'frequencies': None,
+        return {'real_frequencies': None,
+                'imaginary_frequencies': None,
                 'work_dir': None,
                 'zero_point_energy': None,
                 'vib_entropy': None,
