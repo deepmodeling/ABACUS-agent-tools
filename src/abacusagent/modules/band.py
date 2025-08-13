@@ -343,6 +343,7 @@ def abacus_plot_band_pyatb(band_calc_path: Path,
 
 @mcp.tool()
 def abacus_cal_band(abacus_inputs_path: Path,
+                    mode: Literal["nscf", "pyatb"] = "pyatb",
                     energy_min: float = -10,
                     energy_max: float = 10
 ) -> Dict[str, float|str]:
@@ -351,6 +352,8 @@ def abacus_cal_band(abacus_inputs_path: Path,
     PYATB or ABACUS NSCF calculation will be used according to parameters in INPUT.
     Args:
         abacusjob_dir (str): Absolute path to a directory containing the INPUT, STRU, KPT, and pseudopotential or orbital files.
+        mode: Method used to plot band. Should be `pyatb` or `nscf`. `nscf` means using `nscf` calculation in ABACUS, `pyatb` means using PYATB
+            to plot the band.
         energy_min (float): Lower bound of $E - E_F$ in the plotted band.
         energy_max (float): Upper bound of $E - E_F$ in the plotted band.
     Returns:
@@ -366,7 +369,7 @@ def abacus_cal_band(abacus_inputs_path: Path,
                                                                       new_stru_file=original_stru_file,
                                                                       kpt_file=band_kpt_file)
 
-        scf_output = property_calculation_scf(abacus_inputs_path)
+        scf_output = property_calculation_scf(abacus_inputs_path, mode)
         work_path, mode = scf_output["work_path"], scf_output["mode"]
         if mode == 'pyatb':
             # Obtain band using PYATB
