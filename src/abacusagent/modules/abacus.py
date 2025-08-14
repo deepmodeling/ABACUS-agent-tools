@@ -17,7 +17,7 @@ from abacustest.lib_collectdata.collectdata import RESULT
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import run_abacus, generate_work_path
 
-@mcp.tool()
+#@mcp.tool()
 def generate_bulk_structure(element: str, 
                            crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
                            a:float =None, 
@@ -153,7 +153,7 @@ def generate_bulk_structure_from_wyckoff_position(
         return {"structure_file": None,
                 "message": f"Generating bulk structure from Wyckoff position failed: {e}"}
 
-@mcp.tool()
+#@mcp.tool()
 def generate_molecule_structure(
     molecule_name: Literal['PH3', 'P2', 'CH3CHO', 'H2COH', 'CS', 'OCHCHO', 'C3H9C', 'CH3COF',
                            'CH3CH2OCH3', 'HCOOH', 'HCCl3', 'HOCl', 'H2', 'SH2', 'C2H2', 'C4H4NH',
