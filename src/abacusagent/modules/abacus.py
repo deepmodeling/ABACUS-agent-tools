@@ -15,7 +15,7 @@ from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
 
 from abacusagent.init_mcp import mcp
-from abacusagent.modules.util.comm import run_abacus, generate_work_path
+from abacusagent.modules.util.comm import generate_work_path, link_abacusjob, run_abacus
 
 #@mcp.tool()
 def generate_bulk_structure(element: str, 
@@ -227,7 +227,7 @@ def generate_molecule_structure(
             "message": f"Generating molecule structure failed: {e}"
         }
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_prepare(
     stru_file: Path,
     stru_type: Literal["cif", "poscar", "abacus/stru"] = "cif",
@@ -362,7 +362,7 @@ def get_file_content(
         file_content = file_content[:max_length]
     return {'file_content': file_content}
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_modify_input(
     abacusjob_dir: Path,
     dft_plus_u_settings: Optional[Dict[str, Union[float, Tuple[Literal["p", "d", "f"], float]]]] = None,
@@ -465,7 +465,7 @@ def abacus_modify_input(
                 'input_content': None,
                 'message': f"Modify ABACUS INPUT file failed: {e}"}
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_modify_stru(
     abacusjob_dir: Path,
     pp: Optional[Dict[str, str]] = None,
@@ -601,7 +601,7 @@ def abacus_modify_stru(
                 'message': f"Modify ABACUS STRU file failed: {e}"
                 }
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_collect_data(
     abacusjob: Path,
     metrics: List[Literal["version", "ncore", "omp_num", "normal_end", "INPUT", "kpt", "fft_grid",
@@ -754,3 +754,37 @@ def run_abacus_onejob(
         return {'abacusjob_dir': None,
                 'metrics': None,
                 'message': f"Run ABACUS using given input file failed: {e}"}
+
+@mcp.tool()
+def abacus_calculation_scf(
+    abacusjob_path: Path,
+) -> Dict[str, Any]:
+    """
+    Run ABACUS SCF calculation.
+
+    Args:
+        abacusjob (str): Path to the directory containing the ABACUS input files.
+    Returns:
+        A dictionary containing the path to output file of ABACUS calculation, and a dictionary containing whether the SCF calculation
+        finished normally, the SCF is converged or not, the converged SCF energy and total time used.
+    """
+    try:
+        work_path = Path(generate_work_path()).absolute()
+        link_abacusjob(src=abacusjob_path, dst=work_path, copy_files=['INPUT', 'STRU'])
+        input_params = ReadInput(os.path.join(work_path, "INPUT"))
+
+        input_params['calculation'] = 'scf'
+        WriteInput(input_params, os.path.join(work_path, "INPUT"))
+
+        run_abacus(work_path)
+
+        return_dict = {'abacusjob_dir': Path(work_path).absolute()}
+        return_dict.update(abacus_collect_data(work_path))
+
+        return return_dict
+    except Exception as e:
+        return {"abacusjob_dir": None,
+                "normal_end": None,
+                "converge": None,
+                "energy": None,
+                "total_time": None}

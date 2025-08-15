@@ -95,7 +95,7 @@ def abacus_do_relax(
             "result": None
         }
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_prepare_inputs_from_relax_results(
     relax_jobpath: Path
 )-> Dict[str, Any]:
