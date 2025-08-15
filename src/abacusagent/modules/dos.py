@@ -43,7 +43,7 @@ orbital_rep_map = {
     'f3yx^2-y^3': r'$f_{3yx^2-y^3}$'
 }
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_dos_run(
     abacus_inputs_path: Path,
     pdos_mode: Literal['species', 'species+shell', 'species+orbital'] = 'species+shell',

@@ -77,7 +77,7 @@ def identify_complex_types(complex_array):
 
     return is_real, is_pure_imag, is_general
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_vibration_analysis(abacus_inputs_path: Path,
                               selected_atoms: Optional[List[int]] = None,
                               stepsize: float = 0.01,

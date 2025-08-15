@@ -99,7 +99,7 @@ def collected_stress_to_pymatgen_stress(stress: List[float]):
                                    stress[3:6],
                                    stress[6: ]])) # 1 kBar = 0.1 GPa
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_cal_elastic(
     abacus_inputs_path: Path,
     norm_strain: float = 0.01,

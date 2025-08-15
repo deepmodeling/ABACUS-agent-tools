@@ -17,7 +17,7 @@ from abacusagent.modules.vibration import set_ase_abacus_calculator
 THz_TO_K = 47.9924
 
 # Modified from calculate_phonon in https://github.com/deepmodeling/AI4S-agent-tools/blob/main/servers/DPACalculator/server.py
-@mcp.tool()
+#@mcp.tool()
 def abacus_phonon_dispersion(
     abacus_inputs_path: Path,
     supercell: Optional[List[int]] = None,

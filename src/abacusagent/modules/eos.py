@@ -33,7 +33,7 @@ def is_cubic(cell: List[List[float]]) -> bool:
     else:
         return False
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_eos(
     abacus_inputs_path: Path,
     stru_scale_number: int = 3,

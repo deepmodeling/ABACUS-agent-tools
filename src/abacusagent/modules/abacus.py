@@ -227,7 +227,7 @@ def generate_molecule_structure(
             "message": f"Generating molecule structure failed: {e}"
         }
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_prepare(
     stru_file: Path,
     stru_type: Literal["cif", "poscar", "abacus/stru"] = "cif",
@@ -335,7 +335,7 @@ def abacus_prepare(
                 "input_content": None,
                 "message": f"Prepare ABACUS input files from given structure failed: {e}"}
 
-#@mcp.tool()
+@mcp.tool()
 def get_file_content(
     filepath: Path
 ) -> Dict[str, str]:
@@ -362,7 +362,7 @@ def get_file_content(
         file_content = file_content[:max_length]
     return {'file_content': file_content}
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_modify_input(
     abacusjob_dir: Path,
     dft_plus_u_settings: Optional[Dict[str, Union[float, Tuple[Literal["p", "d", "f"], float]]]] = None,
@@ -465,7 +465,7 @@ def abacus_modify_input(
                 'input_content': None,
                 'message': f"Modify ABACUS INPUT file failed: {e}"}
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_modify_stru(
     abacusjob_dir: Path,
     pp: Optional[Dict[str, str]] = None,
@@ -601,7 +601,7 @@ def abacus_modify_stru(
                 'message': f"Modify ABACUS STRU file failed: {e}"
                 }
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_collect_data(
     abacusjob: Path,
     metrics: List[Literal["version", "ncore", "omp_num", "normal_end", "INPUT", "kpt", "fft_grid",
@@ -755,7 +755,7 @@ def run_abacus_onejob(
                 'metrics': None,
                 'message': f"Run ABACUS using given input file failed: {e}"}
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_calculation_scf(
     abacusjob_path: Path,
 ) -> Dict[str, Any]:
