@@ -247,10 +247,7 @@ def write_pyatb_input(band_calc_path: Path, connect_line_points=30):
     pyatb_input_file.write("}\n\nBAND_STRUCTURE\n{\n    kpoint_mode   line\n")
 
     # Get kline and write to pyatb Input file
-    stru_file = AbacusStru.ReadStru(os.path.join(band_calc_path, "STRU"))
-    kpt_file = os.path.join(band_calc_path, "KPT")
-    stru_file.get_kline_ase(point_number=connect_line_points,kpt_file=kpt_file)
-
+    kpt_file = os.path.join(band_calc_path, "KPT_band")
     kpt_file_content = []
     with open(kpt_file) as fin:
         for lines in fin:
@@ -260,7 +257,7 @@ def write_pyatb_input(band_calc_path: Path, connect_line_points=30):
     high_symm_nums = int(kpt_file_content[1][0])
     kpoint_label = ''
     for linenum in range(3, 3+high_symm_nums):
-        kpoint_label += kpt_file_content[linenum][-1]
+        kpoint_label += kpt_file_content[linenum][-1].split('#')[1]
         if linenum < 2+high_symm_nums:
             kpoint_label += ", "
     pyatb_input_file.write(f"    kpoint_num    {high_symm_nums}\n")
