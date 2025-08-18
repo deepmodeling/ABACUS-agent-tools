@@ -143,7 +143,7 @@ def process_band_data(abacusjob_dir: Path,
     else:
         return high_symm_labels, high_symm_poses, kline_splited, bands_splited, bands_dw_splited
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_plot_band_nscf(abacusjob_dir: Path,
                           energy_min: float = -10,
                           energy_max: float = 10
@@ -275,7 +275,7 @@ def write_pyatb_input(band_calc_path: Path, connect_line_points=30):
 
     return True
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_plot_band_pyatb(band_calc_path: Path,
                            energy_min: float = -10,
                            energy_max: float = 10,
@@ -341,7 +341,7 @@ def abacus_plot_band_pyatb(band_calc_path: Path,
     return {'band_gap': band_gap,
             'band_picture': Path(band_picture).absolute()}    
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_cal_band(abacus_inputs_path: Path,
                     mode: Literal["nscf", "pyatb"] = "pyatb",
                     energy_min: float = -10,

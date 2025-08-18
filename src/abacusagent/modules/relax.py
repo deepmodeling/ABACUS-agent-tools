@@ -11,7 +11,7 @@ from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path
 
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_do_relax(
     abacus_inputs_path: Path,
     force_thr_ev: Optional[float] = None,
@@ -95,7 +95,7 @@ def abacus_do_relax(
             "result": None
         }
 
-@mcp.tool()
+#@mcp.tool()
 def abacus_prepare_inputs_from_relax_results(
     relax_jobpath: Path
 )-> Dict[str, Any]:

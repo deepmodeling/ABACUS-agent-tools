@@ -241,7 +241,7 @@ def postprocess_charge_densities(
     }
 
 
-#@mcp.tool() # make it visible to the MCP server
+@mcp.tool() # make it visible to the MCP server
 def abacus_badercharge_run(
     jobdir: Path
 ) -> List[float]:

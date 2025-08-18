@@ -335,7 +335,7 @@ def abacus_prepare(
                 "input_content": None,
                 "message": f"Prepare ABACUS input files from given structure failed: {e}"}
 
-@mcp.tool()
+#@mcp.tool()
 def get_file_content(
     filepath: Path
 ) -> Dict[str, str]:
@@ -755,7 +755,7 @@ def run_abacus_onejob(
                 'metrics': None,
                 'message': f"Run ABACUS using given input file failed: {e}"}
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_calculation_scf(
     abacusjob_path: Path,
 ) -> Dict[str, Any]:

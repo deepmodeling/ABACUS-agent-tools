@@ -87,7 +87,7 @@ def convert_md_dump_to_ase_traj(md_dump_path: Path, traj_filename: str="md_traj.
     
     return Path(traj_filename).absolute()
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_run_md(
     abacusjob_dir: Path,
     md_type: Literal['nve', 'nvt', 'npt', 'langevin'] = 'nve',
