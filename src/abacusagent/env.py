@@ -29,6 +29,8 @@ ENVS = {
     "ABACUS_COMMAND": "abacus",  # abacus executable command
     "ABACUS_PP_PATH": "",  # abacus pseudopotential library path
     "ABACUS_ORB_PATH": "",  # abacus orbital library path
+    "ABACUS_SOC_PP_PATH": "",  # abacus SOC pseudopotential library path
+    "ABACUS_SOC_ORB_PATH": "",  # abacus SOC orbital library path
     
     "_comments":{
         "ABACUS_WORK_PATH": "The working directory for AbacusAgent, where all temporary files will be stored.",
@@ -48,7 +50,9 @@ ENVS = {
         "BOHRIUM_ABACUS_COMMAND": "The command to run Abacus on Bohrium",
         "ABACUS_COMMAND": "The command to execute Abacus on local machine.",
         "ABACUS_PP_PATH": "The path to the pseudopotential library for Abacus.",
-        "ABACUS_ORB_PATH": "The path to the orbital library for Abacus.",
+        "ABACUS_ORB_PATH": "The path to the orbital library for ABACUS_PP_PATH",
+        "ABACUS_SOC_PP_PATH": "The path to the SOC pseudopotential library for Abacus.",
+        "ABACUS_SOC_ORB_PATH": "The path to the orbital library for ABACUS_SOC_PP_PATH.",
         "_comments": "This dictionary contains the default environment variables for AbacusAgent."
     }
 }
