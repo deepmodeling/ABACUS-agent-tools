@@ -23,7 +23,8 @@ def abacus_do_relax(
     relax_new: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """
-    Specially modify the ABACUS input for relaxation calculations.
+    Perform relaxation calculations using ABACUS based on the provided input files. The results of the relaxation and 
+    the new ABACUS input files containing final relaxed structure will be returned.
     
     Args:
         abacus_inputs_path: Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
@@ -55,9 +56,31 @@ def abacus_do_relax(
             - largest_gradient: The largest force gradient during the relaxation.
             - relax_converge: Whether the relaxation converged.
             - energies: The energies at each step of the relaxation.
-    Raises:
-        FileNotFoundError: If the job directory does not exist or does not contain necessary files.
-        RuntimeError: If the ABACUS calculation fails or returns an error.
+    
+    For example:
+        # only relax the atomic positions
+        >>> abacus_do_relax(
+                abacus_inputs_path="/path/to/abacus/inputs",
+                force_thr_ev=0.01,
+                max_steps=100,
+                relax_cell=False)
+        # relax the cell parameters and atomic positions
+        >>> abacus_do_relax(
+                abacus_inputs_path="/path/to/abacus/inputs",
+                force_thr_ev=0.01,
+                stress_thr_kbar=1.0,
+                max_steps=100,
+                relax_cell=True)
+        # relax the cell parameters and atomic positions with fixed volume
+        >>> abacus_do_relax(
+                abacus_inputs_path="/path/to/abacus/inputs",
+                force_thr_ev=0.01,
+                stress_thr_kbar=1.0,
+                max_steps=100,
+                relax_cell=True,
+                fixed_axes="volume") 
+        
+        When the relaxation is not converged, please try to use other relaxation methods.
     """
     try:
         abacus_inputs_path = Path(abacus_inputs_path).absolute()

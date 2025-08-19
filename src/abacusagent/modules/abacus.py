@@ -243,14 +243,18 @@ def abacus_prepare(
     afm: bool = False,
     extra_input: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """
-    Prepare input files for ABACUS calculation.
+    """Prepare input files for ABACUS calculation.
+    
     Args:
         stru_file (Path): Structure file in cif, poscar, or abacus/stru format.
         stru_type (Literal["cif", "poscar", "abacus/stru"] = "cif"): Type of structure file, can be 'cif', 'poscar', or 'abacus/stru'. 'cif' is the default. 'poscar' is the VASP POSCAR format. 'abacus/stru' is the ABACUS structure format.
         pp_path (Optional[str]): The pseudopotential library directory, if is None, will use the value of environment variable ABACUS_PP_PATH.
         orb_path (Optional[str]): The orbital library directory, if is None, will use the value of environment variable ABACUS_ORB_PATH.
-        job_type (Literal["scf", "relax", "cell-relax", "md"] = "scf"): The type of job to be performed, can be 'scf', 'relax', 'cell-relax', or 'md'. 'scf' is the default.
+        job_type (Literal["scf", "relax", "cell-relax", "md"] = "scf"): The type of job to be performed, can be:
+            'scf': Self-consistent field calculation, which is the default. 
+            'relax': Geometry relaxation calculation, which will relax the atomic position to the minimum energy configuration.
+            'cell-relax': Cell relaxation calculation, which will relax the cell parameters and atomic positions to the minimum energy configuration.
+            'md': Molecular dynamics calculation, which will perform molecular dynamics simulation.
         lcao (bool): Whether to use LCAO basis set, default is True. If True, the orbital library path must be provided.
         nspin (int): The number of spins, can be 1 (no spin), 2 (spin polarized), or 4 (non-collinear spin). Default is 1.
         soc (bool): Whether to use spin-orbit coupling, if True, nspin should be 4.
