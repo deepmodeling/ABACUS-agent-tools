@@ -16,10 +16,9 @@ from pymatgen.analysis.elasticity.strain import DeformedStructureSet
 from pymatgen.analysis.elasticity.stress import Stress
 
 from abacustest.lib_prepare.comm import kspacing2kpt
-from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteKpt
+from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteKpt, WriteInput
 from abacusagent.init_mcp import mcp
-from abacusagent.modules.abacus import abacus_modify_input, abacus_collect_data
-from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path
+from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, collect_metrics
 
 def prepare_deformed_stru(
     input_stru_dir: Path,
@@ -132,18 +131,15 @@ def abacus_cal_elastic(
 
         input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
         stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_path, input_params.get("stru_file", "STRU")))
-        remove_input = []
+
         if 'kspacing' in input_params.keys():
-            remove_input += ['kspacing']
             kpt = kspacing2kpt(input_params['kspacing'], stru.get_cell())
             WriteKpt(kpoint_list = kpt + [0, 0, 0],
                      file_name = os.path.join(abacus_inputs_path, input_params.get('kpt_file', 'KPT')))
-
-        modified_params = {'calculation': 'scf',
-                           'cal_stress': 1}
-        modified_input = abacus_modify_input(input_stru_dir,
-                                             extra_input = modified_params,
-                                             remove_input = remove_input)
+            del input_params['kspacing']
+        input_params["calculation"] = 'scf'
+        input_params["cal_stress"] = 1
+        WriteInput(input_params, os.path.join(input_stru_dir, "INPUT"))
 
         deformed_strus = prepare_deformed_stru(input_stru_dir, norm_strain, shear_strain)
         strain = [Strain.from_deformation(d) for d in deformed_strus.deformations]
@@ -157,17 +153,17 @@ def abacus_cal_elastic(
 
         collected_metrics = ["normal_end", "converge", "stress"]
 
-        input_stru_result = abacus_collect_data(input_stru_dir, collected_metrics)
-        if input_stru_result['collected_metrics']['converge'] is True:
-            input_stru_stress = collected_stress_to_pymatgen_stress(input_stru_result['collected_metrics']['stress'])
+        input_stru_result = collect_metrics(input_stru_dir, collected_metrics)
+        if input_stru_result['converge'] is True:
+            input_stru_stress = collected_stress_to_pymatgen_stress(input_stru_result['stress'])
         else:
             raise RuntimeError("SCF calculation for input structure doesn't converge")
 
         deformed_stru_stresses = []
         for idx, deformed_stru_job_dir in enumerate(deformed_stru_job_dirs):
-            deformed_stru_result = abacus_collect_data(deformed_stru_job_dir, collected_metrics)
-            if deformed_stru_result['collected_metrics']['converge'] is True:
-                deformed_stru_stress = collected_stress_to_pymatgen_stress(deformed_stru_result['collected_metrics']['stress'])
+            deformed_stru_result = collect_metrics(deformed_stru_job_dir, collected_metrics)
+            if deformed_stru_result['converge'] is True:
+                deformed_stru_stress = collected_stress_to_pymatgen_stress(deformed_stru_result['stress'])
                 deformed_stru_stresses.append(deformed_stru_stress)
             else:
                 raise RuntimeError(f"SCF calculation for deformed structure {idx} doesn't converge")

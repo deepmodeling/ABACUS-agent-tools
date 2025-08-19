@@ -1,14 +1,14 @@
 import os
 import json
 from pathlib import Path
-from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple, Union
-from abacustest.lib_model.model_013_inputs import PrepInput
-from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
+from typing import Literal, Optional,  Dict, Any, 
+from abacustest.lib_prepare.abacus import ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
-from abacustest.collectdata import parse_value
 
 from abacusagent.init_mcp import mcp
-from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path
+from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, collect_metrics
+
+from abacustest.lib_model.comm import check_abacus_inputs
 
 
 @mcp.tool()
@@ -83,6 +83,10 @@ def abacus_do_relax(
         When the relaxation is not converged, please try to use other relaxation methods.
     """
     try:
+        is_valid, msg = check_abacus_inputs(abacus_inputs_path)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
         abacus_inputs_path = Path(abacus_inputs_path).absolute()
         work_path = Path(generate_work_path()).absolute()
         link_abacusjob(src=abacus_inputs_path,
@@ -223,11 +227,8 @@ def prepare_relax_inputs(
     
 
 def relax_postprocess(work_path: Path) -> Dict[str, Any]:
-    work_path = Path(work_path).absolute()
-    rs = RESULT(path=work_path, fmt="abacus")
-    
-    metrics = ["normal_end", "relax_steps", "largest_gradient", "largest_gradient_stress", "relax_converge", "energies"]
-    
-    results = parse_value(rs, metrics)
-    
-    return results
+    """Collect the key metrics from the relaxation results."""
+    return collect_metrics(work_path, 
+                          metrics_names=["normal_end", "relax_steps", "largest_gradient",
+                                         "largest_gradient_stress", "relax_converge", "energies"])
+

@@ -18,8 +18,7 @@ from abacustest.lib_prepare.abacus import ReadInput, WriteInput, AbacusStru
 from abacustest.lib_collectdata.collectdata import RESULT
 
 from abacusagent.init_mcp import mcp
-from abacusagent.modules.abacus import abacus_collect_data
-from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, run_command, has_chgfile
+from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, run_command, has_chgfile,collect_metrics
 
 BADER_EXE = os.environ.get("BADER_EXE", "bader") # use environment variable to specify the bader executable path
 
@@ -275,8 +274,8 @@ def abacus_badercharge_run(
 
         # Postprocess the charge density to obtain Bader charges
         bader_results = postprocess_charge_densities(fcube)
-        original_atom_electrons = abacus_collect_data(Path(abacus_jobpath),
-                                                      metrics=['nelec_dict'])['collected_metrics']['nelec_dict']
+        original_atom_electrons = collect_metrics(Path(abacus_jobpath),
+                                                ['nelec_dict'])['nelec_dict']
 
         for i in range(len(bader_results['bader_charges'])):
             bader_results["bader_charges"][i] = original_atom_electrons.get(atom_labels[i], 0) - bader_results["bader_charges"][i]

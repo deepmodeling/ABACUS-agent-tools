@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Literal
 
 from abacusagent.init_mcp import mcp
-from abacusagent.modules.util.comm import generate_work_path, link_abacusjob, run_abacus, has_chgfile
-from abacusagent.modules.abacus import abacus_collect_data
+from abacusagent.modules.util.comm import generate_work_path, link_abacusjob, run_abacus, has_chgfile, collect_metrics
+
 
 
 angular_momentum_map = ['s', 'p', 'd', 'f', 'g']
@@ -544,7 +544,7 @@ def plot_dos_pdos(scf_job_path: Path,
     
 
     energy_values, orbitals = parse_pdos_file(input_file)
-    fermi_level = abacus_collect_data(scf_job_path, ['efermi'])['collected_metrics']['efermi']
+    fermi_level = collect_metrics(scf_job_path, ['efermi'])['efermi']
     label_map = parse_basref_file(basref_file)
     
     # Plot DOS and get file path

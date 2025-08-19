@@ -5,8 +5,7 @@ from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple
 from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput, WriteKpt
 
 from abacusagent.init_mcp import mcp
-from abacusagent.modules.abacus import abacus_modify_input, abacus_collect_data
-from abacusagent.modules.util.comm import run_abacus, run_command, get_physical_cores, generate_work_path, link_abacusjob
+from abacusagent.modules.util.comm import run_abacus, run_command, get_physical_cores, collect_metrics
 from abacusagent.modules.util.pyatb import property_calculation_scf
 
 
@@ -168,7 +167,7 @@ def abacus_plot_band_nscf(abacusjob_dir: Path,
     if nspin not in (1, 2):
         raise NotImplementedError("Band plot for nspin=4 is not supported yet")
     
-    metrics = abacus_collect_data(abacusjob_dir, ['efermi', 'nelec', 'band_gap'])['collected_metrics']
+    metrics = collect_metrics(abacusjob_dir, ['efermi', 'nelec', 'band_gap'])
     efermi, band_gap = metrics['efermi'], float(metrics['band_gap'])
     band_file = os.path.join(abacusjob_dir, f"OUT.{suffix}/BANDS_1.dat")
     if nspin == 2:
@@ -214,7 +213,7 @@ def write_pyatb_input(band_calc_path: Path, connect_line_points=30):
     input_args = ReadInput(os.path.join(band_calc_path, "INPUT"))
     suffix = input_args.get('suffix', 'ABACUS')
     nspin = input_args.get('nspin', 1)
-    metrics = abacus_collect_data(band_calc_path, ['efermi', 'cell', 'band_gap'])['collected_metrics']
+    metrics = collect_metrics(band_calc_path, ['efermi', 'cell', 'band_gap'])
     efermi, cell = metrics['efermi'], metrics['cell']
 
     input_parameters = {
@@ -300,7 +299,7 @@ def abacus_plot_band_pyatb(band_calc_path: Path,
     """
     input_args = ReadInput(os.path.join(band_calc_path, "INPUT"))
     nspin = input_args.get('nspin', 1)
-    band_gap = float(abacus_collect_data(band_calc_path, ['band_gap'])['collected_metrics']['band_gap'])
+    band_gap = float(collect_metrics(band_calc_path, ['band_gap'])['band_gap'])
     if nspin not in (1, 2):
         raise NotImplementedError("Band plot for nspin=4 is not supported yet")
     
