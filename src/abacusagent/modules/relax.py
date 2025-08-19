@@ -4,16 +4,15 @@ from pathlib import Path
 from typing import Literal, Optional,  Dict, Any
 from abacustest.lib_prepare.abacus import ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
+from abacustest.lib_model.comm import check_abacus_inputs
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, collect_metrics
 
-from abacustest.lib_model.comm import check_abacus_inputs
-
 
 @mcp.tool()
 def abacus_do_relax(
-    abacus_inputs_path: Path,
+    abacus_inputs_dir: Path,
     force_thr_ev: Optional[float] = None,
     stress_thr_kbar: Optional[float] = None,
     max_steps: Optional[int] = None,
@@ -27,7 +26,7 @@ def abacus_do_relax(
     the new ABACUS input files containing final relaxed structure will be returned.
     
     Args:
-        abacus_inputs_path: Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
+        abacus_inputs_dir: Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
         force_thr_ev: Force convergence threshold in eV/Å, default is 0.01.
         stress_thr_kbar: Stress convergence threshold in kbar, default is 1.0, this is only used when relax_cell is True.
         max_steps: Maximum number of relaxation steps, default is 100.
@@ -48,7 +47,7 @@ def abacus_do_relax(
     Returns:
         A dictionary containing:
         - job_path: The job path of the relaxation calculation.
-        - new_abacus_inputs_path: The path to the new ABACUS input files using relaxed structure in STRU file from the relaxation results.
+        - new_abacus_inputs_dir: The path to the new ABACUS input files using relaxed structure in STRU file from the relaxation results.
                                   Property calculation should be performed using this new ABACUS input files.
         - result: The result of the relaxation calculation with a dictionary containing:
             - normal_end: Whether the relaxation calculation ended normally.
@@ -60,20 +59,20 @@ def abacus_do_relax(
     For example:
         # only relax the atomic positions
         >>> abacus_do_relax(
-                abacus_inputs_path="/path/to/abacus/inputs",
+                abacus_inputs_dir="/path/to/abacus/inputs",
                 force_thr_ev=0.01,
                 max_steps=100,
                 relax_cell=False)
         # relax the cell parameters and atomic positions
         >>> abacus_do_relax(
-                abacus_inputs_path="/path/to/abacus/inputs",
+                abacus_inputs_dir="/path/to/abacus/inputs",
                 force_thr_ev=0.01,
                 stress_thr_kbar=1.0,
                 max_steps=100,
                 relax_cell=True)
         # relax the cell parameters and atomic positions with fixed volume
         >>> abacus_do_relax(
-                abacus_inputs_path="/path/to/abacus/inputs",
+                abacus_inputs_dir="/path/to/abacus/inputs",
                 force_thr_ev=0.01,
                 stress_thr_kbar=1.0,
                 max_steps=100,
@@ -83,13 +82,13 @@ def abacus_do_relax(
         When the relaxation is not converged, please try to use other relaxation methods.
     """
     try:
-        is_valid, msg = check_abacus_inputs(abacus_inputs_path)
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
         if not is_valid:
             raise RuntimeError(f"Invalid ABACUS input files: {msg}")
         
-        abacus_inputs_path = Path(abacus_inputs_path).absolute()
+        abacus_inputs_dir = Path(abacus_inputs_dir).absolute()
         work_path = Path(generate_work_path()).absolute()
-        link_abacusjob(src=abacus_inputs_path,
+        link_abacusjob(src=abacus_inputs_dir,
                        dst=work_path,
                        copy_files=["INPUT", "STRU", "KPT"])
 
@@ -108,19 +107,15 @@ def abacus_do_relax(
 
         results = relax_postprocess(work_path)
 
-        new_abacus_inputs_path = abacus_prepare_inputs_from_relax_results(work_path)['job_path']
+        new_abacus_inputs_dir = abacus_prepare_inputs_from_relax_results(work_path)['job_path']
 
         return {
             "job_path": Path(work_path).absolute(),
-            "new_abacus_inputs_path": Path(new_abacus_inputs_path).absolute(),
+            "new_abacus_inputs_dir": Path(new_abacus_inputs_dir).absolute(),
             "result": results
         }
     except Exception as e:
-        return {
-            "job_path": None,
-            "new_abacus_inputs_path": None,
-            "result": None
-        }
+        return {"message": f"Relaxation calculation failed: {e}"}
 
 #@mcp.tool()
 def abacus_prepare_inputs_from_relax_results(
