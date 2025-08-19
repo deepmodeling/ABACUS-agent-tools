@@ -16,6 +16,9 @@ package-dir = { "abacusagent" = "src/abacusagent" }
 
 [tool.setuptools_scm]
 
+[tool.setuptools.dynamic]
+version = { attr = "abacusagent.version.__version__" }
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["abacusagent*"]
