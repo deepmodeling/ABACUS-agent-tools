@@ -9,6 +9,7 @@ from phonopy import Phonopy
 from phonopy.harmonic.dynmat_to_fc import get_commensurate_points
 from phonopy.structure.atoms import PhonopyAtoms
 from abacustest.lib_prepare.abacus import ReadInput
+from abacustest.lib_model.comm import check_abacus_inputs
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import generate_work_path
@@ -19,7 +20,7 @@ THz_TO_K = 47.9924
 # Modified from calculate_phonon in https://github.com/deepmodeling/AI4S-agent-tools/blob/main/servers/DPACalculator/server.py
 @mcp.tool()
 def abacus_phonon_dispersion(
-    abacus_inputs_path: Path,
+    abacus_inputs_dir: Path,
     supercell: Optional[List[int]] = None,
     displacement_stepsize: float = 0.01,
     temperature: Optional[float] = 298.15,
@@ -28,7 +29,7 @@ def abacus_phonon_dispersion(
     Calculate phonon dispersion using Phonopy with ABACUS as the calculator. 
     This tool function is usually followed by a cell-relax calculation (`calculation` is set to `cell-relax`). 
     Args:
-        abacus_inputs_path (Path): Path to the directory containing ABACUS input files.
+        abacus_inputs_dir (Path): Path to the directory containing ABACUS input files.
         supercell (List[int], optional): Supercell matrix for phonon calculations. If default value None are used,
             the supercell matrix will be determined by how large a supercell can have a length of lattice vector
             along all 3 directions larger than 10.0 Angstrom.
@@ -39,8 +40,6 @@ def abacus_phonon_dispersion(
             - phonon_work_path: Path to the directory containing phonon calculation results.
             - band_plot: Path to the phonon dispersion plot.
             - dos_plot: Path to the phonon density of states plot.
-            - band_yaml: Path to the YAML file containing phonon band structure data.
-            - dos_dat_file: Path to the phonon density of states data file.
             - entropy: Entropy at the specified temperature.
             - free_energy: Free energy at the specified temperature.
             - heat_capacity: Heat capacity at the specified temperature.
@@ -48,11 +47,15 @@ def abacus_phonon_dispersion(
             - max_frequency_K: Maximum phonon frequency in Kelvin.
     """
     try:
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
         work_path = Path(generate_work_path()).absolute()
 
-        input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+        input_params = ReadInput(os.path.join(abacus_inputs_dir, "INPUT"))
         stru_file = input_params.get('stru_file', "STRU")
-        stru = read(os.path.join(abacus_inputs_path, stru_file))
+        stru = read(os.path.join(abacus_inputs_dir, stru_file))
         # Provide extra INPUT parameters necessary for calculating phonon dispersion
         extra_input_params = {'calculation': 'scf',
                               'cal_force': 1,
@@ -60,7 +63,7 @@ def abacus_phonon_dispersion(
                               'init_chg': 'auto'}
         if input_params.get('scf_thr', 1e-7) > 1e-7:
             extra_input_params['scf_thr'] = 1e-7
-        calc = set_ase_abacus_calculator(abacus_inputs_path,
+        calc = set_ase_abacus_calculator(abacus_inputs_dir,
                                          work_path,
                                          extra_input_params)
 
