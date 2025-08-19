@@ -21,6 +21,8 @@ class TestAbacusPrepare(unittest.TestCase):
         self.orb_path = (self.data_dir / "orb").resolve()
         self.stru_file1 = (self.data_dir / "STRU").resolve()
         self.stru_file2 = (self.data_dir / "POSCAR").resolve()
+        os.environ["ABACUS_PP_PATH"] = str(self.pp_path)
+        os.environ["ABACUS_ORB_PATH"] = str(self.orb_path)
         
         self.original_cwd = os.getcwd()
         os.chdir(self.test_path)
@@ -40,8 +42,6 @@ class TestAbacusPrepare(unittest.TestCase):
         
         outputs = abacus_prepare(str(self.stru_file1.absolute()),
             stru_type = "abacus/stru",
-            pp_path= self.pp_path,
-            orb_path = self.orb_path,
             job_type= "scf",
             lcao= True
         )

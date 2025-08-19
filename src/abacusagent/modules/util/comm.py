@@ -1,7 +1,7 @@
 import subprocess
 import select
 from pathlib import Path
-from typing import List, Tuple, Union, Optional
+from typing import List, Tuple, Union, Optional, Dict, Any
 import os
 import time
 import json
@@ -10,6 +10,8 @@ import uuid
 import glob
 
 from abacustest.lib_prepare.abacus import ReadInput
+from abacustest.lib_collectdata.collectdata import RESULT
+
 
 def run_command(
         cmd,
@@ -327,3 +329,14 @@ def has_pyatb_matrix_files(work_path: Path) -> bool:
     return (os.path.isfile(os.path.join(work_path, "OUT." + suffix, "data-HR-sparse_SPIN0.csr")) and
             os.path.isfile(os.path.join(work_path, "OUT." + suffix, "data-SR-sparse_SPIN0.csr")) and 
             os.path.isfile(os.path.join(work_path, "OUT." + suffix, "data-rR-sparse.csr")))
+    
+def collect_metrics(abacusjob: Union[str, Path], 
+                    metrics_names: List[str] = ["normal_end", "converge", "energy", "total_time"], 
+                    ) -> Dict[str, Any]:
+    """ Collect metrics from the ABACUS job directory."""
+    
+    abacusjob = Path(abacusjob)
+    abacusresult = RESULT(fmt="abacus", path=abacusjob)
+    
+    return {i: abacusresult[i] for i in metrics_names}
+
