@@ -1,7 +1,7 @@
 import os
 import json
 from pathlib import Path
-from typing import Literal, Optional,  Dict, Any, 
+from typing import Literal, Optional,  Dict, Any
 from abacustest.lib_prepare.abacus import ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
 
