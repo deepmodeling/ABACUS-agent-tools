@@ -32,28 +32,35 @@ def abacus_cal_elf(abacusjob_dir: Path):
         ValueError: If the nspin in INPUT is not 1 or 2.
         FileNotFoundError: If the ELF file is not found in the output directory.
     """
-    work_path = Path(generate_work_path()).absolute()
-    link_abacusjob(src=abacusjob_dir, dst=work_path, copy_files=["INPUT"])
+    try:
+        work_path = Path(generate_work_path()).absolute()
+        link_abacusjob(src=abacusjob_dir, dst=work_path, copy_files=["INPUT"])
 
-    input_params = ReadInput(os.path.join(work_path, "INPUT"))
-    if input_params.get('nspin', 1) not in [1, 2]:
-        raise ValueError("ELF calculation only supports nspin=1 or nspin=2.")
-    
-    input_params['calculation'] = 'scf'
-    input_params['out_elf'] = 1
-    WriteInput(input_params, os.path.join(work_path, "INPUT"))
+        input_params = ReadInput(os.path.join(work_path, "INPUT"))
+        if input_params.get('nspin', 1) not in [1, 2]:
+            raise ValueError("ELF calculation only supports nspin=1 or nspin=2.")
 
-    run_abacus(work_path)
-    
-    suffix = input_params.get('suffix', 'ABACUS')
-    elf_file = os.path.join(work_path, f'OUT.{suffix}/ELF.cube')
-    if not os.path.exists(elf_file):
-        raise FileNotFoundError(f"ELF file not found in {work_path}")
+        input_params['calculation'] = 'scf'
+        input_params['out_elf'] = 1
+        WriteInput(input_params, os.path.join(work_path, "INPUT"))
 
-    return {
-        "work_path": Path(work_path).absolute(),
-        "elf_file": Path(elf_file).absolute()
-    }
+        run_abacus(work_path)
+
+        suffix = input_params.get('suffix', 'ABACUS')
+        elf_file = os.path.join(work_path, f'OUT.{suffix}/ELF.cube')
+        if not os.path.exists(elf_file):
+            raise FileNotFoundError(f"ELF file not found in {work_path}")
+
+        return {
+            "work_path": Path(work_path).absolute(),
+            "elf_file": Path(elf_file).absolute()
+        }
+    except Exception as e:
+        return {
+            "work_path": None,
+            "elf_file": None,
+            'message': f"Calculating electron localization function failed: {e}"
+        }
 
 def get_subsys_pp_orb(stru: AbacusStru,
                       subsys_atom_index: List[int]
@@ -128,86 +135,91 @@ def abacus_cal_charge_density_difference(
     Raises:
         FileNotFoundError: If the charge density difference file is not found in the output directory.
     """
-    work_path = Path(generate_work_path()).absolute()
-    full_system_jobpath = os.path.join(work_path, "full_system")
-    subsys1_jobpath = os.path.join(work_path, 'subsys1')
-    subsys2_jobpath = os.path.join(work_path, 'subsys2')
-    link_abacusjob(src=abacusjob_dir, dst=full_system_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
-    link_abacusjob(src=abacusjob_dir, dst=subsys1_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
-    link_abacusjob(src=abacusjob_dir, dst=subsys2_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
+    try:
+        work_path = Path(generate_work_path()).absolute()
+        full_system_jobpath = os.path.join(work_path, "full_system")
+        subsys1_jobpath = os.path.join(work_path, 'subsys1')
+        subsys2_jobpath = os.path.join(work_path, 'subsys2')
+        link_abacusjob(src=abacusjob_dir, dst=full_system_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
+        link_abacusjob(src=abacusjob_dir, dst=subsys1_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
+        link_abacusjob(src=abacusjob_dir, dst=subsys2_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
 
-    input_params = ReadInput(os.path.join(full_system_jobpath, "INPUT"))
-    full_system_stru_file = os.path.join(full_system_jobpath, input_params.get('stru_file', 'STRU'))
-    full_system_stru = AbacusStru.ReadStru(full_system_stru_file)
+        input_params = ReadInput(os.path.join(full_system_jobpath, "INPUT"))
+        full_system_stru_file = os.path.join(full_system_jobpath, input_params.get('stru_file', 'STRU'))
+        full_system_stru = AbacusStru.ReadStru(full_system_stru_file)
 
-    # Prepare labels, coordinates, pp and orbital settings needed to generate STRU file for every subsystems
-    subsys2_atom_index = [i for i in range(full_system_stru.get_natoms()) if i not in subsys1_atom_index]
-    if len(subsys1_atom_index) is None:
-        raise ValueError("Subsystem 1 have no atoms! Aborting calculating charge density difference")
-    if len(subsys2_atom_index) is None:
-        raise ValueError("Subsystem 2 have no atoms! Aborting calculating charge density difference")
+        # Prepare labels, coordinates, pp and orbital settings needed to generate STRU file for every subsystems
+        subsys2_atom_index = [i for i in range(full_system_stru.get_natoms()) if i not in subsys1_atom_index]
+        if len(subsys1_atom_index) is None:
+            raise ValueError("Subsystem 1 have no atoms! Aborting calculating charge density difference")
+        if len(subsys2_atom_index) is None:
+            raise ValueError("Subsystem 2 have no atoms! Aborting calculating charge density difference")
 
-    subsys1_stru_file = os.path.join(work_path, f"subsys1/{input_params.get('stru_file', 'STRU')}")
-    subsys2_stru_file = os.path.join(work_path, f"subsys2/{input_params.get('stru_file', 'STRU')}")
-    subsys1_pp, subsys1_orb, subsys1_label = get_subsys_pp_orb(full_system_stru, subsys1_atom_index)
-    subsys2_pp, subsys2_orb, subsys2_label = get_subsys_pp_orb(full_system_stru, subsys2_atom_index)
+        subsys1_stru_file = os.path.join(work_path, f"subsys1/{input_params.get('stru_file', 'STRU')}")
+        subsys2_stru_file = os.path.join(work_path, f"subsys2/{input_params.get('stru_file', 'STRU')}")
+        subsys1_pp, subsys1_orb, subsys1_label = get_subsys_pp_orb(full_system_stru, subsys1_atom_index)
+        subsys2_pp, subsys2_orb, subsys2_label = get_subsys_pp_orb(full_system_stru, subsys2_atom_index)
 
-    subsys1_coord, subsys2_coord = [], []
-    full_system_stru_coord = full_system_stru.get_coord()
-    for i in range(full_system_stru.get_natoms()):
-        if i in subsys1_atom_index:
-            subsys1_coord.append(full_system_stru_coord[i])
-        elif i in subsys2_atom_index:
-            subsys2_coord.append(full_system_stru_coord[i])
-        else:
-            raise ValueError(f"Atom {i} does not belong to neither subsystem1 nor subsystem2")
-    
-    subsys1_stru = AbacusStru(label=subsys1_label,
-                              cell=full_system_stru.get_cell(),
-                              coord=subsys1_coord,
-                              lattice_constant=full_system_stru.get_stru()['lat'],
-                              pp=subsys1_pp,
-                              orb=subsys1_orb,
-                              cartesian=True)
-    subsys1_stru.write(subsys1_stru_file)
+        subsys1_coord, subsys2_coord = [], []
+        full_system_stru_coord = full_system_stru.get_coord()
+        for i in range(full_system_stru.get_natoms()):
+            if i in subsys1_atom_index:
+                subsys1_coord.append(full_system_stru_coord[i])
+            elif i in subsys2_atom_index:
+                subsys2_coord.append(full_system_stru_coord[i])
+            else:
+                raise ValueError(f"Atom {i} does not belong to neither subsystem1 nor subsystem2")
 
-    subsys2_stru = AbacusStru(label=subsys2_label,
-                              cell=full_system_stru.get_cell(),
-                              coord=subsys2_coord,
-                              lattice_constant=full_system_stru.get_stru()['lat'],
-                              pp=subsys2_pp,
-                              orb=subsys2_orb,
-                              cartesian=True)
-    subsys2_stru.write(subsys2_stru_file)
+        subsys1_stru = AbacusStru(label=subsys1_label,
+                                  cell=full_system_stru.get_cell(),
+                                  coord=subsys1_coord,
+                                  lattice_constant=full_system_stru.get_stru()['lat'],
+                                  pp=subsys1_pp,
+                                  orb=subsys1_orb,
+                                  cartesian=True)
+        subsys1_stru.write(subsys1_stru_file)
 
-    # Modify INPUT file to output cube file needed for calculating charge density difference
-    input_params['calculation'] = 'scf'
-    input_params['out_chg'] = '1'
-    
-    WriteInput(input_params, os.path.join(full_system_jobpath, 'INPUT'))
-    run_abacus(full_system_jobpath)
-    WriteInput(input_params, os.path.join(subsys1_jobpath, 'INPUT'))
-    run_abacus(subsys1_jobpath)
-    WriteInput(input_params, os.path.join(subsys2_jobpath, 'INPUT'))
-    run_abacus(subsys2_jobpath)
+        subsys2_stru = AbacusStru(label=subsys2_label,
+                                  cell=full_system_stru.get_cell(),
+                                  coord=subsys2_coord,
+                                  lattice_constant=full_system_stru.get_stru()['lat'],
+                                  pp=subsys2_pp,
+                                  orb=subsys2_orb,
+                                  cartesian=True)
+        subsys2_stru.write(subsys2_stru_file)
 
-    # Generate cube file containing charge density difference
-    full_system_chgfile = os.path.join(full_system_jobpath, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN1_CHG.cube")
+        # Modify INPUT file to output cube file needed for calculating charge density difference
+        input_params['calculation'] = 'scf'
+        input_params['out_chg'] = '1'
 
-    full_system_chg = get_total_charge_density(full_system_jobpath)
-    subsys1_chg = get_total_charge_density(subsys1_jobpath)
-    subsys2_chg = get_total_charge_density(subsys2_jobpath)
-    
-    sum_subsys_chg = read_gaussian_cube(full_system_chgfile)  # Fetch the data structure. The volumeric data will be replaced later
-    chg_density_difference = read_gaussian_cube(full_system_chgfile) # Fetch the data structure. The volumeric data will be replaced later
-    sum_subsys_chg['data'] = axpy(subsys1_chg['data'], subsys2_chg['data'])
-    chg_density_difference['data'] = axpy(sum_subsys_chg['data'], full_system_chg['data'], alpha=1.0, beta=-1.0)
+        WriteInput(input_params, os.path.join(full_system_jobpath, 'INPUT'))
+        run_abacus(full_system_jobpath)
+        WriteInput(input_params, os.path.join(subsys1_jobpath, 'INPUT'))
+        run_abacus(subsys1_jobpath)
+        WriteInput(input_params, os.path.join(subsys2_jobpath, 'INPUT'))
+        run_abacus(subsys2_jobpath)
 
-    chg_dens_diff_cube_file = Path(os.path.join(work_path, 'chg_density_diff.cube')).absolute()
-    write_gaussian_cube(chg_density_difference, chg_dens_diff_cube_file)
+        # Generate cube file containing charge density difference
+        full_system_chgfile = os.path.join(full_system_jobpath, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN1_CHG.cube")
 
-    return {'work_path': Path(work_path).absolute(),
-            'charge_density_difference_cube_file': chg_dens_diff_cube_file}
+        full_system_chg = get_total_charge_density(full_system_jobpath)
+        subsys1_chg = get_total_charge_density(subsys1_jobpath)
+        subsys2_chg = get_total_charge_density(subsys2_jobpath)
+
+        sum_subsys_chg = read_gaussian_cube(full_system_chgfile)  # Fetch the data structure. The volumeric data will be replaced later
+        chg_density_difference = read_gaussian_cube(full_system_chgfile) # Fetch the data structure. The volumeric data will be replaced later
+        sum_subsys_chg['data'] = axpy(subsys1_chg['data'], subsys2_chg['data'])
+        chg_density_difference['data'] = axpy(full_system_chg['data'], sum_subsys_chg['data'], alpha=1.0, beta=-1.0)
+
+        chg_dens_diff_cube_file = Path(os.path.join(work_path, 'chg_density_diff.cube')).absolute()
+        write_gaussian_cube(chg_density_difference, chg_dens_diff_cube_file)
+
+        return {'work_path': Path(work_path).absolute(),
+                'charge_density_difference_cube_file': chg_dens_diff_cube_file}
+    except Exception as e:
+        return {'work_path': None,
+                'charge_density_difference_cube_file': None,
+                'message': f'Calculaing charge density difference failed: {e}'}
 
 @mcp.tool()
 def abacus_cal_spin_density(
@@ -227,26 +239,31 @@ def abacus_cal_spin_density(
     Raises:
         ValueError: If nspin in INPUT file is not 2.
     """
-    work_path = Path(generate_work_path()).absolute()
-    link_abacusjob(src=abacusjob_dir,dst=work_path,copy_files=["INPUT", "STRU"], exclude_directories=True)
-    input_params = ReadInput(os.path.join(work_path, 'INPUT'))
-    if input_params.get('nspin', 1) not in [2]:
-        raise ValueError('Only collinear spin-polarized calculation is supported for calculating spin density')
-    
-    input_params['calculation'] = 'scf'
-    input_params['out_chg'] = '1'
-    WriteInput(input_params, os.path.join(work_path, 'INPUT'))
+    try:
+        work_path = Path(generate_work_path()).absolute()
+        link_abacusjob(src=abacusjob_dir,dst=work_path,copy_files=["INPUT", "STRU"], exclude_directories=True)
+        input_params = ReadInput(os.path.join(work_path, 'INPUT'))
+        if input_params.get('nspin', 1) not in [2]:
+            raise ValueError('Only collinear spin-polarized calculation is supported for calculating spin density')
 
-    run_abacus(work_path)
-    chg_up_file = os.path.join(work_path, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN1_CHG.cube")
-    chg_dn_file = os.path.join(work_path, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN2_CHG.cube")
+        input_params['calculation'] = 'scf'
+        input_params['out_chg'] = '1'
+        WriteInput(input_params, os.path.join(work_path, 'INPUT'))
 
-    chg_up, chg_dn = read_gaussian_cube(chg_up_file), read_gaussian_cube(chg_dn_file)
-    spin_density = read_gaussian_cube(chg_up_file)
-    spin_density['data'] = axpy(chg_up['data'], chg_dn['data'], alpha=1.0, beta=-1.0)
+        run_abacus(work_path)
+        chg_up_file = os.path.join(work_path, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN1_CHG.cube")
+        chg_dn_file = os.path.join(work_path, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN2_CHG.cube")
 
-    spin_density_file = os.path.join(work_path, 'spin_density.cube')
-    write_gaussian_cube(spin_density, spin_density_file)
+        chg_up, chg_dn = read_gaussian_cube(chg_up_file), read_gaussian_cube(chg_dn_file)
+        spin_density = read_gaussian_cube(chg_up_file)
+        spin_density['data'] = axpy(chg_up['data'], chg_dn['data'], alpha=1.0, beta=-1.0)
 
-    return {'work_path': Path(work_path).absolute(),
-            'spin_density': Path(spin_density_file).absolute()}
+        spin_density_file = os.path.join(work_path, 'spin_density.cube')
+        write_gaussian_cube(spin_density, spin_density_file)
+
+        return {'work_path': Path(work_path).absolute(),
+                'spin_density': Path(spin_density_file).absolute()}
+    except Exception as e:
+        return {'work_path': None,
+                'spin_density': None,
+                'message': f"Calculating spin density failed: {e}"}

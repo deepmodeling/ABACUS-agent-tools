@@ -261,33 +261,42 @@ def abacus_badercharge_run(
         - bader_workpath: Absolute path to the Bader analysis work directory.
         - cube_file: Absolute path to the cube file used for Bader analysis.
     """
+    try:
+        # Run ABACUS to calculate charge density
+        results = calculate_charge_densities_with_abacus(jobdir)
+        abacus_jobpath = results["work_path"]
+        fcube = results["cube_files"]
 
-    # Run ABACUS to calculate charge density
-    results = calculate_charge_densities_with_abacus(jobdir)
-    abacus_jobpath = results["work_path"]
-    fcube = results["cube_files"]
-    
-    stru = AbacusStru.ReadStru(os.path.join(abacus_jobpath, "STRU"))
-    if stru is not None:
-        atom_labels = stru.get_label(total=True)
-    else:
-        atom_labels = None
-    
-    # Postprocess the charge density to obtain Bader charges
-    bader_results = postprocess_charge_densities(fcube)
-    original_atom_electrons = abacus_collect_data(Path(abacus_jobpath),
-                                                  metrics=['nelec_dict'])['collected_metrics']['nelec_dict']
+        stru = AbacusStru.ReadStru(os.path.join(abacus_jobpath, "STRU"))
+        if stru is not None:
+            atom_labels = stru.get_label(total=True)
+        else:
+            atom_labels = None
 
-    for i in range(len(bader_results['bader_charges'])):
-        bader_results["bader_charges"][i] = original_atom_electrons.get(atom_labels[i], 0) - bader_results["bader_charges"][i]
-    
-    return {
-        "bader_charges": bader_results["bader_charges"],
-        "atom_labels": atom_labels,
-        "abacus_workpath": Path(abacus_jobpath).absolute(),
-        "bader_workpath": Path(bader_results["work_path"]).absolute(),
-        "cube_file": Path(bader_results["cube_file"]).absolute()
-    }
+        # Postprocess the charge density to obtain Bader charges
+        bader_results = postprocess_charge_densities(fcube)
+        original_atom_electrons = abacus_collect_data(Path(abacus_jobpath),
+                                                      metrics=['nelec_dict'])['collected_metrics']['nelec_dict']
+
+        for i in range(len(bader_results['bader_charges'])):
+            bader_results["bader_charges"][i] = original_atom_electrons.get(atom_labels[i], 0) - bader_results["bader_charges"][i]
+
+        return {
+            "bader_charges": bader_results["bader_charges"],
+            "atom_labels": atom_labels,
+            "abacus_workpath": Path(abacus_jobpath).absolute(),
+            "bader_workpath": Path(bader_results["work_path"]).absolute(),
+            "cube_file": Path(bader_results["cube_file"]).absolute()
+        }
+    except Exception as e:
+        return {
+            "bader_charges": None,
+            "atom_labels": None,
+            "abacus_workpath": None,
+            "bader_workpath": None,
+            "cube_file": None,
+            "message": f"Calculating Bader charge failed: {e}"
+        }
 
 class TestBaderChargeWorkflow(unittest.TestCase):
     

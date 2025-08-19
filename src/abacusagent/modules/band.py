@@ -143,7 +143,7 @@ def process_band_data(abacusjob_dir: Path,
     else:
         return high_symm_labels, high_symm_poses, kline_splited, bands_splited, bands_dw_splited
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_plot_band_nscf(abacusjob_dir: Path,
                           energy_min: float = -10,
                           energy_max: float = 10
@@ -247,10 +247,7 @@ def write_pyatb_input(band_calc_path: Path, connect_line_points=30):
     pyatb_input_file.write("}\n\nBAND_STRUCTURE\n{\n    kpoint_mode   line\n")
 
     # Get kline and write to pyatb Input file
-    stru_file = AbacusStru.ReadStru(os.path.join(band_calc_path, "STRU"))
-    kpt_file = os.path.join(band_calc_path, "KPT")
-    stru_file.get_kline_ase(point_number=connect_line_points,kpt_file=kpt_file)
-
+    kpt_file = os.path.join(band_calc_path, "KPT_band")
     kpt_file_content = []
     with open(kpt_file) as fin:
         for lines in fin:
@@ -260,7 +257,7 @@ def write_pyatb_input(band_calc_path: Path, connect_line_points=30):
     high_symm_nums = int(kpt_file_content[1][0])
     kpoint_label = ''
     for linenum in range(3, 3+high_symm_nums):
-        kpoint_label += kpt_file_content[linenum][-1]
+        kpoint_label += kpt_file_content[linenum][-1].split('#')[1]
         if linenum < 2+high_symm_nums:
             kpoint_label += ", "
     pyatb_input_file.write(f"    kpoint_num    {high_symm_nums}\n")
@@ -275,7 +272,7 @@ def write_pyatb_input(band_calc_path: Path, connect_line_points=30):
 
     return True
 
-#@mcp.tool()
+@mcp.tool()
 def abacus_plot_band_pyatb(band_calc_path: Path,
                            energy_min: float = -10,
                            energy_max: float = 10,
@@ -343,6 +340,7 @@ def abacus_plot_band_pyatb(band_calc_path: Path,
 
 @mcp.tool()
 def abacus_cal_band(abacus_inputs_path: Path,
+                    mode: Literal["nscf", "pyatb"] = "pyatb",
                     energy_min: float = -10,
                     energy_max: float = 10
 ) -> Dict[str, float|str]:
@@ -351,55 +349,63 @@ def abacus_cal_band(abacus_inputs_path: Path,
     PYATB or ABACUS NSCF calculation will be used according to parameters in INPUT.
     Args:
         abacusjob_dir (str): Absolute path to a directory containing the INPUT, STRU, KPT, and pseudopotential or orbital files.
+        mode: Method used to plot band. Should be `pyatb` or `nscf`. `nscf` means using `nscf` calculation in ABACUS, `pyatb` means using PYATB
+            to plot the band.
         energy_min (float): Lower bound of $E - E_F$ in the plotted band.
         energy_max (float): Upper bound of $E - E_F$ in the plotted band.
     Returns:
         A dictionary containing band gap, path to the work directory for calculating band and path to the plotted band.
     Raises:
     """
-    input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
-    original_stru_file = os.path.join(abacus_inputs_path, input_params.get('stru_file', "STRU"))
-    original_stru = AbacusStru.ReadStru(original_stru_file)
-    band_kpt_file = os.path.join(abacus_inputs_path, "KPT_band")
-    new_stru, point_coords, path, kpath = original_stru.get_kline(point_number=30,
-                                                                  new_stru_file=original_stru_file,
-                                                                  kpt_file=band_kpt_file)
+    try:
+        input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+        original_stru_file = os.path.join(abacus_inputs_path, input_params.get('stru_file', "STRU"))
+        original_stru = AbacusStru.ReadStru(original_stru_file)
+        band_kpt_file = os.path.join(abacus_inputs_path, "KPT_band")
+        new_stru, point_coords, path, kpath = original_stru.get_kline(point_number=30,
+                                                                      new_stru_file=original_stru_file,
+                                                                      kpt_file=band_kpt_file)
 
-    scf_output = property_calculation_scf(abacus_inputs_path)
-    work_path, mode = scf_output["work_path"], scf_output["mode"]
-    if mode == 'pyatb':
-        # Obtain band using PYATB
-        postprocess_output = abacus_plot_band_pyatb(work_path,
-                                                    energy_min,
-                                                    energy_max)
+        scf_output = property_calculation_scf(abacus_inputs_path, mode)
+        work_path, mode = scf_output["work_path"], scf_output["mode"]
+        if mode == 'pyatb':
+            # Obtain band using PYATB
+            postprocess_output = abacus_plot_band_pyatb(work_path,
+                                                        energy_min,
+                                                        energy_max)
 
-        return {'band_gap': postprocess_output['band_gap'],
-                'band_calc_dir': abacus_inputs_path,
-                'band_picture': postprocess_output['band_picture'],
-                "message": "The band is calculated using PYATB after SCF calculation using ABACUS"}
+            return {'band_gap': postprocess_output['band_gap'],
+                    'band_calc_dir': abacus_inputs_path,
+                    'band_picture': postprocess_output['band_picture'],
+                    "message": "The band is calculated using PYATB after SCF calculation using ABACUS"}
 
-    elif mode == 'nscf':
-        modified_params = {'calculation': 'nscf',
-                           'init_chg': 'file',
-                           'out_band': 1,
-                           'symmetry': 0}
-        remove_params = ['kspacing']
-        modified_input = abacus_modify_input(work_path,
-                                             extra_input = modified_params,
-                                             remove_input = remove_params)
+        elif mode == 'nscf':
+            modified_params = {'calculation': 'nscf',
+                               'init_chg': 'file',
+                               'out_band': 1,
+                               'symmetry': 0}
+            remove_params = ['kspacing']
+            modified_input = abacus_modify_input(work_path,
+                                                 extra_input = modified_params,
+                                                 remove_input = remove_params)
 
-        # Prepare line-mode KPT file
-        kpt_file = os.path.join(work_path, input_params.get('kpt_file', 'KPT'))
-        shutil.copy(band_kpt_file, kpt_file)
+            # Prepare line-mode KPT file
+            kpt_file = os.path.join(work_path, input_params.get('kpt_file', 'KPT'))
+            shutil.copy(band_kpt_file, kpt_file)
 
-        run_abacus(work_path)
+            run_abacus(work_path)
 
-        plot_output = abacus_plot_band_nscf(work_path, energy_min, energy_max)
+            plot_output = abacus_plot_band_nscf(work_path, energy_min, energy_max)
 
-        return {'band_gap': plot_output['band_gap'],
-                'band_calc_dir': Path(work_path).absolute(),
-                'band_picture': Path(plot_output['band_picture']).absolute(),
-                "message": "The band structure is computed via a non-self-consistent field (NSCF) calculation using ABACUS, \
-                            following a converged self-consistent field (SCF) calculation."}
-    else:
-        raise ValueError(f"Calculation mode {mode} not in ('pyatb', 'nscf')")
+            return {'band_gap': plot_output['band_gap'],
+                    'band_calc_dir': Path(work_path).absolute(),
+                    'band_picture': Path(plot_output['band_picture']).absolute(),
+                    "message": "The band structure is computed via a non-self-consistent field (NSCF) calculation using ABACUS, \
+                                following a converged self-consistent field (SCF) calculation."}
+        else:
+            raise ValueError(f"Calculation mode {mode} not in ('pyatb', 'nscf')")
+    except Exception as e:
+        return {'band_gap': None,
+                'band_calc_dir': None,
+                'band_picture': None,
+                'messsage': f"Calculating band failed: {e}"}
