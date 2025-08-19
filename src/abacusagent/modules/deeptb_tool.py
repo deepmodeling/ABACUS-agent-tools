@@ -7,7 +7,7 @@ from abacusagent.init_mcp import mcp
 class ConfigResult(TypedDict):
     config_path: str
 
-@mcp.tool()
+#@mcp.tool()
 def generate_deeptb_config(
     material: Literal["Si"] = "Si",
 ) -> ConfigResult:
