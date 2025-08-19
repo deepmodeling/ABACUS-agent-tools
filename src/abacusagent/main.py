@@ -2,18 +2,18 @@ from pathlib import Path
 import importlib
 import os
 import argparse
-
+from typing import List
 from importlib.metadata import version
 __version__ = version("abacusagent")
 
-def load_tools():
+def load_tools(screen_modules: List[str] = []):
     """
     Load all tools from the abacusagent package.
     """
     module_dir = Path(__file__).parent / "modules"
     
-    for py_file in module_dir.glob("*.py"):
-        if py_file.name.startswith("_") or py_file.stem in ["utils", "comm"]: 
+    for py_file in sorted(module_dir.glob("*.py")):
+        if py_file.name.startswith("_") or py_file.stem in ["utils", "comm"] + screen_modules: 
             continue  # skipt __init__.py and utils.py
         
         module_name = f"abacusagent.modules.{py_file.stem}"
@@ -64,6 +64,13 @@ def parse_args():
         const=".",
         help="Create a template for Google ADK agent in the specified directory (default: current directory)"
     )
+    parser.add_argument(
+        "--screen-modules",
+        type=str,
+        nargs='*',
+        default=[],
+        help="List of modules to screen for loading. If not specified, all modules will be loaded."
+    )
     
     args = parser.parse_args()
     
@@ -111,7 +118,7 @@ def main():
     create_workpath()
 
     from abacusagent.init_mcp import mcp
-    load_tools()  
+    load_tools(args.screen_modules)  
 
     print_address()
     mcp.run(transport=os.environ["ABACUSAGENT_TRANSPORT"])
