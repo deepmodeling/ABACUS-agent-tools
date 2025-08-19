@@ -115,18 +115,19 @@ class TestAbacusModifyInput(unittest.TestCase):
                                       extra_input=extra_input)
 
         modified_input_param = ReadInput("INPUT")
+        
         self.assertEqual(modified_input_param['vdw_method'], extra_input['vdw_method'])
         self.assertEqual(modified_input_param['nspin'], extra_input['nspin'])
         self.assertEqual(modified_input_param['ecutwfc'], original_input_param['ecutwfc'])
 
         self.assertEqual(modified_input_param['dft_plus_u'], 1)
-        orbital_corr_modified = modified_input_param['orbital_corr'].split()
-        orbital_corr_ref = ['2', '-1', '-1', '1']
-        self.assertEqual(len(orbital_corr_modified), len(orbital_corr_ref))
+        orbital_corr_modified = modified_input_param['orbital_corr']
+        orbital_corr_ref = [2,-1,-1, 1]
+        self.assertEqual(orbital_corr_modified, orbital_corr_ref)
         for i in range(len(orbital_corr_modified)):
             self.assertEqual(orbital_corr_modified[i], orbital_corr_ref[i])
         
-        hubbard_u_modified = modified_input_param['hubbard_u'].split()
+        hubbard_u_modified = modified_input_param['hubbard_u']
         for i in range(len(hubbard_u_modified)):
             hubbard_u_modified[i] = float(hubbard_u_modified[i])
         hubbard_u_ref = [3.0, 0.0, 0.0, 0.5]
