@@ -85,8 +85,8 @@ def abacus_dos_run(
         input_file = os.path.join(abacus_inputs_path, "INPUT")
         input_params = ReadInput(input_file)
         nspin = input_params.get("nspin", 1)
-        if nspin in [2, 4]:
-            raise ValueError("Currently DOS calculation can only be plotted using for nspin=1")
+        if nspin in [4]:
+            raise ValueError("Currently DOS calculation can only be plotted using for nspin=1 and nspin=2")
 
         metrics_scf = abacus_dos_run_scf(abacus_inputs_path)
         metrics_nscf = abacus_dos_run_nscf(metrics_scf["scf_work_path"],
@@ -477,16 +477,9 @@ def plot_dos(file_path: List[Path],
         data = np.loadtxt(file_path[1], usecols=(0, 1))
         dos_dn = data[:, 1]
     
-    # Determine y limits based on data within x range
-    x_min, x_max = -fermi_level, fermi_level
-    mask = (energy >= x_min) & (energy <= x_max)
-    
-    if not any(mask):
-        y_min, y_max = 0, 1
-    else:
-        y_min = -0.1 * np.max(dos[mask])
-        y_max = 1.1 * np.max(dos[mask])
-    
+    # Determine energy limits based on data within x range
+    x_min, x_max = max(min(energy), -20), min(20, max(energy))
+
     # Create plot
     plt.figure(figsize=(8, 6))
     if nspin == 1:
