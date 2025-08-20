@@ -10,11 +10,12 @@ from ase.calculators.abacus import Abacus, AbacusProfile
 from ase.thermochemistry import HarmonicThermo
 from ase.io.abacus import read_kpt
 from abacustest.lib_prepare.abacus import AbacusStru, ReadInput
+from abacustest.lib_model.comm import check_abacus_inputs
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import get_physical_cores, generate_work_path
 
-def set_ase_abacus_calculator(abacus_inputs_path: Path,
+def set_ase_abacus_calculator(abacus_inputs_dir: Path,
                               work_path: Path,
                               extra_input_params: Optional[Dict[str, Any]]) -> Abacus:
     """
@@ -27,11 +28,11 @@ def set_ase_abacus_calculator(abacus_inputs_path: Path,
     out_directory = os.path.join(work_path, "SCF")
 
     # Read INPUT, STRU
-    input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+    input_params = ReadInput(os.path.join(abacus_inputs_dir, "INPUT"))
     input_params.update(extra_input_params)
     stru_file = input_params.get('stru_file', "STRU")
-    stru = read(os.path.join(abacus_inputs_path, stru_file))
-    abacus_stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_path, stru_file))
+    stru = read(os.path.join(abacus_inputs_dir, stru_file))
+    abacus_stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_dir, stru_file))
 
     # Read KPT
     if 'gamma_only' in input_params.keys():
@@ -40,7 +41,7 @@ def set_ase_abacus_calculator(abacus_inputs_path: Path,
         kpts = {'kspacing': input_params['kspacing']}
     else:
         kpt_file = input_params.get('kpt_file', 'KPT')
-        kpt_info = read_kpt(os.path.join(abacus_inputs_path, kpt_file))
+        kpt_info = read_kpt(os.path.join(abacus_inputs_dir, kpt_file))
         # Set kpoint information required by `ase.calculators.calculator.kpts2sizeandoffsets`
         # used by ase-abacus
         kpts = {'size': kpt_info['kpts']}
@@ -48,8 +49,8 @@ def set_ase_abacus_calculator(abacus_inputs_path: Path,
             kpts['gamma'] = True
 
     # Get pp and orb from provided STRU file
-    pseudo_dir = Path(abacus_inputs_path).absolute()
-    orbital_dir = Path(abacus_inputs_path).absolute()
+    pseudo_dir = Path(abacus_inputs_dir).absolute()
+    orbital_dir = Path(abacus_inputs_dir).absolute()
     pp_list, orb_list = abacus_stru.get_pp(), abacus_stru.get_orb()
     elements = [key for key, _ in groupby(stru.get_chemical_symbols())]
     pp = {element: ppfile for element, ppfile in zip(elements, pp_list)}
@@ -78,7 +79,7 @@ def identify_complex_types(complex_array):
     return is_real, is_pure_imag, is_general
 
 @mcp.tool()
-def abacus_vibration_analysis(abacus_inputs_path: Path,
+def abacus_vibration_analysis(abacus_inputs_dir: Path,
                               selected_atoms: Optional[List[int]] = None,
                               stepsize: float = 0.01,
                               nfree: Literal[2, 4] = 2,
@@ -87,7 +88,7 @@ def abacus_vibration_analysis(abacus_inputs_path: Path,
     Performing vibrational analysis using finite displacement method.
     This tool function is usually followed by a relax calculation (`calculation` is set to `relax`).
     Args:
-        abacus_inputs_path (Path): Path to the ABACUS input files directory.
+        abacus_inputs_dir (Path): Path to the ABACUS input files directory.
         selected_atoms (Optional[List[int]]): Indices of atoms included in the vibrational analysis. If this
             parameter are not given, all atoms in the structure will be included.
         stepsize (float): Step size to displace cartesian coordinates of atoms during the vibrational analysis.
@@ -101,22 +102,26 @@ def abacus_vibration_analysis(abacus_inputs_path: Path,
         A dictionary containing the following keys:
         - 'real_frequencies': List of real frequencies from vibrational analysis. Units in cm^{-1}.
         - 'imaginary_frequencies': Imaginary frequencies will be a string ended with 'i'. Units in cm^{-1}.
-        - 'work_path': Path to directory performing vibrational analysis. Containing animation of normal modes 
-            with non-zero frequency in ASE traj format and `vib` directory containing collected forces.
         - 'zero_point_energy': Zero-point energy summed over all modes. Units in eV.
         - 'vib_entropy': Vibrational entropy using harmonic approximation. Units in eV/K.
         - 'vib_free_energy': Vibrational Helmholtz free energy using harmonic approximation. Units in eV.
+        - 'vib_analysis_work_path': Path to directory performing vibrational analysis. Containing animation of normal modes 
+            with non-zero frequency in ASE traj format and `vib` directory containing collected forces.
     """
     try:
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
         work_path = Path(generate_work_path()).absolute()
 
-        input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+        input_params = ReadInput(os.path.join(abacus_inputs_dir, "INPUT"))
         stru_file = input_params.get('stru_file', "STRU")
-        stru = read(os.path.join(abacus_inputs_path, stru_file))
+        stru = read(os.path.join(abacus_inputs_dir, stru_file))
         # Provide extra INPUT parameters necessary for vibration analysis using finite difference
         extra_input_params = {'calculation': 'scf',
                               'cal_force': 1}
-        stru.calc = set_ase_abacus_calculator(abacus_inputs_path,
+        stru.calc = set_ase_abacus_calculator(abacus_inputs_dir,
                                               work_path,
                                               extra_input_params)
 
@@ -157,16 +162,10 @@ def abacus_vibration_analysis(abacus_inputs_path: Path,
 
         return {'real_frequencies': real_freq,
                 'imaginary_frequencies': imag_freq,
-                'work_dir': Path(work_path).absolute(),
                 'zero_point_energy': float(zero_point_energy),
                 'vib_entropy': float(entropy),
-                'vib_free_energy': float(free_energy)}
+                'vib_free_energy': float(free_energy),
+                'vib_analysis_work_dir': Path(work_path).absolute()}
     except Exception as e:
-        return {'real_frequencies': None,
-                'imaginary_frequencies': None,
-                'work_dir': None,
-                'zero_point_energy': None,
-                'vib_entropy': None,
-                'vib_free_energy': None,
-                'message': f"Doing vibration analysis failed: {e}"}
+        return {'message': f"Doing vibration analysis failed: {e}"}
 

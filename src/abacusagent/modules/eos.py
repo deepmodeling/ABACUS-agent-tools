@@ -152,13 +152,5 @@ def abacus_eos(
             "B0": B0,
             "B0_deriv": B0_deriv, }
     except Exception as e:
-        return {
-            "eos_work_path": None,
-            "new_abacus_inputs_dir": None,
-            "eos_fig_path": None,
-            "E0": None,
-            "V0": None,
-            "B0": None,
-            "B0_deriv": None,
-            "message": f"Fitting EOS failed: {e}"}
+        return {"message": f"Fitting EOS failed: {e}"}
 
