@@ -16,6 +16,7 @@ import baderkit
 
 from abacustest.lib_prepare.abacus import ReadInput, WriteInput, AbacusStru
 from abacustest.lib_collectdata.collectdata import RESULT
+from abacustest.lib_model.comm import check_abacus_inputs
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, run_command, has_chgfile,collect_metrics
@@ -86,20 +87,20 @@ def ver_cmp(v1: str|tuple[int], v2: str|tuple[int]) -> int:
     return (v1 > v2) - (v1 < v2)  # Returns 1, 0, or -1
 
 def calculate_charge_densities_with_abacus(
-    jobdir: Path
+    abacus_inputs_dir: Path
 ) -> Optional[List[str]]:
     """
     Calculate the charge density using ABACUS in the specified job directory.
     
     Parameters:
-    jobdir (str): Directory where the job files are located.
+    abacus_inputs_dir (str): Directory where the job files are located.
     
     Returns:
     list: List of file names for the charge density cube files.
     """
     # get the abacus version with `abacus --version`
     work_path = generate_work_path()
-    link_abacusjob(src=jobdir,
+    link_abacusjob(src=abacus_inputs_dir,
                    dst=work_path,
                    copy_files=["INPUT"])
     input_param = ReadInput(os.path.join(work_path, 'INPUT'))
@@ -242,27 +243,30 @@ def postprocess_charge_densities(
 
 @mcp.tool() # make it visible to the MCP server
 def abacus_badercharge_run(
-    jobdir: Path
+    abacus_inputs_dir: Path
 ) -> List[float]:
     """
-    Calculate Bader charges for a given job directory, with ABACUS as
+    Calculate Bader charges for a given ABACUS input file directory, with ABACUS as
     the dft software to calculate the charge density, and then postprocess
     the charge density with the cube manipulator and Bader analysis.
     
     Parameters:
-    jobdir (str): Directory where the job files are located.
+    abacus_inputs_dir (str): Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
     
     Returns:
     dict: A dictionary containing: 
         - bader_charges: List of Bader charge for each atom.
         - atom_labels: Labels of atoms in the structure.
         - abacus_workpath: Absolute path to the ABACUS work directory.
-        - bader_workpath: Absolute path to the Bader analysis work directory.
-        - cube_file: Absolute path to the cube file used for Bader analysis.
+        - badercharge_run_workpath: Absolute path to the Bader analysis work directory.
     """
     try:
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
         # Run ABACUS to calculate charge density
-        results = calculate_charge_densities_with_abacus(jobdir)
+        results = calculate_charge_densities_with_abacus(abacus_inputs_dir)
         abacus_jobpath = results["work_path"]
         fcube = results["cube_files"]
 
@@ -284,18 +288,10 @@ def abacus_badercharge_run(
             "bader_charges": bader_results["bader_charges"],
             "atom_labels": atom_labels,
             "abacus_workpath": Path(abacus_jobpath).absolute(),
-            "bader_workpath": Path(bader_results["work_path"]).absolute(),
-            "cube_file": Path(bader_results["cube_file"]).absolute()
+            "badercharge_run_workpath": Path(bader_results["work_path"]).absolute(),
         }
     except Exception as e:
-        return {
-            "bader_charges": None,
-            "atom_labels": None,
-            "abacus_workpath": None,
-            "bader_workpath": None,
-            "cube_file": None,
-            "message": f"Calculating Bader charge failed: {e}"
-        }
+        return {"message": f"Calculating Bader charge failed: {e}"}
 
 class TestBaderChargeWorkflow(unittest.TestCase):
     
