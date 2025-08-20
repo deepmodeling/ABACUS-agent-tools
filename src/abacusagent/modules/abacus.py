@@ -125,9 +125,7 @@ def abacus_prepare(
         return {"abacus_inputs_dir": abacus_inputs_dir,
                 "input_content": input_content}
     except Exception as e:
-        return {"abacus_inputs_dir": None,
-                "input_content": None,
-                "message": f"Prepare ABACUS input files from given structure failed: {e}"}
+        return {"message": f"Prepare ABACUS input files from given structure failed: {e}"}
 
 #@mcp.tool()
 def get_file_content(

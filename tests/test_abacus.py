@@ -45,13 +45,13 @@ class TestAbacusPrepare(unittest.TestCase):
             job_type= "scf",
             lcao= True
         )
-        self.assertTrue(os.path.exists(outputs["job_path"]))
-        self.assertTrue(os.path.exists(outputs["job_path"] / "INPUT"))
-        self.assertTrue(os.path.exists(outputs["job_path"] / "STRU"))
-        self.assertTrue(os.path.exists(outputs["job_path"] / "As_ONCV_PBE-1.0.upf"))
-        self.assertTrue(os.path.exists(outputs["job_path"] / "As_gga_8au_100Ry_2s2p1d.orb"))
-        self.assertTrue(os.path.exists(outputs["job_path"] / "Ga_ONCV_PBE-1.0.upf"))
-        self.assertTrue(os.path.exists(outputs["job_path"] / "Ga_gga_9au_100Ry_2s2p2d.orb"))
+        self.assertTrue(os.path.exists(outputs["abacus_inputs_dir"]))
+        self.assertTrue(os.path.exists(outputs["abacus_inputs_dir"] / "INPUT"))
+        self.assertTrue(os.path.exists(outputs["abacus_inputs_dir"] / "STRU"))
+        self.assertTrue(os.path.exists(outputs["abacus_inputs_dir"] / "As_ONCV_PBE-1.0.upf"))
+        self.assertTrue(os.path.exists(outputs["abacus_inputs_dir"] / "As_gga_8au_100Ry_2s2p1d.orb"))
+        self.assertTrue(os.path.exists(outputs["abacus_inputs_dir"] / "Ga_ONCV_PBE-1.0.upf"))
+        self.assertTrue(os.path.exists(outputs["abacus_inputs_dir"] / "Ga_gga_9au_100Ry_2s2p2d.orb"))
         
         self.assertTrue("input_content" in outputs)
         
