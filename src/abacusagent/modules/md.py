@@ -89,7 +89,7 @@ def convert_md_dump_to_ase_traj(md_dump_path: Path, traj_filename: str="md_traj.
 
 @mcp.tool()
 def abacus_run_md(
-    abacusjob_dir: Path,
+    abacus_inputs_dir: Path,
     md_type: Literal['nve', 'nvt', 'npt', 'langevin'] = 'nve',
     md_nstep: int = 10,
     md_dt: float = 1.0,
@@ -105,7 +105,7 @@ def abacus_run_md(
     Use ABACUS to do ab-initio molecular dynamics calculation.
 
     Args:
-        abacusjob_dir (Path): Path to ABACUS input files.
+        abacus_inputs_dir (Path): Path to ABACUS input files.
         md_type (Literal['nve', 'nvt', 'npt', 'langevin']): The algorithm to integrate the equation of motion for molecular dynamics (MD).
             - nve: NVE ensemble with velocity Verlet algorithm.
             - nvt: NVT ensemble.
@@ -140,12 +140,13 @@ def abacus_run_md(
             - < 0: No srand() function is called.
             - >= 0: The function srand(md_seed) is called.
     Returns:
-    Raises:
-
+        A dictionary containing:
+            - md_work_path (Path): The working directory of the molecular dynamics calculation.
+            - md_traj_file (Path): The path to the ASE trajectory file containing the MD steps.
     """
     try:
         work_path = Path(generate_work_path()).absolute()
-        link_abacusjob(src=abacusjob_dir, dst=work_path, copy_files=['INPUT', 'STRU'], exclude_directories=True)
+        link_abacusjob(src=abacus_inputs_dir, dst=work_path, copy_files=['INPUT', 'STRU'], exclude_directories=True)
         input_params = ReadInput(os.path.join(work_path, "INPUT"))
 
         input_params['calculation'] = 'md'
@@ -181,11 +182,7 @@ def abacus_run_md(
 
         suffix = input_params.get('suffix', 'ABACUS')
         return {'md_work_path': work_path,
-                'md_last_stru': get_last_md_stru(Path(os.path.join(work_path, f'OUT.{suffix}/STRU')).absolute()),
                 'md_traj_file': convert_md_dump_to_ase_traj(Path(os.path.join(work_path, f'OUT.{suffix}/MD_dump')).absolute())}
 
     except Exception as e:
-        return {'md_work_path': None,
-                'md_last_stru': None,
-                'md_traj_file': None,
-                "message": f"Error occured during the running md: {e}"}
+        return {"message": f"Error occured during the running md: {e}"}
