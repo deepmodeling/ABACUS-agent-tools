@@ -17,6 +17,7 @@ from pymatgen.analysis.elasticity.stress import Stress
 
 from abacustest.lib_prepare.comm import kspacing2kpt
 from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteKpt, WriteInput
+from abacustest.lib_model.comm import check_abacus_inputs
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import run_abacus, link_abacusjob, generate_work_path, collect_metrics
 
@@ -100,14 +101,14 @@ def collected_stress_to_pymatgen_stress(stress: List[float]):
 
 @mcp.tool()
 def abacus_cal_elastic(
-    abacus_inputs_path: Path,
+    abacus_inputs_dir: Path,
     norm_strain: float = 0.01,
     shear_strain: float = 0.01,
 ) -> Dict[str, float]:
     """
     Calculate various elastic constants for a given structure using ABACUS. 
     Args:
-        abacus_inputs_path (str): Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
+        abacus_inputs_dir (str): Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
         norm_strain (float): Normal strain to calculate elastic constants, default is 0.01.
         shear_strain (float): Shear strain to calculate elastic constants, default is 0.01.
     Returns:
@@ -121,21 +122,25 @@ def abacus_cal_elastic(
         RuntimeError: If ABACUS calculation when calculating stress for input structure or deformed structures fails.
     """
     try:
-        abacus_inputs_path = Path(abacus_inputs_path).absolute()
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
+        abacus_inputs_dir = Path(abacus_inputs_dir).absolute()
         work_path = Path(generate_work_path()).absolute()
         input_stru_dir = Path(os.path.join(work_path, "input_stru")).absolute()
 
-        link_abacusjob(src=abacus_inputs_path,
+        link_abacusjob(src=abacus_inputs_dir,
                        dst=input_stru_dir,
                        copy_files=["INPUT", "STRU", "KPT"])
 
-        input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
-        stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_path, input_params.get("stru_file", "STRU")))
+        input_params = ReadInput(os.path.join(input_stru_dir, "INPUT"))
+        stru = AbacusStru.ReadStru(os.path.join(input_stru_dir, input_params.get("stru_file", "STRU")))
 
         if 'kspacing' in input_params.keys():
             kpt = kspacing2kpt(input_params['kspacing'], stru.get_cell())
             WriteKpt(kpoint_list = kpt + [0, 0, 0],
-                     file_name = os.path.join(abacus_inputs_path, input_params.get('kpt_file', 'KPT')))
+                     file_name = os.path.join(input_stru_dir, input_params.get('kpt_file', 'KPT')))
             del input_params['kspacing']
         input_params["calculation"] = 'scf'
         input_params["cal_stress"] = 1
@@ -187,12 +192,4 @@ def abacus_cal_elastic(
             "poisson_ratio": float(uV)
         }
     except Exception as e:
-        return {
-            "elastic_cal_dir": None,
-            "elastic_tensor": None,
-            "bulk_modulus": None,
-            "shear_modulus": None,
-            "young_modulus": None,
-            "poisson_ratio": None,
-            "message": f"Calculating elastic properties failed: {e}"
-        }
+        return {"message": f"Calculating elastic properties failed: {e}"}
