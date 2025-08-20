@@ -6,6 +6,7 @@ import shutil
 import matplotlib.pyplot as plt
 from abacustest.lib_prepare.abacus import ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
+from abacustest.lib_model.comm import check_abacus_inputs
 
 from pathlib import Path
 from typing import Dict, Any, List, Literal
@@ -45,7 +46,7 @@ orbital_rep_map = {
 
 @mcp.tool()
 def abacus_dos_run(
-    abacus_inputs_path: Path,
+    abacus_inputs_dir: Path,
     pdos_mode: Literal['species', 'species+shell', 'species+orbital'] = 'species+shell',
     dos_edelta_ev: float = 0.01,
     dos_sigma: float = 0.07,
@@ -62,7 +63,7 @@ def abacus_dos_run(
     If the INPUT parameter "basis" is "LCAO", then out_dos will be set to 2, and both DOS and PDOS will be calculated.
     
     Args:
-        abacus_inputs_path: Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
+        abacus_inputs_dir: Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
         pdos_mode: Mode of plotted PDOS file.
             - "species": Total PDOS of any species will be plotted in a picture.
             - "species+shell": PDOS for any shell (s, p, d, f, g,...) of any species will be plotted. PDOS of a shell of a species willbe plotted in a subplot.
@@ -82,13 +83,17 @@ def abacus_dos_run(
             - fig_paths: List of paths to the generated figures for DOS and PDOS. DOS will be saved as "DOS.png" and PDOS will be saved as "species_atom_index_pdos.png" in the output directory.
     """
     try:
-        input_file = os.path.join(abacus_inputs_path, "INPUT")
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
+        input_file = os.path.join(abacus_inputs_dir, "INPUT")
         input_params = ReadInput(input_file)
         nspin = input_params.get("nspin", 1)
         if nspin in [4]:
             raise ValueError("Currently DOS calculation can only be plotted using for nspin=1 and nspin=2")
 
-        metrics_scf = abacus_dos_run_scf(abacus_inputs_path)
+        metrics_scf = abacus_dos_run_scf(abacus_inputs_dir)
         metrics_nscf = abacus_dos_run_nscf(metrics_scf["scf_work_path"],
                                            dos_edelta_ev=dos_edelta_ev,
                                            dos_sigma=dos_sigma,
@@ -113,32 +118,30 @@ def abacus_dos_run(
 
         return return_dict
     except Exception as e:
-        return {"dos_fig_path": None,
-                "pdos_fig_path": None,
-                "message": f"Calculating DOS and PDOS failed: {e}"}
+        return {"message": f"Calculating DOS and PDOS failed: {e}"}
 
-def abacus_dos_run_scf(abacus_inputs_path: Path,
+def abacus_dos_run_scf(abacus_inputs_dir: Path,
                        force_run: bool = False) -> Dict[str, Any]:
     """
     Run the SCF calculation to generate the charge density file.
     If the charge file already exists, it will skip the SCF calculation.
     
     Args:
-        abacus_inputs_path: Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
+        abacus_inputs_dir: Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
         force_run: If True, it will run the SCF calculation even if the charge file already exists.
     
     Returns:
         Dict[str, Any]: A dictionary containing the work path, normal end status, SCF steps, convergence status, and energies.
     """
     
-    input_param = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+    input_param = ReadInput(os.path.join(abacus_inputs_dir, "INPUT"))
     # check if charge file has been generated
-    if has_chgfile(abacus_inputs_path) and not force_run:
+    if has_chgfile(abacus_inputs_dir) and not force_run:
         print("Charge file already exists, skipping SCF calculation.")
-        work_path = abacus_inputs_path
+        work_path = abacus_inputs_dir
     else:
         work_path = generate_work_path()
-        link_abacusjob(src=abacus_inputs_path,
+        link_abacusjob(src=abacus_inputs_dir,
                        dst=work_path,
                        copy_files=["INPUT"])
 
@@ -159,7 +162,7 @@ def abacus_dos_run_scf(abacus_inputs_path: Path,
         "scf_energies": rs["energies"]
     }
 
-def abacus_dos_run_nscf(abacus_inputs_path: Path,
+def abacus_dos_run_nscf(abacus_inputs_dir: Path,
                         dos_edelta_ev: float = None,
                         dos_sigma: float = None,
                         dos_scale: float = None,
@@ -168,7 +171,7 @@ def abacus_dos_run_nscf(abacus_inputs_path: Path,
                         dos_nche: int = None,) -> Dict[str, Any]:
     
     work_path = generate_work_path()
-    link_abacusjob(src=abacus_inputs_path,
+    link_abacusjob(src=abacus_inputs_dir,
                    dst=work_path,
                    copy_files=["INPUT"])
     
