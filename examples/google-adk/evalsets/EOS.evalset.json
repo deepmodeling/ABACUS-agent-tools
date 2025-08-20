@@ -1,0 +1,156 @@
+{
+  "eval_set_id": "EOS",
+  "name": "EOS",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "FCC-Al-conventional",
+      "conversation": [
+        {
+          "invocation_id": "e-9bccfeba-0ed5-4e27-9ab9-4326fff9e0ff",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/Al_fcc_conventional.cif有一个FCC Al的惯用胞结构，请用这个结构准备ABACUS输入文件，并用进行EOS拟合。在拟合过程中按1%的比例缩放晶格，并且缩小和放大5个结构。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已完成EOS拟合。以下是拟合结果：\n\n- 平衡体积 $ V_0 $: 67.067 Å³\n- 最小能量 $ E_0 $: -252.164 eV\n- 体积模量 $ B_0 $: 86.715 GPa\n- 体积模量的一阶导数 $ B_0' $: 1.542\n\n拟合的EOS图像保存在：[Birch-Murnaghan EOS拟合图](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7902fd89-25fb-4b0b-9107-cf1d644b1107/outputs/eos_fig_path/birch_murnaghan_eos_fit.png)"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_cb29d0231a4e4aafae8654",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Al_fcc_conventional.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_172f105caf4149efb4f947",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/0dc350ac-72c4-41a3-9e04-b3c3f70165a1/outputs/job_path/000000.tgz",
+                  "stru_scale_number": 5,
+                  "stru_scale_type": "percentage",
+                  "scale_stepsize": 0.01
+                },
+                "name": "abacus_eos"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755661495.230061
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755661651.833789
+    },
+    {
+      "eval_id": "CsCl",
+      "conversation": [
+        {
+          "invocation_id": "e-027fa34d-71c7-4238-9f26-255076a19ede",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/CsCl.cif有一个CsCl的结构，请用这个结构准备ABACUS输入文件，并用进行EOS拟合。在拟合过程中按0.1 Angstrom的步长的修改晶格常数，并且缩小和放大5个结构。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "EOS拟合已完成。以下是拟合结果的关键数据：\n\n- **平衡体积 $ V_0 $:** 71.498 Å³  \n- **最小能量 $ E_0 $:** -1085.937 eV  \n- **体模量 $ B_0 $:** 19.302 GPa  \n- **体模量的压强导数 $ B_0' $:** 4.905  \n\n拟合的 EOS 曲线图已生成，可以通过以下链接查看：\n[EOS拟合图](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/17b5e722-1bc7-4a1a-9064-51a21d8b54d8/outputs/eos_fig_path/birch_murnaghan_eos_fit.png)\n\n如果您需要进一步的分析或计算，请告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_2a72c42770f1468e935ada",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CsCl.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_a3988db1e5ea4cf78c6db2",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/ce6a7d4e-147f-4225-bf20-a772d9d9a3af/outputs/job_path/000000.tgz",
+                  "stru_scale_number": 5,
+                  "stru_scale_type": "angstrom",
+                  "scale_stepsize": 0.1
+                },
+                "name": "abacus_eos"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755661715.911663
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755661845.5775735
+    }
+  ],
+  "creation_timestamp": 1755661638.222552
+}

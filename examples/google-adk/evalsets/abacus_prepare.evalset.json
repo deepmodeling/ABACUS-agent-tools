@@ -1,0 +1,72 @@
+{
+  "eval_set_id": "abacus_prepare",
+  "name": "abacus_prepare",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "Si-prim",
+      "conversation": [
+        {
+          "invocation_id": "e-2363a435-446f-46f4-8291-4a10b1858ab4",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请准备ABACUS对Si原胞做SCF计算的输入文件，Si原胞的结构位于/personal/google-adk-eval-stru/Si-prim.STRU"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已准备好ABACUS输入文件，位于 https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/23e75e56-4b5f-46ff-b53d-7bc5e5f00d14/outputs/abacus_inputs_dir/000000.tgz\n\nINPUT文件内容为：\n```json\n{\n  \"calculation\": \"scf\",\n  \"symmetry\": 1,\n  \"ecutwfc\": 100,\n  \"scf_thr\": 1e-07,\n  \"scf_nmax\": 100,\n  \"smearing_method\": \"gauss\",\n  \"smearing_sigma\": 0.015,\n  \"mixing_type\": \"broyden\",\n  \"mixing_beta\": 0.7,\n  \"basis_type\": \"lcao\",\n  \"ks_solver\": \"genelpa\",\n  \"kspacing\": 0.14\n}\n```"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_1321e88500b740bd95f78b",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Si-prim.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755675810.905399
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755675857.0166423
+    }
+  ],
+  "creation_timestamp": 1755675846.8900864
+}

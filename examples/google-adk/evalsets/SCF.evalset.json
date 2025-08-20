@@ -1,0 +1,252 @@
+{
+  "eval_set_id": "SCF",
+  "name": "SCF",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "CoF3",
+      "conversation": [
+        {
+          "invocation_id": "e-540d3b6f-f97b-4bb3-8f89-b9b8fe5da3b9",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/CoF3.cif有一个CoF3的结构文件。CoF3是一种铁磁性材料，请使用ABACUS对该材料做SCF计算"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已完成对CoF3材料的SCF计算。以下是计算结果的关键数据：\n\n- **总能量**：-11398.3864 eV\n- **计算是否收敛**：是\n- **总磁矩**：5.60672 Bohr磁子\n- **各原子的磁矩**：\n  - 原子1（Co）：2.3338 Bohr磁子\n  - 原子2（Co）：2.3338 Bohr磁子\n  - 原子3（F）：0.1565 Bohr磁子\n  - 原子4（F）：0.1565 Bohr磁子\n  - 原子5（F）：0.1565 Bohr磁子\n  - 原子6（F）：0.1565 Bohr磁子\n  - 原子7（F）：0.1565 Bohr磁子\n  - 原子8（F）：0.1565 Bohr磁子\n\n这些结果表明，该材料具有明显的磁性，Co原子为主要的磁矩贡献者。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_9500ef9967c14e45a67abc",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CoF3.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 2,
+                  "init_mag": {
+                    "Co": 3.0
+                  },
+                  "afm": false
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_6a53e3424e514cc59107f5",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/9a02a30c-ce58-4f63-b336-a54e0ae1b314/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_calculation_scf"
+              },
+              {
+                "id": "call_82fd2c06a924466eb609a7",
+                "args": {
+                  "abacusjob": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/e7afa2df-bf53-494e-acc8-1b25de018fcd/outputs/scf_work_dir/20250820144539.abacus_calculation_scf.d50b5524.tgz",
+                  "metrics": [
+                    "energy",
+                    "converge",
+                    "total_mag",
+                    "atom_mag"
+                  ]
+                },
+                "name": "abacus_collect_data"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755672323.329913
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755672525.853865
+    },
+    {
+      "eval_id": "CuSO4",
+      "conversation": [
+        {
+          "invocation_id": "e-dc56ab7c-057d-4a53-bb8a-3013cd58cbc9",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请对CuSO4做SCF计算，CuSO4的结构文件位于/personal/google-adk-eval-stru/CuSO4.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功对CuSO4进行了SCF计算。以下是计算结果摘要：\n\n- **总能量**: -28261.00034422354 eV\n- **是否收敛**: 是\n- **总计算时间**: 61.1648 秒\n- **是否正常结束**: 是\n\n如果需要进一步的计算或分析，请告知我！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_def91fbee14b411a980f77",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CuSO4.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_2b6cb49cd71e49f5982c13",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/c6f633ce-516a-44a2-902c-a628e90cbf85/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_calculation_scf"
+              },
+              {
+                "id": "call_475d4a86373c45db9ef2cf",
+                "args": {
+                  "abacusjob": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/04576e00-9a7c-4740-b046-cbd268bc337c/outputs/scf_work_dir/20250820145441.abacus_calculation_scf.960ac421.tgz",
+                  "metrics": [
+                    "energy",
+                    "converge",
+                    "total_time",
+                    "normal_end"
+                  ]
+                },
+                "name": "abacus_collect_data"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755672869.654214
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755672982.3863652
+    },
+    {
+      "eval_id": "H2O",
+      "conversation": [
+        {
+          "invocation_id": "e-4e8af35a-c560-4ace-a899-c92f72cfb950",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "水分子的结构文件位于/personal/google-adk-eval-stru/H2O.STRU，请用该结构文件准备所需的输入文件，然后对水分子做SCF计算"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "水分子的SCF计算已完成。以下是计算结果的概要：\n\n- **计算工作目录**: [SCF工作目录](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/0b9dc60c-72da-4397-bd2c-3bf2388f2bf0/outputs/scf_work_dir/20250820145637.abacus_calculation_scf.56315252.tgz)\n- **计算是否正常结束**: 是\n- **SCF是否收敛**: 是\n- **总能量**: -481.6458066703315 eV\n- **总耗时**: 16.4433 秒\n\n如需进一步分析或获取更多详细信息，请告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_a2bb373f22fa4fd09d616b",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/H2O.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_bdec8b9bee9448369da4a7",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/a1c3d1e6-e6d2-4d09-a477-29bc945ad795/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_calculation_scf"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755672986.086947
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755673052.083265
+    }
+  ],
+  "creation_timestamp": 1755672514.797093
+}

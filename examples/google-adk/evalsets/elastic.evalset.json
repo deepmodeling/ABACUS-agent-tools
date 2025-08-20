@@ -1,0 +1,79 @@
+{
+  "eval_set_id": "elastic",
+  "name": "elastic",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "Al-FCC",
+      "conversation": [
+        {
+          "invocation_id": "e-9756ebf6-4c60-4a54-b129-3c8d945cf141",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算FCC结构的Al的弹性常数，其结构文件的路径是/personal/google-adk-eval-stru/Al_fcc.cif，请使用该结构文件生成ABACUS输入文件后计算"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "计算完成，FCC结构Al的弹性常数如下：\n\n- **弹性常数矩阵（单位：GPa）**：\n  $$\n  \\begin{bmatrix}\n  109.84 & 61.90 & 54.26 & 10.81 & 0.00 & 0.00 \\\\\n  61.75 & 110.31 & 54.15 & -11.00 & 0.00 & 0.00 \\\\\n  54.02 & 54.02 & 118.19 & 0.00 & 0.00 & 0.00 \\\\\n  9.65 & -9.27 & 0.05 & 18.81 & 0.00 & 0.00 \\\\\n  0.00 & 0.00 & 0.00 & 0.00 & 18.84 & 9.39 \\\\\n  0.00 & 0.00 & 0.00 & 0.00 & 10.23 & 24.98 \\\\\n  \\end{bmatrix}\n  $$\n\n- **体积模量（Bulk Modulus）**：75.38 GPa\n- **剪切模量（Shear Modulus）**：23.73 GPa\n- **杨氏模量（Young's Modulus）**：64.42 GPa\n- **泊松比（Poisson Ratio）**：0.358\n\n如需进一步分析或可视化弹性常数矩阵，请告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_ad48f6fafe864837910070",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Al_fcc.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_8f8b7c2c0ce14f2388f991",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/168d2b49-d2fa-4678-adba-f125c8da202a/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_cal_elastic"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755657004.740432
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755657609.865792
+    }
+  ],
+  "creation_timestamp": 1755657596.0320926
+}

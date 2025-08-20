@@ -1,0 +1,370 @@
+{
+  "eval_set_id": "DOS_PDOS",
+  "name": "DOS_PDOS",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "Al",
+      "conversation": [
+        {
+          "invocation_id": "e-701e0c80-7c57-4643-a2c6-167f38cb8cc3",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算铝的态密度，Al的结构文件位于/personal/google-adk-eval-stru/Al_fcc.cif\n\n"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "铝的态密度（DOS）和分态密度（PDOS）计算已完成。以下是计算结果的链接：\n\n1. **态密度（DOS）图**：[DOS.png](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/50623085-4bb8-409c-8e74-b61e2d5f4f24/outputs/dos_fig_path/DOS.png)\n2. **分态密度（PDOS）图**：[PDOS.png](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/50623085-4bb8-409c-8e74-b61e2d5f4f24/outputs/pdos_fig_path/PDOS.png)\n\n这些图像文件展示了铝的电子态密度分布情况。DOS图显示了整个系统的态密度，而PDOS图则按元素和壳层分解了态密度。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_2d0c6c6e79af44a2b03fed",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Al_fcc.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_1090d1fa4da3431aafa188",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/b0eb5678-e177-4cd9-b571-6ffd1b5ee5c0/outputs/job_path/000000.tgz",
+                  "pdos_mode": "species+shell"
+                },
+                "name": "abacus_dos_run"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755604275.037668
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755604435.1404157
+    },
+    {
+      "eval_id": "Fe-nspin2",
+      "conversation": [
+        {
+          "invocation_id": "e-02ef481c-7cce-4399-824c-ac83de106ddf",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算BCC结构的铁的自旋极化态密度，Fe的结构文件位于/personal/google-adk-eval-stru/Fe_bcc.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功计算BCC结构铁的自旋极化态密度。以下是计算结果的概要：\n\n- **DOS图路径**: [DOS.png](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/9615de67-51b5-494c-90f6-b4fc86496348/outputs/dos_fig_path/DOS.png)\n- **PDOS图路径**: [PDOS.png](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/9615de67-51b5-494c-90f6-b4fc86496348/outputs/pdos_fig_path/PDOS.png)\n\n这些图像分别展示了总态密度（DOS）和分态密度（PDOS），其中PDOS按照元素和轨道进行了分解。通过这些图像，可以清楚地观察到BCC铁的自旋极化特性。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_0c2c8031b41e438b9224c7",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Fe_bcc.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 2
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_2c46e749cc5149e89160e5",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/23403cbf-e575-4b5d-81aa-ea2a10a6ae50/outputs/job_path/000000.tgz",
+                  "pdos_mode": "species+orbital"
+                },
+                "name": "abacus_dos_run"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755604475.370829
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755604660.7875257
+    },
+    {
+      "eval_id": "CsPbI3-element",
+      "conversation": [
+        {
+          "invocation_id": "e-997cc355-d468-41bd-a19e-82360f6cb251",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算CsPbI3的DOS，并绘制不同元素的PDOS。其结构文件位于/personal/google-adk-eval-stru/CsPbI3.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功计算CsPbI3的DOS，并绘制了不同元素的PDOS。以下是结果的简要说明：\n\n1. **DOS图**：显示了整个系统的总密度态（DOS），路径为：\n   - ![DOS图](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/6e63df59-659d-43ca-957b-78911fce4a98/outputs/dos_fig_path/DOS.png)\n\n2. **PDOS图**：展示了不同元素的分密度态（PDOS），路径为：\n   - ![PDOS图](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/6e63df59-659d-43ca-957b-78911fce4a98/outputs/pdos_fig_path/PDOS.png)\n\n通过这些图，可以分析CsPbI3材料的电子结构特性，例如能带结构、元素贡献等。如果需要进一步的分析或具体的数值数据，请告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_7c6dcb12408949ea848f41",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CsPbI3.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_cdfed744406b4695b4f1cf",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/b489da9d-ac90-4e55-9179-ebf1834144ab/outputs/job_path/000000.tgz",
+                  "pdos_mode": "species"
+                },
+                "name": "abacus_dos_run"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755604611.402389
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755604796.9307709
+    },
+    {
+      "eval_id": "NaCl-element+orbital",
+      "conversation": [
+        {
+          "invocation_id": "e-7f4148ab-9cfc-4d46-92d0-3f0d4024be52",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算NaCl的DOS和PDOS，其中PDOS中绘制Na和Cl不同轨道的PDOS。NaCl的结构文件位于/personal/google-adk-eval-stru/NaCl_rocksalt.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功计算NaCl的DOS和PDOS。以下是计算结果：\n\n1. **DOS图**：[DOS.png](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7079032a-ba07-486e-bb8a-a4985a1d5b14/outputs/dos_fig_path/DOS.png)\n2. **PDOS图**：[PDOS.png](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7079032a-ba07-486e-bb8a-a4985a1d5b14/outputs/pdos_fig_path/PDOS.png)\n\n在PDOS图中，您可以看到Na和Cl不同轨道的PDOS。如果您需要进一步的分析或具体的数值数据，请告知我。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_94879144cbff4fddbb9daf",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/NaCl_rocksalt.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_5b692f5df11049d786762c",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/03ce7f08-eae8-4383-baa6-81090083b8f9/outputs/job_path/000000.tgz",
+                  "pdos_mode": "species+orbital"
+                },
+                "name": "abacus_dos_run"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755624104.754563
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755624555.2369697
+    },
+    {
+      "eval_id": "CoPt3-element",
+      "conversation": [
+        {
+          "invocation_id": "e-e1341c38-0e43-48fa-adda-988b28aad931",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算磁性材料CoPt3的DOS，分别绘制Co和Pt的PDOS。CoPt3的结构文件位于/personal/google-adk-eval-stru/CoPt3.STRU"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功计算CoPt3的DOS，并分别绘制了Co和Pt的PDOS。以下是计算结果的概要：\n\n1. **DOS图**：总密度态（DOS）图保存为`DOS.png`，可以通过以下链接访问：\n   - [DOS图链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/91694e36-423c-41ff-8f4e-d3ce2931c05c/outputs/dos_fig_path/DOS.png)\n\n2. **PDOS图**：Co和Pt的分密度态（PDOS）图保存为`PDOS.png`，可以通过以下链接访问：\n   - [PDOS图链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/91694e36-423c-41ff-8f4e-d3ce2931c05c/outputs/pdos_fig_path/PDOS.png)\n\n在SCF计算中，系统能量收敛到-13590.366309 eV，计算正常结束，表明计算过程顺利。接下来，NSCF计算也正常结束，确保了DOS和PDOS的准确计算。\n\n如果您需要进一步分析或有其他计算需求，请告知。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_9613e799441b421cad38c2",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CoPt3.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 2
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_468300e0d0664dc7ac4699",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/697ecd38-b1e8-4d1d-b825-c97541b4b0f6/outputs/job_path/000000.tgz",
+                  "pdos_mode": "species"
+                },
+                "name": "abacus_dos_run"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755624947.879475
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755625279.6369731
+    }
+  ],
+  "creation_timestamp": 1755604413.8952765
+}

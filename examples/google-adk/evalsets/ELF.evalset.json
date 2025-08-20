@@ -1,0 +1,299 @@
+{
+  "eval_set_id": "ELF",
+  "name": "ELF",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "CsPbI3",
+      "conversation": [
+        {
+          "invocation_id": "e-26ff390a-bcdb-4d8e-9014-716300d387e4",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算CsPbI3的电子局域化函数（ELF），CsPbI3的结构文件位于/personal/google-adk-eval-stru/CsPbI3.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功计算CsPbI3的电子局域化函数（ELF）。以下是相关文件的链接：\n\n- **ELF工作目录**：[下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/839a5a02-3d67-4bed-a1a0-ae35990b16fe/outputs/elf_work_path/20250820104934.abacus_cal_elf.cc4ce767.tgz)\n- **ELF文件（.cube格式）**：[下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/839a5a02-3d67-4bed-a1a0-ae35990b16fe/outputs/elf_file/ELF.cube)\n\n您可以下载并使用可视化软件（如VMD、VESTA）打开ELF.cube文件以查看电子局域化分布。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_80b5015a629743f594463a",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CsPbI3.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_b4af854f73c94bdfb3dda8",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/67af8326-37ff-4e2a-bebf-63a6aca50f4c/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_cal_elf"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755658162.654922
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755658342.2216854
+    },
+    {
+      "eval_id": "CuSO4",
+      "conversation": [
+        {
+          "invocation_id": "e-80361eba-2da0-443a-8cdb-4bb05a15f8d8",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算CuSO4的电子局域化函数（ELF），CsPbI3的结构文件位于/personal/google-adk-eval-stru/CuSO4.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功计算CuSO4的电子局域化函数（ELF）。以下是相关文件的链接：\n\n- **ELF计算工作路径**：[下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/97ec45f9-60b3-48eb-aa93-5cf68663bf3f/outputs/elf_work_path/20250820105250.abacus_cal_elf.34d95ece.tgz)\n- **ELF文件（.cube格式）**：[下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/97ec45f9-60b3-48eb-aa93-5cf68663bf3f/outputs/elf_file/ELF.cube)\n\n您可以使用可视化软件（如VMD或VESTA）打开`.cube`文件来查看ELF分布。如果还有其他问题，请随时告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_b08e4cdf00f441b8b54932",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CuSO4.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_4be7f37cb14a4e3a85aa46",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3bdb2583-0915-4551-8b0e-95857aef3015/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_cal_elf"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755658359.738968
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755658597.5563862
+    },
+    {
+      "eval_id": "CoPt3",
+      "conversation": [
+        {
+          "invocation_id": "e-0f6bf8bd-bb09-4dcf-85ef-719002b2d328",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算磁性材料CoPt3的电子局域化函数（ELF），CoPt3的结构文件位于CoPt3的结构文件位于/personal/google-adk-eval-stru/CoPt3.STRU，请使用这个结构文件准备计算所需文件"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "电子局域化函数（ELF）计算已完成。以下是相关文件的链接：\n\n- **ELF工作路径**：[下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/4366b261-bb45-4165-9e58-f36e094692d8/outputs/elf_work_path/20250820105631.abacus_cal_elf.64ffdd64.tgz)\n- **ELF文件（.cube格式）**：[下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/4366b261-bb45-4165-9e58-f36e094692d8/outputs/elf_file/ELF.cube)\n\n您可以下载这些文件以进一步分析或可视化ELF结果。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_41c0517108264fb48739bf",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CoPt3.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 2,
+                  "soc": false,
+                  "dftu": false,
+                  "init_mag": {
+                    "Co": 3.0
+                  },
+                  "afm": false
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_8387be52407d4a7e85d6e3",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/566b80b3-6389-4faa-bd88-3b4a23bbdcaf/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_cal_elf"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755658577.065561
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755658750.9219327
+    },
+    {
+      "eval_id": "H2O",
+      "conversation": [
+        {
+          "invocation_id": "e-0df4987b-4829-4398-91b6-e79d6280a4af",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算H2O分子的电子局域化函数（ELF），结构文件位于CoPt3的结构文件位于/personal/google-adk-eval-stru/H2O.STRU,请使用这个结构文件准备计算所需文件"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "H2O分子的电子局域化函数（ELF）计算已完成。以下是相关文件的链接：\n\n- **ELF工作路径文件**：[下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/9eb4a0cc-35cc-440b-99cb-430598f5ef52/outputs/elf_work_path/20250820110126.abacus_cal_elf.24c7b27c.tgz)\n- **ELF文件（.cube格式）**：[下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/9eb4a0cc-35cc-440b-99cb-430598f5ef52/outputs/elf_file/ELF.cube)\n\n您可以下载并使用可视化软件（如VMD或Gaussian Cube Viewer）打开ELF.cube文件以查看电子局域化函数的分布情况。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_6289bd1857524c4bbab1a8",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/H2O.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_ac907c5916d640cdb23179",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/02fdb6b5-3907-4aa6-a8ce-c442813f9cc0/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_cal_elf"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755658875.024084
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755659065.6766393
+    }
+  ],
+  "creation_timestamp": 1755658333.3542457
+}

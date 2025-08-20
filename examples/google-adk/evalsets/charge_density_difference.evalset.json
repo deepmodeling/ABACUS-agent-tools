@@ -1,0 +1,161 @@
+{
+  "eval_set_id": "charge_density_difference",
+  "name": "charge_density_difference",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "H2O",
+      "conversation": [
+        {
+          "invocation_id": "e-45fe1de1-b9b8-4f81-9993-c49b49d6bcf2",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "H2O分子的结构文件位于/personal/google-adk-eval-stru/H2O.STRU，其中O原子是0号原子。请用这个结构文件准备ABACUS输入文件，然后计算将H2O划分为仅含O原子与仅含H原子的2个子系统与完整H2O分子之间的电荷密度差。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "电荷密度差计算已完成，以下是结果：\n\n- **电荷密度差工作路径**：  \n  [https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/217c6fd2-ede2-4628-8df2-4eb8d956910f/outputs/charge_density_diff_work_path/20250820111852.abacus_cal_charge_density_difference.7a9debd3.tgz](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/217c6fd2-ede2-4628-8df2-4eb8d956910f/outputs/charge_density_diff_work_path/20250820111852.abacus_cal_charge_density_difference.7a9debd3.tgz)\n\n- **电荷密度差文件（cube格式）**：  \n  [https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/217c6fd2-ede2-4628-8df2-4eb8d956910f/outputs/charge_density_difference_cube_file/chg_density_diff.cube](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/217c6fd2-ede2-4628-8df2-4eb8d956910f/outputs/charge_density_difference_cube_file/chg_density_diff.cube)\n\n该 cube 文件描述了将 H2O 分子划分为仅含 O 原子与仅含 H 原子的两个子系统后，与完整 H2O 分子之间的电荷密度差异。您可以使用可视化软件（如 VMD、VESTA 或 GaussView）打开该文件以查看电荷密度变化的三维分布。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_ebd59f535f714e639b2e16",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/H2O.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_853ed1c2fdee41099e3c86",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/f28a5f18-91eb-400f-b6a5-e96c843b1e81/outputs/job_path/000000.tgz",
+                  "subsys1_atom_index": [
+                    0
+                  ]
+                },
+                "name": "abacus_cal_charge_density_difference"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755659921.522905
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755660134.4161239
+    },
+    {
+      "eval_id": "CoPt3",
+      "conversation": [
+        {
+          "invocation_id": "e-38922ba7-4128-43f3-94af-f8a2e41b65b4",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "CoPt3结构文件位于/personal/google-adk-eval-stru/CoPt3.STRU有结构文件，其中Co是0号原子。请用这个结构文件准备ABACUS输入文件（考虑CoPt3的磁性），然后计算将晶体划分为仅含Co原子和仅含Pt原子的2个子系统，与完整CoPt3晶体之间的电荷密度差。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "电荷密度差计算已完成，结果文件已生成。以下是相关信息：\n\n- **电荷密度差工作路径**：  \n  [下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/2ed5dddb-e2e3-4099-8734-110fcd2df760/outputs/charge_density_diff_work_path/20250820112303.abacus_cal_charge_density_difference.431107f0.tgz)\n\n- **电荷密度差文件（cube格式）**：  \n  [下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/2ed5dddb-e2e3-4099-8734-110fcd2df760/outputs/charge_density_difference_cube_file/chg_density_diff.cube)\n\n您可以通过可视化软件（如VESTA或Gaussian Cube Viewer）打开`chg_density_diff.cube`文件，查看Co原子与Pt原子之间的电荷密度差异。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_fb0f164051d94eb383503a",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CoPt3.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 2,
+                  "init_mag": {
+                    "Co": 4
+                  },
+                  "afm": false
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_3a63cdc9d6824c3ba16c22",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/038fc8c0-501c-4a35-a02b-1d4f78f2c69a/outputs/job_path/000000.tgz",
+                  "subsys1_atom_index": [
+                    0
+                  ]
+                },
+                "name": "abacus_cal_charge_density_difference"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755660170.970495
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755660384.718854
+    }
+  ],
+  "creation_timestamp": 1755660126.2273397
+}
