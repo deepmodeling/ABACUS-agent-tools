@@ -1,0 +1,152 @@
+{
+  "eval_set_id": "spin_density",
+  "name": "spin_density",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "CoPt3",
+      "conversation": [
+        {
+          "invocation_id": "e-17ed05c8-90bb-458c-89d2-f564e1b703b8",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "CoPt3结构文件位于/personal/google-adk-eval-stru/CoPt3.STRU有结构文件，请在准备必须的输入文件后计算其自旋密度"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "计算已完成，自旋密度文件已生成。您可以通过以下链接访问结果：\n\n- **自旋密度工作路径**: [下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/8bf62aaa-d97e-46f7-9088-7b16c3ea9d73/outputs/spin_density_work_path/20250820112804.abacus_cal_spin_density.35156a3f.tgz)\n- **自旋密度文件 (cube格式)**: [下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/8bf62aaa-d97e-46f7-9088-7b16c3ea9d73/outputs/spin_density_file/spin_density.cube)\n\n您可以使用可视化软件（如VMD、Gaussian View等）打开 `.cube` 文件以查看自旋密度分布。如果您需要进一步的分析或有其他问题，请告诉我！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_6aebb685366148798780a0",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CoPt3.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 2
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_78254980158b44989aecdd",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/45c1f810-b38a-4314-ba85-5f05325fc728/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_cal_spin_density"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755660471.732684
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755660644.5060885
+    },
+    {
+      "eval_id": "Fe",
+      "conversation": [
+        {
+          "invocation_id": "e-d7cb96e2-6da9-4841-b0df-db79d02a407a",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "BCC Fe结构文件位于/personal/google-adk-eval-stru/Fe_bcc.cif，请在准备必须的输入文件后计算其自旋密度"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "自旋密度计算已完成，结果文件如下：\n\n- **自旋密度工作路径**: [下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/e6ab1536-e229-41c0-afcd-142d67ab223f/outputs/spin_density_work_path/20250820113137.abacus_cal_spin_density.d49a96d4.tgz)\n- **自旋密度文件 (cube格式)**: [下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/e6ab1536-e229-41c0-afcd-142d67ab223f/outputs/spin_density_file/spin_density.cube)\n\n您可以下载这些文件以进一步分析或可视化自旋密度分布。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_91c6a9c783aa4d489f8dde",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Fe_bcc.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 2
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_e48a468b68a5434d8fdbae",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7a20c01e-4909-4d23-a255-d07ed1e504f8/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_cal_spin_density"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755660686.16021
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755660805.748006
+    }
+  ],
+  "creation_timestamp": 1755660631.2524471
+}

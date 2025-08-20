@@ -1,0 +1,31 @@
+ATOMIC_SPECIES
+Ni  58.6934 Ni_ONCV_PBE-1.2.upf upf201
+O  15.9994 O.upf upf201
+
+NUMERICAL_ORBITAL
+Ni_gga_8au_100Ry_4s2p2d1f.orb
+O_gga_6au_100Ry_2s2p1d.orb
+
+LATTICE_CONSTANT
+1.8897260000
+
+LATTICE_VECTORS
+        4.1632639461        2.0729584133        2.0729584133
+        2.0729584133        4.1632639461        2.0729584133
+        2.0729584133        2.0729584133        4.1632639461
+
+ATOMIC_POSITIONS
+Direct
+
+Ni #label
+0.0000   #magnetism
+2 #number of atoms
+        0.0000000000        0.0000000000        0.0000000000 m 1 1 1 mag  1.3047
+        0.5000000000        0.5000000000        0.5000000000 m 1 1 1 mag -1.3047
+
+O #label
+0.0000   #magnetism
+2 #number of atoms
+        0.2500000000        0.2500000000        0.2500000000 m 1 1 1 mag -0.0000
+        0.7500000000        0.7500000000        0.7500000000 m 1 1 1 mag -0.0000
+

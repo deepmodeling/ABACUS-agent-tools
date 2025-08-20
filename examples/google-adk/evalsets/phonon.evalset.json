@@ -1,0 +1,252 @@
+{
+  "eval_set_id": "phonon",
+  "name": "phonon",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "Fe-nspin2",
+      "conversation": [
+        {
+          "invocation_id": "e-dabfdcc4-e174-4e04-a4d9-ae034dd8f17b",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算具有铁磁性的BCC Fe的声子谱，Fe的结构文件位于/personal/google-adk-eval-stru/Fe_bcc.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功计算BCC Fe的声子谱。以下是计算结果的摘要：\n\n- **声子谱路径**：`https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/4af9ae83-21fb-4bee-9ef0-5158ffa5dc33/outputs/phonon_work_path/20250820015723.abacus_phonon_dispersion.f189ce88.tgz`\n- **声子谱图**：`https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/4af9ae83-21fb-4bee-9ef0-5158ffa5dc33/outputs/band_plot/phonon_dispersion.png`\n- **声子态密度图**：`https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/4af9ae83-21fb-4bee-9ef0-5158ffa5dc33/outputs/dos_plot/phonon_dos.png`\n- **声子谱YAML文件**：`https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/4af9ae83-21fb-4bee-9ef0-5158ffa5dc33/outputs/band_yaml/phonon_dispersion.yaml`\n- **声子态密度数据文件**：`https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/4af9ae83-21fb-4bee-9ef0-5158ffa5dc33/outputs/dos_dat_file/phonon_dos.dat`\n- **熵**：24.88554633307098 J/mol·K\n- **自由能**：0.7928584306115627 eV\n- **热容**：22.469317405942135 J/mol·K\n- **最大频率（THz）**：8.864384502099503 THz\n- **最大频率（K）**：425.4230867785602 K\n\n您可以下载和查看上述文件以获取更多详细信息。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_94f1e0d982b34d8bbaa65d",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Fe_bcc.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 2,
+                  "soc": false,
+                  "dftu": false,
+                  "init_mag": {
+                    "Fe": 2.0
+                  },
+                  "afm": false
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_d098c14ffe9540f4b68b62",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3936c870-2f3a-4377-a224-b3d9524df0ff/outputs/job_path/000000.tgz",
+                  "relax_cell": true
+                },
+                "name": "abacus_do_relax"
+              },
+              {
+                "id": "call_da0699bf50634ce5a840db",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/703e34b5-a25a-4e87-b1e7-ead2280fa868/outputs/new_abacus_inputs_path/20250820015716.abacus_prepare_inputs_from_relax_results.ca7ffd4b.tgz"
+                },
+                "name": "abacus_phonon_dispersion"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755626075.384331
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755627230.47826
+    },
+    {
+      "eval_id": "CsCl",
+      "conversation": [
+        {
+          "invocation_id": "e-ac7f3a0c-9a0c-4cd6-a030-25852a9dc1dd",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算具有CsCl的声子谱，结构文件位于/personal/google-adk-eval-stru/CsCl.cif\n\n"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功计算CsCl的声子谱。以下是计算结果的摘要：\n\n- **声子谱图**：[下载声子谱图](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3c11efdf-654c-425a-bb8f-30507496722a/outputs/band_plot/phonon_dispersion.png)\n- **声子态密度图**：[下载声子态密度图](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3c11efdf-654c-425a-bb8f-30507496722a/outputs/dos_plot/phonon_dos.png)\n- **声子谱数据文件**：[下载声子谱数据](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3c11efdf-654c-425a-bb8f-30507496722a/outputs/band_yaml/phonon_dispersion.yaml)\n- **声子态密度数据文件**：[下载声子态密度数据](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3c11efdf-654c-425a-bb8f-30507496722a/outputs/dos_dat_file/phonon_dos.dat)\n\n### 计算结果数据：\n- **最大声子频率 (THz)**：4.486\n- **最大声子频率 (K)**：215.312\n- **熵 (eV/K)**：104.801\n- **自由能 (eV)**：-16.180\n- **热容量 (eV/K)**：49.245\n\n如需进一步分析或获取更多详细信息，请告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_16858cc9badd4b17849423",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CsCl.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_c8a0ca193d5848c087e6bf",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/dbb7fa97-a2d2-45b1-9ea2-1e7081a1fa99/outputs/job_path/000000.tgz",
+                  "relax_cell": true
+                },
+                "name": "abacus_do_relax"
+              },
+              {
+                "id": "call_5f19d6229ae245e2b63b49",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7c043358-ab3d-465f-8b52-0f95290a98f3/outputs/new_abacus_inputs_path/20250820021519.abacus_prepare_inputs_from_relax_results.2b50eacf.tgz"
+                },
+                "name": "abacus_phonon_dispersion"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755627287.361253
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755627470.306782
+    },
+    {
+      "eval_id": "diamond",
+      "conversation": [
+        {
+          "invocation_id": "e-2ccf720b-2490-45bd-b6f5-53343f0f2f2e",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请使用ABACUS做DFT计算，在优化结构后计算金刚石的声子谱，结构文件位于/personal/google-adk-eval-stru/C-prim.STRU"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功完成金刚石结构的声子谱计算。以下是计算结果的概要：\n\n- **声子谱图**：[点击下载](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/70da5458-15bf-45f3-9abd-d3945ef1892d/outputs/band_plot/phonon_dispersion.png)\n- **声子态密度图**：[点击下载](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/70da5458-15bf-45f3-9abd-d3945ef1892d/outputs/dos_plot/phonon_dos.png)\n- **熵**：4.9076 $k_B$\n- **自由能**：34.4242 eV\n- **热容量**：12.5461 $k_B$\n- **最大频率 (THz)**：39.2091 THz\n- **最大频率 (K)**：1881.7388 K\n\n如需进一步分析或获取其他属性，请告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_c59f25ba149f4f4c86f8a5",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/C-prim.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_e6a71d04e16f4f92a93eae",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/1e630e8a-a8c0-48ae-b9e4-0c4c556d9ceb/outputs/job_path/000000.tgz",
+                  "relax_cell": true
+                },
+                "name": "abacus_do_relax"
+              },
+              {
+                "id": "call_fd960138fde34aa1b2fb96",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/672bf81e-e982-402d-8373-f83d4ea15985/outputs/new_abacus_inputs_path/20250820024132.abacus_prepare_inputs_from_relax_results.7b759ad3.tgz"
+                },
+                "name": "abacus_phonon_dispersion"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755628762.201373
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755629260.1890302
+    }
+  ],
+  "creation_timestamp": 1755627219.7323544
+}

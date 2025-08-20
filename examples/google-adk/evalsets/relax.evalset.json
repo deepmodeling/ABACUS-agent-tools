@@ -1,0 +1,290 @@
+{
+  "eval_set_id": "relax",
+  "name": "relax",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "H2O",
+      "conversation": [
+        {
+          "invocation_id": "e-4df9ef5f-546b-4197-b1e3-76b7c22586d9",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请使用DFT计算优化水分子的结构，H2O的结构文件位于/personal/google-adk-eval-stru/C-prim.STRU"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "水分子结构优化完成。优化后的结构已生成，可以使用以下信息进行进一步分析或计算：\n\n- **优化后的输入文件路径**: [new_abacus_inputs_dir](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/cbe98c05-48b7-4128-a8de-0e72a08ecdde/outputs/new_abacus_inputs_dir/20250820030016.abacus_prepare_inputs_from_relax_results.9417db5c.tgz)\n- **能量**: -327.48177917 eV\n- **是否正常结束**: 是\n- **优化步骤数**: 1步\n- **最大梯度**: 4.42299e-17 eV/Å\n\n如需进一步处理或分析优化后的结构，请告知。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_d92d1d38d044425ab4aca9",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/C-prim.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "relax",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_0da919eb545a455db081c3",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/4ee8099b-b38f-4734-bb1f-d0329d82fa02/outputs/job_path/000000.tgz",
+                  "force_thr_ev": 0.01,
+                  "max_steps": 100,
+                  "relax_cell": false
+                },
+                "name": "abacus_do_relax"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755629994.571804
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755630087.628302
+    },
+    {
+      "eval_id": "CsCl",
+      "conversation": [
+        {
+          "invocation_id": "e-78947514-88dd-4c99-9aa6-18e74309a086",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/CsCl.cif有一个CsCl的结构文件。请使用这个结构文件准备输入文件，并优化Fe的晶胞结构。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "优化已完成，结构收敛。以下是优化后的信息：\n\n- **最终能量**：-1085.93738368189 eV\n- **优化步数**：3步\n- **是否收敛**：是\n\n优化后的输入文件位于新的目录中，您可以使用此目录进行后续的属性计算。需要我继续进行其他属性计算吗？"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_9a39b7b1810c4a00aebeef",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CsCl.cif",
+                  "stru_type": "cif",
+                  "job_type": "cell-relax",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_2b247b8f1b1346aeb12111",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/5cb6b53f-ea9f-4d12-ae1a-af0d0de9620e/outputs/job_path/000000.tgz",
+                  "relax_cell": true
+                },
+                "name": "abacus_do_relax"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755631229.493515
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755631330.139445
+    },
+    {
+      "eval_id": "CoF3-nspin2",
+      "conversation": [
+        {
+          "invocation_id": "e-ace311b3-c173-4dc7-bfe8-641ec2ecb4cf",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/CoF3.cif有一个CoF3的结构文件。CoF3是一种铁磁性材料。请使用这个结构文件准备输入文件，并优化CoF3的晶胞结构，力收敛限和应力收敛限分别设置为0.02 eV/Angstrom和0.5 kbar"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "优化已完成，结构已收敛。以下是优化结果的概要：\n\n- **最终能量**：-11398.5501370551 eV\n- **优化步数**：47步\n- **最大梯度力**：0.012431 eV/Å\n- **最大梯度应力**：0.499726 kbar\n- **是否正常结束**：是\n- **是否收敛**：是\n\n优化后的结构文件已生成，路径为：\n```\nhttps://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/216dbbb9-084e-47c7-9cb0-711318ec5eec/outputs/new_abacus_inputs_dir/20250820143541.abacus_prepare_inputs_from_relax_results.1cb8440e.tgz\n```\n\n如需进一步的性质计算（如能带结构、态密度、弹性常数等），可以使用上述优化后的结构文件作为输入。请告诉我您下一步的计算需求。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_75b5f75d7f6b45d1ba84de",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CoF3.cif",
+                  "stru_type": "cif",
+                  "job_type": "cell-relax",
+                  "lcao": true,
+                  "nspin": 2,
+                  "soc": false,
+                  "dftu": false,
+                  "init_mag": {
+                    "Co": 3.0
+                  },
+                  "afm": false
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_701b95e82f8d4b708101fc",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/bc1700bc-bd95-4700-93c6-f17e45022d65/outputs/job_path/000000.tgz",
+                  "force_thr_ev": 0.02,
+                  "stress_thr_kbar": 0.5,
+                  "max_steps": 60,
+                  "relax_cell": true,
+                  "relax_method": "cg"
+                },
+                "name": "abacus_do_relax"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755666042.949705
+        },
+        {
+          "invocation_id": "e-ea5d12fe-e7e6-4987-ad7f-81c1481b2a39",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "结构优化收敛时，Co原子的磁矩是多少？"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在结构优化收敛时，Co原子的磁矩为：\n\n- **Co原子磁矩**：1.7998555785 Bohr磁子（μB）和 1.7995124568 Bohr磁子（μB）\n\n这两个值对应于Co原子在优化后结构中的磁矩（可能由于结构对称性或计算细节，存在两个相近的值）。通常，磁矩的最终值可以取其平均值，约为 **1.80 μB**。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_55fbf3eaaaad4ecfacfc59",
+                "args": {
+                  "abacusjob": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/216dbbb9-084e-47c7-9cb0-711318ec5eec/outputs/job_path/20250820130057.abacus_do_relax.7ad04c70.tgz",
+                  "metrics": [
+                    "atom_mag"
+                  ]
+                },
+                "name": "abacus_collect_data"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755671804.645411
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755671860.307258
+    }
+  ],
+  "creation_timestamp": 1755630078.8070297
+}

@@ -1,0 +1,170 @@
+{
+  "eval_set_id": "vibration",
+  "name": "vibration",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "H2O",
+      "conversation": [
+        {
+          "invocation_id": "e-70c2a210-c27b-45c8-ae35-6828a942b379",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/H2O.STRU有一个H2O分子的结构文件，请用这个结构准备ABACUS输入文件，然后优化H2O分子的结构，力收敛限为0.01 eV/Angstrom，最后用优化后的H2O分子结构计算振动频率。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "H2O分子结构优化后的振动频率计算结果如下：\n\n- **实频率**（单位：cm⁻¹）：\n  - 3.0123\n  - 33.2181\n  - 1645.4375\n  - 3722.9441\n  - 3838.7187\n\n- **虚频率**（单位：cm⁻¹）：\n  - 59.4278i\n  - 22.9472i\n  - 9.9379i\n  - 0.0060i\n\n- **零点能**：0.5787 eV\n\n- **振动熵**：0.000695 eV/K\n\n- **振动自由能**：0.4150 eV\n\n这些结果表明，H2O分子在优化后的结构中存在稳定的振动模式，但仍有少量虚频率，可能与计算精度或分子构型的局部稳定性有关。如果需要进一步分析，可以考虑调整计算参数或优化方法。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_6acc252fe2694d119aa133",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/H2O.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_a22983b885734d808fbac4",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/75522e36-cf01-4b48-825d-511b3ac10ec9/outputs/job_path/000000.tgz",
+                  "force_thr_ev": 0.01,
+                  "max_steps": 100,
+                  "relax_cell": false
+                },
+                "name": "abacus_do_relax"
+              },
+              {
+                "id": "call_99a0879d735e4770ba91c3",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7c3bff73-8d03-46c8-bd39-0a3c73400d33/outputs/new_abacus_inputs_dir/20250820120204.abacus_prepare_inputs_from_relax_results.c7b03829.tgz"
+                },
+                "name": "abacus_vibration_analysis"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755662418.194849
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755663145.9219842
+    },
+    {
+      "eval_id": "CO2",
+      "conversation": [
+        {
+          "invocation_id": "e-885c94ce-cddb-4370-8ff9-114051852828",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/CO2.stru有一个CO2分子的结构文件，请用这个结构准备ABACUS输入文件，然后优化H2O分子的结构，力收敛限为0.01 eV/Angstrom，最后用优化后的CO2分子结构计算振动频率。\n\n"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功完成以下任务流程：\n\n1. **准备ABACUS输入文件**：基于提供的CO2分子结构文件（`/personal/google-adk-eval-stru/CO2.stru`），生成了ABACUS计算所需的输入文件。\n\n2. **结构优化**：对CO2分子进行了结构优化，设置力收敛阈值为 `0.01 eV/Angstrom`，优化后结构已保存在新的输入文件中。\n\n3. **振动频率计算**：使用优化后的结构计算了CO2分子的振动频率。\n\n### 结果摘要：\n- **实频率（cm⁻¹）**：`[636.95, 636.95, 1324.57, 2373.21]`\n- **虚频率（cm⁻¹）**：`[\"11.64i\", \"11.64i\", \"0.06i\", \"0.04i\"]`\n- **零点能（ZPE）**：`0.3097 eV`\n- **振动熵**：`3.49e-5 eV/K`\n- **振动自由能**：`0.3057 eV`\n\n这些结果可用于进一步分析CO2分子的振动特性。如需查看具体文件或进行其他分析，请告知。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_cb9e9edbce7b4e86a0de19",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CO2.stru",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_5df4e23004304db8a77d0f",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/348c253d-fcc9-4182-93e4-fcc103c1285a/outputs/job_path/000000.tgz",
+                  "force_thr_ev": 0.01,
+                  "max_steps": 100,
+                  "relax_cell": false
+                },
+                "name": "abacus_do_relax"
+              },
+              {
+                "id": "call_0d1ba6815cb14b9ebf2719",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/123bf373-71a0-4d7f-8e88-560095cf4909/outputs/new_abacus_inputs_dir/20250820121612.abacus_prepare_inputs_from_relax_results.7880115e.tgz"
+                },
+                "name": "abacus_vibration_analysis"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755663272.563015
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755665656.523947
+    }
+  ],
+  "creation_timestamp": 1755663139.0830345
+}

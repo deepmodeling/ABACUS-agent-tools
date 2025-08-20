@@ -10,22 +10,23 @@ from itertools import groupby
 
 from ase.data import chemical_symbols
 from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
+from abacustest.lib_model.comm import check_abacus_inputs
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import run_abacus, generate_work_path, link_abacusjob
 from abacusagent.modules.util.cube_manipulator import read_gaussian_cube, axpy, write_gaussian_cube
 
 @mcp.tool()
-def abacus_cal_elf(abacusjob_dir: Path):
+def abacus_cal_elf(abacus_inputs_dir: Path):
     """
     Calculate electron localization function (ELF) using ABACUS.
     
     Args:
-        abacusjob_dir (Path): Path to the ABACUS job directory.
+        abacus_inputs_dir (Path): Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
     
     Returns:
         Dict[str, Any]: A dictionary containing:
-         - work_path: Path to the directory containing ABACUS input files and output files when calculating ELF.
+         - elf_work_path: Path to the directory containing ABACUS input files and output files when calculating ELF.
          - elf_file: ELF file path (in .cube file format).
     
     Raises:
@@ -33,8 +34,12 @@ def abacus_cal_elf(abacusjob_dir: Path):
         FileNotFoundError: If the ELF file is not found in the output directory.
     """
     try:
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
         work_path = Path(generate_work_path()).absolute()
-        link_abacusjob(src=abacusjob_dir, dst=work_path, copy_files=["INPUT"])
+        link_abacusjob(src=abacus_inputs_dir, dst=work_path, copy_files=["INPUT"])
 
         input_params = ReadInput(os.path.join(work_path, "INPUT"))
         if input_params.get('nspin', 1) not in [1, 2]:
@@ -52,15 +57,11 @@ def abacus_cal_elf(abacusjob_dir: Path):
             raise FileNotFoundError(f"ELF file not found in {work_path}")
 
         return {
-            "work_path": Path(work_path).absolute(),
+            "elf_work_path": Path(work_path).absolute(),
             "elf_file": Path(elf_file).absolute()
         }
     except Exception as e:
-        return {
-            "work_path": None,
-            "elf_file": None,
-            'message': f"Calculating electron localization function failed: {e}"
-        }
+        return {'message': f"Calculating electron localization function failed: {e}"}
 
 def get_subsys_pp_orb(stru: AbacusStru,
                       subsys_atom_index: List[int]
@@ -93,18 +94,18 @@ def get_subsys_pp_orb(stru: AbacusStru,
 
     return subsys_pp, subsys_orb, subsys_label
 
-def get_total_charge_density(abacusjob_dir: Path):
+def get_total_charge_density(abacus_inputs_dir: Path):
     """
     Get charge density for non spin-polarized case and total charge density for spin-polarized case.
     """
-    input_params = ReadInput(os.path.join(abacusjob_dir, "INPUT"))
+    input_params = ReadInput(os.path.join(abacus_inputs_dir, "INPUT"))
     nspin = input_params.get('nspin', 1)
-    chg_file = os.path.join(abacusjob_dir, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN1_CHG.cube")
+    chg_file = os.path.join(abacus_inputs_dir, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN1_CHG.cube")
     if nspin == 1:
         chg = read_gaussian_cube(str(Path(chg_file).absolute()))
     elif nspin == 2:
         chg_up = read_gaussian_cube(str(Path(chg_file).absolute()))
-        chg_down_file = os.path.join(abacusjob_dir, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN2_CHG.cube")
+        chg_down_file = os.path.join(abacus_inputs_dir, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN2_CHG.cube")
         chg_dn = read_gaussian_cube(str(Path(chg_down_file).absolute()))
         chg = read_gaussian_cube(str(Path(chg_file).absolute()))
         chg['data'] = axpy(chg_up['data'], chg_dn['data'])
@@ -115,34 +116,37 @@ def get_total_charge_density(abacusjob_dir: Path):
 
 @mcp.tool()
 def abacus_cal_charge_density_difference(
-    abacusjob_dir: Path,
-    subsys1_atom_index: Optional[List[int]] = [],
+    abacus_inputs_dir: Path,
+    subsys1_atom_index: Optional[List[int]] = [0],
 ) -> Dict[str, Any]:
     """
     Calculate charge density difference using ABACUS.
     
     Args:
-        abacusjob_dir (Path): Path to the ABACUS job directory.
-        reference_abacusjob_dir (Optional[Path]): Path to the reference ABACUS job directory. If not provided, 
-            the charge density of the current job will be used as the reference.
-        suffix (str): Suffix for the output files. Defaults to "ABACUS".
+        abacus_inputs_dir (Path): Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
+        subsys1_atom_index (Optional[List[int]]): Atom indices of the first subsystem. Should not be empty. The atom indices of
+            the second subsystem will be determined by the remaining atoms in the full system.
     
     Returns:
         Dict[str, Any]: A dictionary containing:
-         - work_path: Path to the directory containing ABACUS input files and output files when calculating charge density difference.
+         - charge_density_diff_work_path: Path to the directory containing ABACUS input files and output files when calculating charge density difference.
          - charge_density_diff_file: Charge density difference file path (in .cube file format).
     
     Raises:
         FileNotFoundError: If the charge density difference file is not found in the output directory.
     """
     try:
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
         work_path = Path(generate_work_path()).absolute()
         full_system_jobpath = os.path.join(work_path, "full_system")
         subsys1_jobpath = os.path.join(work_path, 'subsys1')
         subsys2_jobpath = os.path.join(work_path, 'subsys2')
-        link_abacusjob(src=abacusjob_dir, dst=full_system_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
-        link_abacusjob(src=abacusjob_dir, dst=subsys1_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
-        link_abacusjob(src=abacusjob_dir, dst=subsys2_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
+        link_abacusjob(src=abacus_inputs_dir, dst=full_system_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
+        link_abacusjob(src=abacus_inputs_dir, dst=subsys1_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
+        link_abacusjob(src=abacus_inputs_dir, dst=subsys2_jobpath, copy_files=["INPUT", "STRU"], exclude_directories=True)
 
         input_params = ReadInput(os.path.join(full_system_jobpath, "INPUT"))
         full_system_stru_file = os.path.join(full_system_jobpath, input_params.get('stru_file', 'STRU'))
@@ -214,34 +218,36 @@ def abacus_cal_charge_density_difference(
         chg_dens_diff_cube_file = Path(os.path.join(work_path, 'chg_density_diff.cube')).absolute()
         write_gaussian_cube(chg_density_difference, chg_dens_diff_cube_file)
 
-        return {'work_path': Path(work_path).absolute(),
+        return {'charge_density_diff_work_path': Path(work_path).absolute(),
                 'charge_density_difference_cube_file': chg_dens_diff_cube_file}
     except Exception as e:
-        return {'work_path': None,
-                'charge_density_difference_cube_file': None,
-                'message': f'Calculaing charge density difference failed: {e}'}
+        return {'message': f'Calculaing charge density difference failed: {e}'}
 
 @mcp.tool()
 def abacus_cal_spin_density(
-    abacusjob_dir: Path
+    abacus_inputs_dir: Path
 ) -> Dict[str, Any]:
     """
     Calculate the spin density for collinear spin-polarized system (nspin=2).
 
     Args:
-        abacusjob_dir (Path): Path to the ABACUS job directory.
+        abacus_inputs_dir (Path): Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
     
     Returns:
         A dictionary containing the following keys:
-        - work_path (Path): Path to the ABACUS job directory calculating spin density.
-        - spin_density (Path): Path to the cube file containing the spin density.
+        - spin_density_work_path (Path): Path to the ABACUS job directory calculating spin density.
+        - spin_density_file (Path): Path to the cube file containing the spin density.
     
     Raises:
         ValueError: If nspin in INPUT file is not 2.
     """
     try:
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
         work_path = Path(generate_work_path()).absolute()
-        link_abacusjob(src=abacusjob_dir,dst=work_path,copy_files=["INPUT", "STRU"], exclude_directories=True)
+        link_abacusjob(src=abacus_inputs_dir,dst=work_path,copy_files=["INPUT", "STRU"], exclude_directories=True)
         input_params = ReadInput(os.path.join(work_path, 'INPUT'))
         if input_params.get('nspin', 1) not in [2]:
             raise ValueError('Only collinear spin-polarized calculation is supported for calculating spin density')
@@ -261,9 +267,7 @@ def abacus_cal_spin_density(
         spin_density_file = os.path.join(work_path, 'spin_density.cube')
         write_gaussian_cube(spin_density, spin_density_file)
 
-        return {'work_path': Path(work_path).absolute(),
-                'spin_density': Path(spin_density_file).absolute()}
+        return {'spin_density_work_path': Path(work_path).absolute(),
+                'spin_density_file': Path(spin_density_file).absolute()}
     except Exception as e:
-        return {'work_path': None,
-                'spin_density': None,
-                'message': f"Calculating spin density failed: {e}"}
+        return {'message': f"Calculating spin density failed: {e}"}

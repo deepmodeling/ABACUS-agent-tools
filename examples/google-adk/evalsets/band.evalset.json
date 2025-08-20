@@ -1,0 +1,530 @@
+{
+  "eval_set_id": "band",
+  "name": "band",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "Si-prim",
+      "conversation": [
+        {
+          "invocation_id": "e-c0a2ec89-a2ab-4125-be33-9b0d00544635",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/Si-prim.STRU有一个Si的结构文件，请在准备好ABACUS输入文件后使用ABACUS计算Si的能带"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已使用 ABACUS 计算 Si 的能带，计算结果如下：\n\n- **带隙 (Band Gap)**: 0.62556 eV\n- **能带计算目录**: [下载地址](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/f78e20ce-cabe-4f8c-8f22-214a421469be/outputs/band_calc_dir/000000.tgz)\n- **能带图**: [查看图片](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/f78e20ce-cabe-4f8c-8f22-214a421469be/outputs/band_picture/band.png)\n\n如需进一步分析，请告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_e94b4afc9e334cff87a136",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Si-prim.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_949fbd1d74d6490e847fb9",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/d5dd6233-64e9-4633-b26f-fdae944e58d3/outputs/job_path/000000.tgz",
+                  "mode": "pyatb"
+                },
+                "name": "abacus_cal_band"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755590757.128084
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755590820.9006376
+    },
+    {
+      "eval_id": "NaCl",
+      "conversation": [
+        {
+          "invocation_id": "e-8c668ac8-6115-48c7-bf8d-acb49d1d3893",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算NaCl的能带，NaCl的结构文件位于/personal/google-adk-eval-stru/NaCl_rocksalt.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "NaCl的能带计算已完成。以下是计算结果：\n\n- **带隙（Band Gap）**: 5.14356 eV\n- **能带计算目录（Band Calculation Directory）**: [下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/091baf71-8a4f-4144-b042-b7e1af37020a/outputs/band_calc_dir/000000.tgz)\n- **能带图（Band Picture）**: [查看能带图](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/091baf71-8a4f-4144-b042-b7e1af37020a/outputs/band_picture/band.png)\n\n计算使用了PYATB方法，在ABACUS的自洽场（SCF）计算结果基础上进行。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_2322a209a1fc4a12bb83ad",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/NaCl_rocksalt.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_38d189773191479aaae935",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/92f2a5c5-e0de-4465-841b-8b79812d2667/outputs/job_path/000000.tgz",
+                  "mode": "pyatb"
+                },
+                "name": "abacus_cal_band"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755591142.823981
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755591253.7460673
+    },
+    {
+      "eval_id": "BCC-Fe-nspin2",
+      "conversation": [
+        {
+          "invocation_id": "e-0cd20af6-1d05-4281-9b8b-e54acebee595",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算BCC结构的铁的自旋极化能带，Fe的结构文件位于/personal/google-adk-eval-stru/Fe_bcc.cif\n\n"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功计算BCC结构铁的自旋极化能带。计算结果显示带隙为0.0 eV，表明这是一个金属系统。\n\n以下是计算的详细信息：\n- **能带计算目录**：[band_calc_dir](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/48fd281b-51fa-4529-bce7-17d6e5d5e4db/outputs/band_calc_dir/000000.tgz)\n- **能带图**：![band_picture](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/48fd281b-51fa-4529-bce7-17d6e5d5e4db/outputs/band_picture/band.png)\n\n如需进一步分析或获取更多详细信息，请告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_9f734aa4f2fb41608c2a52",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Fe_bcc.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 2
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_cd4d42e31ee44a8fbb9a45",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/22e83826-b208-4b3b-8547-bd1fbd8bf99f/outputs/job_path/000000.tgz",
+                  "mode": "pyatb"
+                },
+                "name": "abacus_cal_band"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755591365.030629
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755591493.9149957
+    },
+    {
+      "eval_id": "Al-fcc",
+      "conversation": [
+        {
+          "invocation_id": "e-30b75325-9963-480f-bbb0-c5b7f736e645",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算铝的能带，Al的结构文件位于/personal/google-adk-eval-stru/Al_fcc.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "铝的能带计算已完成。以下是计算结果的概要：\n\n1. **能带结构图**：能带结构图已经生成，路径为：\n   ```\n   https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/9eb12ab1-a0c6-4e62-a415-f1e6bed835f0/outputs/band_picture/band.png\n   ```\n\n2. **带隙**：计算结果显示铝的带隙为 **0.0 eV**，表明铝是一个金属材料，没有明显的带隙。\n\n您可以点击链接查看能带结构图以获取更详细的信息。如果有其他问题或需要进一步的计算，请随时告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_95b1a1167bb04ccea632db",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Al_fcc.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_6a78dd8a02594e35b5ef39",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/aab656d0-2a75-4c11-a127-ddb1a164cafd/outputs/job_path/000000.tgz",
+                  "mode": "pyatb"
+                },
+                "name": "abacus_cal_band"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755591535.509038
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755591593.5890074
+    },
+    {
+      "eval_id": "CsPbI3",
+      "conversation": [
+        {
+          "invocation_id": "e-a20168b5-38f9-40f2-8b6c-3c4bb1d6e4b5",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算CsPbI3的能带，其结构文件位于/personal/google-adk-eval-stru/CsPbI3.cif\n\n"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "CsPbI3的能带计算已完成。以下是计算结果的摘要：\n\n1. **带隙（Band Gap）**：计算得到的带隙为1.577 eV。\n\n2. **能带图（Band Structure）**：能带图已经生成，可以通过以下链接查看：\n   ![CsPbI3能带图](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/c6f65404-c017-4f0e-8aaa-094ec7686ceb/outputs/band_picture/band.png)\n\n请注意，这些结果基于使用ABACUS进行的自洽场（SCF）计算，随后使用PYATB进行能带计算。如果您需要进一步的信息或有其他请求，请随时告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_f769a74798274b968e3854",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CsPbI3.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 1
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_906d64bdaccd47319e50fd",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/ad9b0537-3a6d-49d5-bf81-483e7b8198a2/outputs/job_path/000000.tgz",
+                  "mode": "pyatb"
+                },
+                "name": "abacus_cal_band"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755591853.034935
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755591989.9186563
+    },
+    {
+      "eval_id": "BCC-Fe-nspin2-nscf",
+      "conversation": [
+        {
+          "invocation_id": "e-d5f585ad-18ac-48ea-a0ad-3fcdb19e649f",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/Fe_bcc.cif有一个Fe的结构文件。请使用这个结构文件准备输入文件，使用nscf方法计算Fe的自旋极化能带。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已成功完成Fe的自旋极化能带计算。以下是计算结果的概要：\n\n1. **结构准备**：使用提供的Fe_bcc.cif文件准备了ABACUS输入文件，设置了自旋极化（nspin=2）并初始化了Fe的磁矩为4。\n\n2. **结构优化**：进行了全结构优化（包括晶胞参数和原子位置的优化），优化结果显示结构已收敛，最终能量为-3220.42737823934 eV。\n\n3. **能带计算**：基于优化后的结构，通过非自洽场（NSCF）计算得到了能带结构。计算结果显示带隙为0.0 eV，表明Fe为金属材料，具有导电性。\n\n能带图已生成并保存为band.png文件，您可以通过以下链接访问：\n- **能带图链接**: [band.png](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/c90d26f3-25e7-4111-b5bc-53a3b969f953/outputs/band_picture/band.png)\n\n如需进一步分析或获取更多详细信息，请随时告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_61cf33c88a284572b7b791",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Fe_bcc.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 2,
+                  "soc": false,
+                  "dftu": false,
+                  "dftu_param": null,
+                  "init_mag": {
+                    "Fe": 4
+                  },
+                  "afm": false
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_b026ac06d99c46ee85b1f7",
+                "args": {
+                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/ba5214b7-5409-43d5-a998-eb2caa7e23f4/outputs/job_path/000000.tgz",
+                  "relax_cell": true
+                },
+                "name": "abacus_do_relax"
+              },
+              {
+                "id": "call_15a397c14aa74f2990daca",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/ff5865c3-ee0f-4ae9-9844-0073935f0f86/outputs/new_abacus_inputs_path/20250819185231.abacus_prepare_inputs_from_relax_results.810cc5f9.tgz",
+                  "mode": "nscf"
+                },
+                "name": "abacus_cal_band"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755600521.164413
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755600980.9764662
+    },
+    {
+      "eval_id": "NaCl-nscf",
+      "conversation": [
+        {
+          "invocation_id": "e-8b729505-d59c-431b-9900-1b32b802bd04",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请实验nscf方法计算NaCl的能带，NaCl的结构文件位于/personal/google-adk-eval-stru/NaCl_rocksalt.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "能带计算已完成，以下是结果：\n\n1. **带隙（Band Gap）**: 5.108 eV  \n2. **能带结构图**: [点击查看能带图](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7a6804bf-5346-4958-8f28-f69d2a8e151c/outputs/band_picture/band.png)  \n3. **输出目录**: [下载能带计算输出文件](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7a6804bf-5346-4958-8f28-f69d2a8e151c/outputs/band_output_dir/20250819185836.property_calculation_scf.1549129d.tgz)\n\n此次计算采用了非自洽场（NSCF）方法，基于先前收敛的自洽场（SCF）计算结果进行。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_55c96d7f2fb24e71ac0d66",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/NaCl_rocksalt.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": false
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_d831f3fb03024de0b83e1f",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/9a9caee2-eba1-4412-95ed-8117d6161cd5/outputs/job_path/000000.tgz",
+                  "mode": "nscf"
+                },
+                "name": "abacus_cal_band"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755601104.008834
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755601199.2232194
+    }
+  ],
+  "creation_timestamp": 1755590809.9131298
+}

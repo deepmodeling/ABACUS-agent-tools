@@ -1,0 +1,221 @@
+{
+  "eval_set_id": "Bader",
+  "name": "Bader",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "NaCl",
+      "conversation": [
+        {
+          "invocation_id": "e-deeada7d-2d7e-4740-bede-4d371903c455",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算NaCl的Bader电荷，NaCl的结构文件位于/personal/google-adk-eval-stru/NaCl_rocksalt.cif"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "计算结果显示，NaCl的Bader电荷为：\n- Na原子的Bader电荷为+0.870609\n- Cl原子的Bader电荷为-0.870775\n\n这表明在NaCl晶体中，Na原子失去了约0.87个电子，而Cl原子获得了约0.87个电子，形成了离子键。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_7f067d46f4ab4f7480484e",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/NaCl_rocksalt.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_3acecffdbdbb4749972d3e",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7c2dd7e6-a4df-426e-a969-9cd4df457b6b/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_badercharge_run"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755653744.935411
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755653872.1696637
+    },
+    {
+      "eval_id": "CsPbI3",
+      "conversation": [
+        {
+          "invocation_id": "e-23fa1f10-3c90-405a-8cdc-23e7a2a51288",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算CsPbI3的Bader电荷。CsPbI3的结构文件位于其结构文件位于/personal/google-adk-eval-stru/CsPbI3.cif。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "CsPbI3的Bader电荷计算结果如下：\n\n- Cs原子的Bader电荷为+0.8987 e\n- Pb原子的Bader电荷为+0.7642 e\n- 三个I原子的Bader电荷均为-0.5542 e\n\n这些电荷值反映了在CsPbI3结构中各原子的电荷分布情况。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_3efecccdce2a4c38ab5daf",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CsPbI3.cif",
+                  "stru_type": "cif",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_d5f640dfd3b8473ab052e0",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/a810ee6a-2597-4be2-9f47-3ce5a6ae6683/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_badercharge_run"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755654215.425397
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755654386.2343435
+    },
+    {
+      "eval_id": "CoPt3",
+      "conversation": [
+        {
+          "invocation_id": "e-c77f7bc7-060d-43f0-8df3-7aa2de7f457e",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "CoPt3是一种磁性材料，其结构文件位于/personal/google-adk-eval-stru/CoPt3.STRU，请使用该结构文件准备ABACUS输入文件夹，计算其Bader电荷"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "计算结果显示，CoPt3结构中的Bader电荷分布如下：\n\n- Co原子的Bader电荷为+0.4817 e\n- 三个Pt原子的Bader电荷分别为-0.1627 e、-0.1596 e和-0.1596 e\n\n这表明Co原子带有正电荷，而Pt原子带有负电荷。电荷分布反映了CoPt3中不同原子间的电荷转移情况。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_83357623c6c2432d9b3590",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/CoPt3.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_103dcb444589492ea98f07",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/8ed48caa-b2b9-470d-92b3-fd5ce4a71fbe/outputs/job_path/000000.tgz"
+                },
+                "name": "abacus_badercharge_run"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755655298.042205
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755655368.0310986
+    }
+  ],
+  "creation_timestamp": 1755653864.609681
+}

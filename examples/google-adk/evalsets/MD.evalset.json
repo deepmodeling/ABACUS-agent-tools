@@ -1,0 +1,250 @@
+{
+  "eval_set_id": "MD",
+  "name": "MD",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "MgO-NVT",
+      "conversation": [
+        {
+          "invocation_id": "e-b2d28853-afb1-4fb9-ba90-e29192245037",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/MgO.STRU有一个MgO的结构文件。请使用这个结构文件准备ABACUS输入文件，然后进行MD计算，使用NVT系综，温度为800K，步数为10步，使用nhc恒温器。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "MD计算已完成，以下是结果：\n\n- **MD工作路径**: [下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/d209a0ce-e2de-4944-956c-cd6a65852449/outputs/md_work_path/20250820150732.abacus_run_md.d4d48d73.tgz)\n- **MD轨迹文件**: [下载链接](https://d209a0ce-e2de-4944-956c-cd6a65852449/outputs/md_traj_file)\n\n如有其他需求，请随时告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_8b159c7657bf489c904bd3",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/MgO.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_19b63c3b26f244c3bc9c08",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/71468369-1f95-46b2-84df-66b93ec215e0/outputs/job_path/000000.tgz",
+                  "md_type": "nvt",
+                  "md_nstep": 10,
+                  "md_dt": 1.0,
+                  "md_tfirst": 800.0,
+                  "md_tlast": 800.0,
+                  "md_thermostat": "nhc"
+                },
+                "name": "abacus_run_md"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755673636.537514
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755674561.5501726
+    },
+    {
+      "eval_id": "H2O-NVT",
+      "conversation": [
+        {
+          "invocation_id": "e-ed5f8dae-44eb-428f-85a1-c98fc2257a2c",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/H2O.STRU有一个MgO的结构文件。请使用这个结构文件准备ABACUS输入文件，并去掉输入文件中的kspacing，同时将gamma_only设置为1。然后进行MD计算，使用NVT系综，温度为300K，步数为10步，使用berendsen恒温器。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已完成以下操作：\n1. 使用提供的MgO结构文件准备了ABACUS输入文件。\n2. 修改了输入文件，去掉了kspacing参数，并将gamma_only设置为1。\n3. 进行了NVT系综的MD计算，温度为300K，步数为10步，使用berendsen恒温器。\n\nMD计算的结果已经保存，您可以下载轨迹文件进行进一步分析。如果有其他需求，请随时告知。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_e13f7057d2fd49bb958a1d",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/H2O.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "scf",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_f1e24dd3ebee41ac8a9620",
+                "args": {
+                  "abacusjob_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3d4162b4-b020-4bcd-bcc0-4acdfed1bbde/outputs/job_path/000000.tgz",
+                  "remove_input": [
+                    "kspacing"
+                  ],
+                  "extra_input": {
+                    "gamma_only": 1
+                  }
+                },
+                "name": "abacus_modify_input"
+              },
+              {
+                "id": "call_36879e662cef46439026b6",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/84ece64c-c1b7-401d-ad63-d561a0ec2283/outputs/abacusjob_dir/000000.tgz",
+                  "md_type": "nvt",
+                  "md_nstep": 10,
+                  "md_thermostat": "berendsen",
+                  "md_tfirst": 300.0,
+                  "md_tlast": 300.0
+                },
+                "name": "abacus_run_md"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755674175.0091
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755674603.9810202
+    },
+    {
+      "eval_id": "Si-prim-NPT",
+      "conversation": [
+        {
+          "invocation_id": "e-654a3da4-c862-4641-852b-f951be1b134a",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "在/personal/google-adk-eval-stru/Si-prim.STRU有一个Si的结构文件。请使用这个结构文件准备ABACUS输入文件，然后进行MD计算，使用NPT系综，温度为1000K，步数为10步，使用berendsen恒温器控制温度，并使用各向同性控压。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "已完成ABACUS输入文件的准备，并成功执行了NPT系综的分子动力学（MD）计算。以下是计算的详细信息：\n\n- **MD类型**: NPT系综\n- **温度**: 1000 K\n- **步数**: 10步\n- **恒温器**: Berendsen\n- **控压模式**: 各向同性\n\n计算结果保存在以下路径中：\n- **工作目录**: [下载链接](https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/fe1edc77-4c58-40a4-ae77-e090bc348904/outputs/md_work_path/20250820152536.abacus_run_md.c9dedbfd.tgz)\n- **轨迹文件**: [下载链接](https://fe1edc77-4c58-40a4-ae77-e090bc348904/outputs/md_traj_file)\n\n如需进一步分析或处理这些结果，请告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_e6984bc4ac8941c499d33c",
+                "args": {
+                  "stru_file": "/personal/google-adk-eval-stru/Si-prim.STRU",
+                  "stru_type": "abacus/stru",
+                  "job_type": "md",
+                  "lcao": true
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_0f54793b60094812b37d49",
+                "args": {
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3e909989-c4c2-46c2-9342-0e680eb899f5/outputs/job_path/000000.tgz",
+                  "md_type": "npt",
+                  "md_nstep": 10,
+                  "md_tfirst": 1000.0,
+                  "md_thermostat": "berendsen",
+                  "md_pmode": "iso"
+                },
+                "name": "abacus_run_md"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755674723.152137
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus_agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755674818.9453032
+    }
+  ],
+  "creation_timestamp": 1755674554.9214194
+}

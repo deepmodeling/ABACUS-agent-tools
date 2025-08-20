@@ -53,9 +53,8 @@ def abacus_prepare(
     
     Returns:
         A dictionary containing the job path.
-        - 'job_path': The absolute path to the job directory.
+        - 'abacus_inputs_dir': The absolute path to the generated ABACUS input directory, containing INPUT, STRU, pseudopotential and orbital files.
         - 'input_content': The content of the generated INPUT file.
-        - 'input_files': A list of files in the job directory.
     Raises:
         FileNotFoundError: If the structure file or pseudopotential path does not exist.
         ValueError: If LCAO basis set is selected but no orbital library path is provided.
@@ -90,7 +89,7 @@ def abacus_prepare(
                 extra_input_file = Path("INPUT.tmp").absolute()
                 WriteInput(extra_input, extra_input_file)
 
-            _, job_path = PrepInput(
+            _, abacus_inputs_dir = PrepInput(
                 files=str(stru_file),
                 filetype=stru_type,
                 jobtype=job_type,
@@ -110,25 +109,23 @@ def abacus_prepare(
             os.chdir(pwd)
             raise RuntimeError(f"Error preparing input files: {e}")
 
-        if len(job_path) == 0:
+        if len(abacus_inputs_dir) == 0:
             os.chdir(pwd)
             raise RuntimeError("No job path returned from PrepInput.")
 
-        input_content = ReadInput(os.path.join(job_path[0], "INPUT"))
-        input_files = os.listdir(job_path[0])
-        job_path = Path(job_path[0]).absolute()
+        input_content = ReadInput(os.path.join(abacus_inputs_dir[0], "INPUT"))
+        input_files = os.listdir(abacus_inputs_dir[0])
+        abacus_inputs_dir = Path(abacus_inputs_dir[0]).absolute()
         os.chdir(pwd)
 
-        is_valid, msg = check_abacus_inputs(job_path)
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
         if not is_valid:
             raise RuntimeError(f"Invalid ABACUS input files: {msg}")
         
-        return {"job_path": job_path,
+        return {"abacus_inputs_dir": abacus_inputs_dir,
                 "input_content": input_content}
     except Exception as e:
-        return {"job_path": None,
-                "input_content": None,
-                "message": f"Prepare ABACUS input files from given structure failed: {e}"}
+        return {"message": f"Prepare ABACUS input files from given structure failed: {e}"}
 
 #@mcp.tool()
 def get_file_content(
@@ -159,7 +156,7 @@ def get_file_content(
 
 @mcp.tool()
 def abacus_modify_input(
-    abacusjob_dir: Path,
+    abacus_inputs_dir: Path,
     dft_plus_u_settings: Optional[Dict[str, Union[float, Tuple[Literal["p", "d", "f"], float]]]] = None,
     extra_input: Optional[Dict[str, Any]] = None,
     remove_input: Optional[List[str]] = None
@@ -167,7 +164,7 @@ def abacus_modify_input(
     """
     Modify keywords in ABACUS INPUT file.
     Args:
-        abacusjob (str): Path to the directory containing the ABACUS input files.
+        abacus_inputs_dir (str): Path to the directory containing the ABACUS input files.
         dft_plus_u_setting: Dictionary specifying DFT+U settings.  
             - Key: Element symbol (e.g., 'Fe', 'Ni').  
             - Value: A list with one or two elements:  
@@ -178,16 +175,16 @@ def abacus_modify_input(
 
     Returns:
         A dictionary containing:
-        - input_path: the path of the modified INPUT file.
+        - modified_abacus_inputs_dir: the path of the modified INPUT file.
         - input_content: the content of the modified INPUT file as a dictionary.
     Raises:
         FileNotFoundError: If path of given INPUT file does not exist
         RuntimeError: If write modified INPUT file failed
     """
     try:
-        input_file = os.path.join(abacusjob_dir, "INPUT")
+        input_file = os.path.join(abacus_inputs_dir, "INPUT")
         if dft_plus_u_settings is not None:
-            stru_file = os.path.join(abacusjob_dir, "STRU")
+            stru_file = os.path.join(abacus_inputs_dir, "STRU")
         if not os.path.isfile(input_file):
             raise FileNotFoundError(f"INPUT file {input_file} does not exist.")
 
@@ -253,16 +250,18 @@ def abacus_modify_input(
 
         WriteInput(input_param, input_file)
 
-        return {'abacusjob_dir': abacusjob_dir,
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
+        return {'modified_abacus_inputs_dir': abacus_inputs_dir,
                 'input_content': input_param}
     except Exception as e:
-        return {'abacusjob_dir': None,
-                'input_content': None,
-                'message': f"Modify ABACUS INPUT file failed: {e}"}
+        return {'message': f"Modify ABACUS INPUT file failed: {e}"}
 
 @mcp.tool()
 def abacus_modify_stru(
-    abacusjob_dir: Path,
+    abacus_inputs_dir: Path,
     pp: Optional[Dict[str, str]] = None,
     orb: Optional[Dict[str, str]] = None,
     fix_atoms_idx: Optional[List[int]] = None,
@@ -276,7 +275,7 @@ def abacus_modify_stru(
     """
     Modify pseudopotential, orbital, atom fixation, initial magnetic moments and initial velocities in ABACUS STRU file.
     Args:
-        abacusjob (str): Path to the directory containing the ABACUS input files.
+        abacus_inputs_dir (str): Path to the directory containing the ABACUS input files.
         pp: Dictionary mapping element names to pseudopotential file paths.
             If not provided, the pseudopotentials from the original STRU file are retained.
         orb: Dictionary mapping element names to numerical orbital file paths.
@@ -298,7 +297,7 @@ def abacus_modify_stru(
 
     Returns:
         A dictionary containing:
-        - stru_path: the path of the modified ABACUS STRU file
+        - modified_abacus_inputs_dir: the path of the modified ABACUS STRU file
         - stru_content: the content of the modified ABACUS STRU file as a string.
     Raises:
         ValueError: If `stru_file` is not path of a file, or dimension of initial_magmoms, angle1 or angle2 is not equal with number of atoms,
@@ -306,7 +305,7 @@ def abacus_modify_stru(
         KeyError: If pseudopotential or orbital are not provided for a element
     """
     try:
-        stru_file = os.path.join(abacusjob_dir, "STRU")
+        stru_file = os.path.join(abacus_inputs_dir, "STRU")
         if os.path.isfile(stru_file):
             stru = AbacusStru.ReadStru(stru_file)
         else:
@@ -387,18 +386,18 @@ def abacus_modify_stru(
         stru.write(stru_file)
         stru_content = Path(stru_file).read_text(encoding='utf-8')
 
-        return {'abacusjob_dir': Path(abacusjob_dir).absolute(),
-                'stru_content': stru_content 
-                }
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
+        return {'modified_abacus_inputs_dir': Path(abacus_inputs_dir).absolute(),
+                'stru_content': stru_content}
     except Exception as e:
-        return {'abacusjob_dir': None,
-                'stru_content': None,
-                'message': f"Modify ABACUS STRU file failed: {e}"
-                }
+        return {'message': f"Modify ABACUS STRU file failed: {e}"}
 
 @mcp.tool()
 def abacus_collect_data(
-    abacusjob: Path,
+    abacus_outputs_dir: Path,
     metrics: List[Literal["version", "ncore", "omp_num", "normal_end", "INPUT", "kpt", "fft_grid",
                           "nbase", "nbands", "nkstot", "ibzk", "natom", "nelec", "nelec_dict", "point_group",
                           "point_group_in_space_group", "converge", "total_mag", "absolute_mag", "energy", 
@@ -417,7 +416,7 @@ def abacus_collect_data(
     """
     Collect results after ABACUS calculation and dump to a json file.
     Args:
-        abacusjob (str): Path to the directory containing the ABACUS job output files.
+        abacus_outputs_dir (str): Path to the directory containing the ABACUS job output files.
         metrics (List[str]): List of metric names to collect.  
                   metric_name  description
                       version: the version of ABACUS
@@ -510,33 +509,29 @@ def abacus_collect_data(
         RuntimeError: If error occured during collectring data using abacustest
     """
     try:
-        
-        collected_metrics = collect_metrics(abacusjob=abacusjob, 
+        collected_metrics = collect_metrics(abacusjob=abacus_outputs_dir, 
                                             metrics_names=metrics,)
 
         return {'collected_metrics': collected_metrics}
     except Exception as e:
-        return {'collected_metrics': None,
-                'message': f'Collectiong results from ABACUS output files failed: {e}'}
+        return {'message': f'Collectiong results from ABACUS output files failed: {e}'}
 
 #@mcp.tool()
 def run_abacus_onejob(
-    abacusjob: Path,
+    abacus_inputs_dir: Path,
 ) -> Dict[str, Any]:
     """
     Run one ABACUS job and collect data.
     Args:
-        abacusjob (str): Path to the directory containing the ABACUS input files.
+        abacus_inputs_dir (str): Path to the directory containing the ABACUS input files.
     Returns:
         the collected metrics from the ABACUS job.
     """
     try:
-        run_abacus(abacusjob)
+        run_abacus(abacus_inputs_dir)
 
-        return {'abacusjob_dir': abacusjob,
-                'metrics': abacus_collect_data(abacusjob)}
+        return {'abacus_inputs_dir_dir': abacus_inputs_dir,
+                'metrics': abacus_collect_data(abacus_inputs_dir)}
     except Exception as e:
-        return {'abacusjob_dir': None,
-                'metrics': None,
-                'message': f"Run ABACUS using given input file failed: {e}"}
+        return {'message': f"Run ABACUS using given input file failed: {e}"}
 
