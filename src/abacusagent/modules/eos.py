@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
 from abacustest.lib_model.comm_eos import eos_fit
+from abacustest.lib_model.comm import check_abacus_inputs
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.abacus import abacus_modify_input, abacus_modify_stru, abacus_collect_data
@@ -35,7 +36,7 @@ def is_cubic(cell: List[List[float]]) -> bool:
 
 @mcp.tool()
 def abacus_eos(
-    abacus_inputs_path: Path,
+    abacus_inputs_dir: Path,
     stru_scale_number: int = 3,
     stru_scale_type: Literal['percentage', 'angstrom'] = 'percentage',
     scale_stepsize: float = 0.02
@@ -44,7 +45,7 @@ def abacus_eos(
     Use Birch-Murnaghan equation of state (EOS) to calculate the EOS data.
 
     Args:
-        abacus_inputs_path (Path): Path to the ABACUS inputs directory.
+        abacus_inputs_dir (Path): Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
         stru_scale_number (int): Number of structures to generate for EOS calculation.
         stru_scale_type (Literal['percentage', 'angstrom']): Type of scaling for structures.
         scale_stepsize (float): Step size for scaling.
@@ -54,7 +55,7 @@ def abacus_eos(
     Returns:
         Dict[str, Any]: A dictionary containing EOS calculation results:
             - "eos_work_path" (Path): Working directory for the EOS calculation.
-            - "optimal_stru_abacusjob_dir" (Path): ABACUS input files directory with the lowest energy structure.
+            - "new_abacus_inputs_dir" (Path): ABACUS input files directory containing the lowest energy structure using the fitted EOS.
             - "eos_fig_path" (Path): Path to the EOS fitting plot (energy vs. volume).
             - "E0" (float): Minimum energy (in eV) from the EOS fit.
             - "V0" (float): Equilibrium volume (in Å³) corresponding to E0.
@@ -62,11 +63,15 @@ def abacus_eos(
             - "B0_deriv" (float): Pressure derivative of the bulk modulus.
     """
     try:
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
+        if not is_valid:
+            raise RuntimeError(f"Invalid ABACUS input files: {msg}")
+        
         work_path = Path(generate_work_path()).absolute()
 
-        input_params = ReadInput(os.path.join(abacus_inputs_path, "INPUT"))
+        input_params = ReadInput(os.path.join(abacus_inputs_dir, "INPUT"))
         input_stru_file = input_params.get('stru_file', 'STRU')
-        input_stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_path, input_stru_file))
+        input_stru = AbacusStru.ReadStru(os.path.join(abacus_inputs_dir, input_stru_file))
         if is_cubic(input_stru.get_cell()) is False:
             raise ValueError("The structure is not cubic. Implemented EOS calculation requires a cubic structure.")
 
@@ -81,7 +86,7 @@ def abacus_eos(
 
         scaled_lat_params = [original_cell_param * scale for scale in scales]
 
-        output = abacus_modify_input(abacus_inputs_path, extra_input={'calculation': 'scf'})
+        output = abacus_modify_input(abacus_inputs_dir, extra_input={'calculation': 'scf'})
 
         scale_cell_job_dirs = []
         for i in range(len(scales)):
@@ -90,7 +95,7 @@ def abacus_eos(
             scale_cell_job_dirs.append(dir_name)
 
             link_abacusjob(
-                src=abacus_inputs_path,
+                src=abacus_inputs_dir,
                 dst=Path(dir_name).absolute(),
                 copy_files=["INPUT", input_stru_file],
                 exclude=["OUT.*", "*.log", "*.out", "*.json", "log"],
@@ -124,23 +129,23 @@ def abacus_eos(
         plt.savefig('birch_murnaghan_eos_fit.png', dpi=300)
         fig_path = Path('birch_murnaghan_eos_fit.png').absolute()
 
-        optimal_stru_abacusjob_dir = Path(os.path.join(work_path, "optimal_stru_abacusjob_dir")).absolute()
+        new_abacus_inputs_dir = Path(os.path.join(work_path, "new_abacus_inputs_dir")).absolute()
         link_abacusjob(
-                src=abacus_inputs_path,
-                dst=optimal_stru_abacusjob_dir,
+                src=abacus_inputs_dir,
+                dst=new_abacus_inputs_dir,
                 copy_files=["INPUT", input_stru_file],
                 exclude=["OUT.*", "*.log", "*.out", "*.json", "log"],
                 exclude_directories=True
             )
         optimal_lat_param = V0 ** (1.0 / 3)
         optimal_cell = (np.array(input_stru.get_cell()) * optimal_lat_param / original_cell_param).tolist()
-        output = abacus_modify_stru(optimal_stru_abacusjob_dir,
+        output = abacus_modify_stru(new_abacus_inputs_dir,
                                     cell = optimal_cell,
                                     coord_change_type = 'scale')
 
         return {
             "eos_work_path": work_path.absolute(),
-            "optimal_stru_abacusjob_dir": Path(optimal_stru_abacusjob_dir).absolute(),
+            "new_abacus_inputs_dir": Path(new_abacus_inputs_dir).absolute(),
             "eos_fig_path": fig_path,
             "E0": E0,
             "V0": V0,
@@ -149,7 +154,7 @@ def abacus_eos(
     except Exception as e:
         return {
             "eos_work_path": None,
-            "optimal_stru_abacusjob_dir": None,
+            "new_abacus_inputs_dir": None,
             "eos_fig_path": None,
             "E0": None,
             "V0": None,
