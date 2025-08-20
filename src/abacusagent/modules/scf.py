@@ -13,7 +13,7 @@ from abacusagent.modules.util.comm import generate_work_path, link_abacusjob, ru
 
 @mcp.tool()
 def abacus_calculation_scf(
-    abacusjob_path: Path,
+    abacus_inputs_dir: Path,
 ) -> Dict[str, Any]:
     """
     Run ABACUS SCF calculation.
@@ -25,12 +25,12 @@ def abacus_calculation_scf(
         finished normally, the SCF is converged or not, the converged SCF energy and total time used.
     """
     try:
-        is_valid, msg = check_abacus_inputs(abacusjob_path)
+        is_valid, msg = check_abacus_inputs(abacus_inputs_dir)
         if not is_valid:
             raise RuntimeError(f"Invalid ABACUS input files: {msg}")
         
         work_path = Path(generate_work_path()).absolute()
-        link_abacusjob(src=abacusjob_path, dst=work_path, copy_files=['INPUT', 'STRU'])
+        link_abacusjob(src=abacus_inputs_dir, dst=work_path, copy_files=['INPUT', 'STRU'])
         input_params = ReadInput(os.path.join(work_path, "INPUT"))
 
         input_params['calculation'] = 'scf'
@@ -38,13 +38,9 @@ def abacus_calculation_scf(
 
         run_abacus(work_path)
 
-        return_dict = {'abacusjob_dir': Path(work_path).absolute()}
+        return_dict = {'scf_work_dir': Path(work_path).absolute()}
         return_dict.update(collect_metrics(work_path, metrics_names=['normal_end', 'converge', 'energy', 'total_time']))
 
         return return_dict
     except Exception as e:
-        return {"abacusjob_dir": None,
-                "normal_end": None,
-                "converge": None,
-                "energy": None,
-                "total_time": None}
+        return {"message": f"Performing SCF calculation failed: {e}"}
