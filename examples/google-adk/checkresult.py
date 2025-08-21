@@ -68,7 +68,7 @@ def collect_results(results_path):
             
     return results
 
-def compare_args(ref_args, test_args):
+def check_args(ref_args, test_args):
     if len(ref_args) != len(test_args):
         return False
     for iarg in ref_args:
@@ -76,7 +76,7 @@ def compare_args(ref_args, test_args):
             return False
         
         # do not compare path
-        if iarg.endswith("_path") or iarg.endswith("_dir"):
+        if iarg.endswith("_path") or iarg.endswith("_dir") or iarg.endswith("_file"):
             continue
         
         if ref_args[iarg] != test_args[iarg]:
@@ -84,6 +84,20 @@ def compare_args(ref_args, test_args):
     return True
 
 def calculate_metrics(ref_final_response, test_final_response, ref_tool_uses, test_tool_uses):
+    """Calculate evaluation metrics based on reference and test tool uses and final responses.
+    
+    Args:
+        ref_final_response (str): The reference final response.
+        test_final_response (str): The test final response.
+        ref_tool_uses (List[Dict]): List of reference tool uses, each containing 'name' and 'args'.
+        test_tool_uses (List[Dict]): List of test tool uses, each containing 'name' and 'args'.
+        
+    Returns:
+        Dict[str, Any]: A dictionary containing the evaluation metrics:
+            - "tool_order_correct" (int): 1 if the order of tool uses is correct, 0 otherwise.
+            - "tool_args_correct" (List[int]): A list indicating whether the arguments for each tool use are correct (1) or not (0).
+            - "final_response_correct" (int): 1 if the final responses match, 0 otherwise.
+    """
     
     # 1. check the tool use order and names
     ref_tool_names = [tool["name"] for tool in ref_tool_uses]
@@ -91,14 +105,17 @@ def calculate_metrics(ref_final_response, test_final_response, ref_tool_uses, te
     tool_order_correct = ref_tool_names == test_tool_names
     
     # 2. check the tool use arguments
-    if tool_order_correct:
-        tool_args_correct = True 
-        for ref_tool, test_tool in zip(ref_tool_uses, test_tool_uses):
-            if not compare_args(ref_tool["args"], test_tool["args"]):
-                tool_args_correct = False
-                break
-    else:
-        tool_args_correct = False
+    tool_args_correct = []
+    for i, testname in enumerate(test_tool_names):
+        if len(ref_tool_names) <= i or testname != ref_tool_names[i]:
+            break
+
+        if not check_args(ref_tool_uses[i]["args"], 
+                          test_tool_uses[i]["args"]):
+            tool_args_correct.append(0)
+        else:
+            tool_args_correct.append(1)
+
     
     # 3. check the final response
     
@@ -108,24 +125,46 @@ def calculate_metrics(ref_final_response, test_final_response, ref_tool_uses, te
         "final_response_correct": ref_final_response == test_final_response
     }
 
+def cal_true_ratio(lst):
+    """Calculate the ratio of True values in a list or list of lists.
+    """        
+    lst_all = []
+    
+    def flatten(i):
+        """Flatten a list of lists into a single list."""
+        if isinstance(i, list):
+            for j in i:
+                flatten(j)
+        else:
+            lst_all.append(i)
         
+    flatten(lst)
+    return lst_all.count(True) / len(lst_all) if lst_all else 0
+    
+    
+    
 
 def summary_results(results):
     r = {}
     
+    metrics_name = list(results[list(results.keys())[0]]["test_results"][0]["metrics"].keys())
+    total_m = {
+        m: [] for m in metrics_name
+    }
+    
     for eval_name, eval_data in results.items():
-        metrics_name = eval_data["test_results"][0]["metrics"].keys()
-        run_times = len(eval_data["test_results"])
-        r[eval_name] = {
-            m : [results[eval_name]["test_results"][i]["metrics"][m] for i in range(run_times)].count(True) / run_times for m in metrics_name
-        }
-        
-        r[eval_name]["run_times"] = run_times   
+        r[eval_name] = { }
+        for m in metrics_name:
+            r_m = [t["metrics"][m] for t in eval_data["test_results"]]
+            r[eval_name][m] = cal_true_ratio(r_m)
+            total_m[m].append(r_m)
+
+        r[eval_name]["run_times"] = len(eval_data["test_results"])   
     
     # calculate the total metrics
     total_run_times = sum([r[eval_name]["run_times"] for eval_name in r])
     r["total"] = {
-        m: sum([r[eval_name][m] * r[eval_name]["run_times"] for eval_name in r]) / total_run_times for m in metrics_name
+        m: cal_true_ratio(total_m[m]) for m in metrics_name
     }
     
     r["total"]["run_times"] = total_run_times

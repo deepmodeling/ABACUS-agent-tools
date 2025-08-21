@@ -1,0 +1,191 @@
+{
+  "eval_set_id": "longchain",
+  "name": "longchain",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "elastic-fcc-Al",
+      "conversation": [
+        {
+          "invocation_id": "e-eea8a8cd-ba50-448f-91d0-e359dad96c8a",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算FCC Al的弹性模量"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "FCC Al的弹性模量计算结果如下：\n\n- **弹性张量（Voigt notation）**:\n  $$\n  \\begin{bmatrix}\n  114.70 & 63.94 & 55.90 & 11.37 & 0.00 & 0.00 \\\\\n  63.74 & 115.23 & 55.77 & -11.59 & 0.00 & 0.00 \\\\\n  55.62 & 55.62 & 123.54 & 0.00 & 0.00 & 0.00 \\\\\n  10.23 & -9.87 & 0.08 & 19.83 & 0.00 & 0.00 \\\\\n  0.00 & 0.00 & 0.00 & 0.00 & 19.86 & 9.98 \\\\\n  0.00 & 0.00 & 0.00 & 0.00 & 10.81 & 26.40 \\\\\n  \\end{bmatrix} \\quad \\text{(单位: GPa)}\n  $$\n\n- **体积模量 (Bulk Modulus)**: 78.23 GPa\n- **剪切模量 (Shear Modulus)**: 25.08 GPa\n- **杨氏模量 (Young's Modulus)**: 67.96 GPa\n- **泊松比 (Poisson's Ratio)**: 0.355\n\n这些值反映了Al在FCC结构下的力学性能。如果需要进一步分析或可视化弹性张量，可以使用相关工具进行处理。"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_50534a78c5f44465934ca7",
+                "args": {
+                  "element": "Al",
+                  "crystal_structure": "fcc",
+                  "a": 4.05
+                },
+                "name": "generate_bulk_structure"
+              },
+              {
+                "id": "call_e000fd0b89f1449f9e4107",
+                "args": {
+                  "stru_file": "bohrium://13756/112260/store/0e1d1831-a915-4d3f-b42e-fd6f0b8c5f07/outputs/structure_file/Al_fcc.cif",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 1
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_7021abc6b5254f5c8b8f66",
+                "args": {
+                  "abacus_inputs_dir": "bohrium://13756/112260/store/b7dfce7c-33d9-4f23-ac13-9a835d22ea61/outputs/abacus_inputs_dir/000000.tgz",
+                  "force_thr_ev": 0.01,
+                  "max_steps": 100,
+                  "relax_cell": true
+                },
+                "name": "abacus_do_relax"
+              },
+              {
+                "id": "call_a694c4ce8d934094ad6509",
+                "args": {
+                  "abacus_inputs_dir": "bohrium://13756/112260/store/8e9d4c37-0fd9-48b3-82f9-d29d4f74ab07/outputs/new_abacus_inputs_dir/20250821161155.abacus_prepare_inputs_from_relax_results.618db1a1.tgz"
+                },
+                "name": "abacus_cal_elastic"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755763674.592917
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus-agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755764676.7665882
+    },
+    {
+      "eval_id": "bandstructure-fcc-Al",
+      "conversation": [
+        {
+          "invocation_id": "e-75a7515a-031c-4a8a-8d2f-ee91de5260be",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "请计算fcc Al的能带结构"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "fcc Al的能带结构计算已完成，结果如下：\n\n- **能带图**: [点击查看能带图](bohrium://13756/112260/store/05f502ad-5a3e-49c0-b329-3c7c9cd83e08/outputs/band_picture/band.png)\n- **计算说明**: 使用PYATB在ABACUS自洽计算后绘制了能带结构。\n\n如果需要进一步分析或有其他问题，请随时告知！"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "call_331b21a2673940f98a5a16",
+                "args": {
+                  "element": "Al",
+                  "crystal_structure": "fcc",
+                  "a": 4.05
+                },
+                "name": "generate_bulk_structure"
+              },
+              {
+                "id": "call_969071f84a75412daf1e96",
+                "args": {
+                  "stru_file": "bohrium://13756/112260/store/128dd74e-3cd6-4201-ae70-640f90df2e11/outputs/structure_file/Al_fcc.cif",
+                  "job_type": "scf",
+                  "lcao": true,
+                  "nspin": 1
+                },
+                "name": "abacus_prepare"
+              },
+              {
+                "id": "call_79b7e4050e294ebf916317",
+                "args": {
+                  "abacus_inputs_dir": "bohrium://13756/112260/store/dd0792b3-ab49-4e4a-bc50-554241450e24/outputs/abacus_inputs_dir/000000.tgz",
+                  "force_thr_ev": 0.01,
+                  "max_steps": 100,
+                  "relax_cell": false
+                },
+                "name": "abacus_do_relax"
+              },
+              {
+                "id": "call_a32ba4e2e8294e2dac314d",
+                "args": {
+                  "abacus_inputs_dir": "bohrium://13756/112260/store/9b6859b4-a824-4ad8-b93b-32c5b274b0c0/outputs/new_abacus_inputs_dir/20250821163107.abacus_prepare_inputs_from_relax_results.3fbfca02.tgz",
+                  "mode": "pyatb",
+                  "energy_min": -5,
+                  "energy_max": 5
+                },
+                "name": "abacus_cal_band"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1755764890.294346
+        }
+      ],
+      "session_input": {
+        "app_name": "abacus-agent",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1755765389.9125643
+    }
+  ],
+  "creation_timestamp": 1755763420.088192
+}
