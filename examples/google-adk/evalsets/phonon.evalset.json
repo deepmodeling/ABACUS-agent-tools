@@ -64,7 +64,7 @@
               {
                 "id": "call_d098c14ffe9540f4b68b62",
                 "args": {
-                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3936c870-2f3a-4377-a224-b3d9524df0ff/outputs/job_path/000000.tgz",
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3936c870-2f3a-4377-a224-b3d9524df0ff/outputs/job_path/000000.tgz",
                   "relax_cell": true
                 },
                 "name": "abacus_do_relax"
@@ -72,7 +72,7 @@
               {
                 "id": "call_da0699bf50634ce5a840db",
                 "args": {
-                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/703e34b5-a25a-4e87-b1e7-ead2280fa868/outputs/new_abacus_inputs_path/20250820015716.abacus_prepare_inputs_from_relax_results.ca7ffd4b.tgz"
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/703e34b5-a25a-4e87-b1e7-ead2280fa868/outputs/new_abacus_inputs_path/20250820015716.abacus_prepare_inputs_from_relax_results.ca7ffd4b.tgz"
                 },
                 "name": "abacus_phonon_dispersion"
               }
@@ -143,7 +143,7 @@
               {
                 "id": "call_c8a0ca193d5848c087e6bf",
                 "args": {
-                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/dbb7fa97-a2d2-45b1-9ea2-1e7081a1fa99/outputs/job_path/000000.tgz",
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/dbb7fa97-a2d2-45b1-9ea2-1e7081a1fa99/outputs/job_path/000000.tgz",
                   "relax_cell": true
                 },
                 "name": "abacus_do_relax"
@@ -151,7 +151,7 @@
               {
                 "id": "call_5f19d6229ae245e2b63b49",
                 "args": {
-                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7c043358-ab3d-465f-8b52-0f95290a98f3/outputs/new_abacus_inputs_path/20250820021519.abacus_prepare_inputs_from_relax_results.2b50eacf.tgz"
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/7c043358-ab3d-465f-8b52-0f95290a98f3/outputs/new_abacus_inputs_path/20250820021519.abacus_prepare_inputs_from_relax_results.2b50eacf.tgz"
                 },
                 "name": "abacus_phonon_dispersion"
               }
@@ -222,7 +222,7 @@
               {
                 "id": "call_e6a71d04e16f4f92a93eae",
                 "args": {
-                  "abacus_inputs_path": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/1e630e8a-a8c0-48ae-b9e4-0c4c556d9ceb/outputs/job_path/000000.tgz",
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/1e630e8a-a8c0-48ae-b9e4-0c4c556d9ceb/outputs/job_path/000000.tgz",
                   "relax_cell": true
                 },
                 "name": "abacus_do_relax"

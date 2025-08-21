@@ -265,7 +265,7 @@
               {
                 "id": "call_55fbf3eaaaad4ecfacfc59",
                 "args": {
-                  "abacusjob": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/216dbbb9-084e-47c7-9cb0-711318ec5eec/outputs/job_path/20250820130057.abacus_do_relax.7ad04c70.tgz",
+                  "abacus_outputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/216dbbb9-084e-47c7-9cb0-711318ec5eec/outputs/job_path/20250820130057.abacus_do_relax.7ad04c70.tgz",
                   "metrics": [
                     "atom_mag"
                   ]

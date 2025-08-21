@@ -134,7 +134,7 @@
               {
                 "id": "call_f1e24dd3ebee41ac8a9620",
                 "args": {
-                  "abacusjob_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3d4162b4-b020-4bcd-bcc0-4acdfed1bbde/outputs/job_path/000000.tgz",
+                  "abacus_inputs_dir": "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/112260/store/3d4162b4-b020-4bcd-bcc0-4acdfed1bbde/outputs/job_path/000000.tgz",
                   "remove_input": [
                     "kspacing"
                   ],
