@@ -120,9 +120,9 @@ def calculate_metrics(ref_final_response, test_final_response, ref_tool_uses, te
     # 3. check the final response
     
     return {
-        "tool_order_correct": tool_order_correct,
-        "tool_args_correct": tool_args_correct,
-        "final_response_correct": ref_final_response == test_final_response
+        "Tool-Order-Accuracy": tool_order_correct,
+        "Tool-Param-Accuracy": tool_args_correct,
+        "Respond-Match-Rate": ref_final_response == test_final_response
     }
 
 def cal_true_ratio(lst):
@@ -158,16 +158,18 @@ def summary_results(results):
             r_m = [t["metrics"][m] for t in eval_data["test_results"]]
             r[eval_name][m] = cal_true_ratio(r_m)
             total_m[m].append(r_m)
-
-        r[eval_name]["run_times"] = len(eval_data["test_results"])   
+        r[eval_name]["Tool_Number"] = len(eval_data["ref_tool_uses"])
+        r[eval_name]["Total_Run"] = len(eval_data["test_results"]) 
+        r[eval_name]["User_Content"] = eval_data["user_content"]
     
     # calculate the total metrics
-    total_run_times = sum([r[eval_name]["run_times"] for eval_name in r])
+    total_run_times = sum([r[eval_name]["Total_Run"] for eval_name in r])
     r["total"] = {
         m: cal_true_ratio(total_m[m]) for m in metrics_name
     }
     
-    r["total"]["run_times"] = total_run_times
+    
+    r["total"]["Total_Run"] = total_run_times
     return r
 
 if __name__ == "__main__":
@@ -181,7 +183,8 @@ if __name__ == "__main__":
     df = pd.DataFrame(metrics).T
     # sort by eval_name
     df = df.sort_index()
-    print(df)
+    df_display = df.drop(columns=['User_Content'] if 'User_Content' in df.columns else [])
+    print(df_display)
     
     
   
