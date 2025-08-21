@@ -102,6 +102,8 @@ def set_envs(transport_input=None, model_input=None, port_input=None, host_input
     if update_envjson:
         # write envjson to ~/.abacusagent/env.json
         os.makedirs(os.path.dirname(envjson_file), exist_ok=True)
+        del envjson["_comments"]  # remove comments before writing
+        envjson["_comments"] = ENVS["_comments"]  # add comments from ENVS
         json.dump(
             envjson,
             open(envjson_file, "w"),
@@ -109,14 +111,19 @@ def set_envs(transport_input=None, model_input=None, port_input=None, host_input
         )
     return envjson
     
-def create_workpath():
+def create_workpath(work_path=None):
     """
     Create the working directory for AbacusAgent, and change the current working directory to it.
+    
+    Args:
+        work_path (str, optional): The path to the working directory. If None, a default path will be used.
     
     Returns:
         str: The path to the working directory.
     """
-    work_path = os.environ.get("ABACUSAGENT_WORK_PATH", "/tmp/abacusagent") + f"/{time.strftime('%Y%m%d%H%M%S')}"
+    if work_path is None:
+        work_path = os.environ.get("ABACUSAGENT_WORK_PATH", "/tmp/abacusagent") + f"/{time.strftime('%Y%m%d%H%M%S')}"
+        
     os.makedirs(work_path, exist_ok=True)
     cwd = os.getcwd()
     os.chdir(work_path)
