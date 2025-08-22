@@ -301,6 +301,10 @@ if __name__ == "__main__":
     df = pd.DataFrame(metrics).T
     # sort by eval_name
     df = df.sort_index()
+    # put total to the last row
+    total_row = df.loc["total"]
+    df = df.drop(index=["total"])
+    df = pd.concat([df, pd.DataFrame([total_row], index=["total"])])
     df_display = df.drop(columns=['User_Content'] if 'User_Content' in df.columns else [])
     print(df_display)
     
