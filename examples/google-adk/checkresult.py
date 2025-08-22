@@ -289,6 +289,8 @@ def summary_results(results):
     return r
 
 if __name__ == "__main__":
+    # Please set the environment variables LLM_API_KEY, LLM_BASE_URL, LLM_MODEL
+    # to use the OpenAI API to compare the responsed.
     
     results = collect_results(".")
     metrics = summary_results(results)
