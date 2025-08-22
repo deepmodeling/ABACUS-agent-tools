@@ -114,6 +114,16 @@ EXECUTOR_MAP = {
     "generate_bulk_structure_from_wyckoff_position": executor["local"],
 }
 
+STORAGE = {
+    "type": "https",
+    "plugin":{
+        "type": "bohrium",
+        "username": bohrium_username,
+        "password": bohrium_password,
+        "project_id": bohrium_project_id,
+    }
+}
+
 toolset = CalculationMCPToolset(
     connection_params=SseServerParams(
         url="http://localhost:50001/sse", # Or any other MCP server URL
@@ -121,13 +131,7 @@ toolset = CalculationMCPToolset(
     ),
     executor_map = EXECUTOR_MAP,
     executor=executor["local"],
-    storage={
-        "type": "bohrium",
-        "username": bohrium_username,
-        "password": bohrium_password,
-        "project_id": bohrium_project_id,
-    },
-    
+    storage=STORAGE,
 )
 
 root_agent = Agent(
