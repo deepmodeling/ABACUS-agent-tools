@@ -336,6 +336,6 @@ if __name__ == "__main__":
     
     # Example prompt to invoke the Bader charge calculation
     '''
-    Hello, I want to calculate Bader charges for the system in the directory at `/home/xxx/abacus-develop/representation/examples/scf/lcao_Si2`, could you please help me do this job? I think you will [...]
+    Hello, I want to calculate Bader charges for the system in the directory at `/home/xxx/abacus-develop/representation/examples/scf/lcao_Si2`, could you please help me do this job? I think you will need to run ABACUS first to calculate the charge density, and then if there are two spin channels, you will need to merge the charge density cube files and then run Bader analysis on the merged file. If there is only one spin channel, you can directly run Bader analysis on the charge density cube file. There are several executables you will need to complete the whole process. You can run the ABACUS executable directly with `abacus`, the cube manipulator is a Python script that you can find it at `/home/xxx/abacus-develop/representation/tools/plot-tools/cube_manipulator.py`. And the Bader analysis program is at `/home/xxx/soft/bader`.
     '''
     
