@@ -11,12 +11,10 @@ Tests cover:
 
 import pytest
 
-from src.abacusagent.modules.submodules.scf.schema import (
+from src.abacusagent.modules.submodules.scf import (
     SCFParameters,
     SmearingMethod,
     MixingType,
-)
-from src.abacusagent.modules.submodules.scf.validator import (
     SCFParameterValidator,
     ValidationResult,
 )

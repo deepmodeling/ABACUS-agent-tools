@@ -1,8 +1,8 @@
 """
-SCF parameter management package.
+Relax parameter management package.
 
 This package implements schema-first, logic-explicit, and traceable
-parameter management for ABACUS SCF calculations.
+parameter management for ABACUS relax calculations.
 
 Components:
 - schema: Parameter schemas and type definitions
@@ -12,31 +12,23 @@ Components:
 """
 
 from .schema import (
-    SCFParameters,
+    RelaxParameters,
     SmearingMethod,
     MixingType,
-    BasisType,
 )
-from .audit import (
-    SCFAuditLogger,
-    ParameterProvenance,
-    SCFAuditTrail,
-)
+from .audit import RelaxAuditLogger
 from .validator import (
-    SCFParameterValidator,
+    RelaxParameterValidator,
     ValidationResult,
 )
-from .defaults import SCFDefaultsManager
+from .defaults import RelaxDefaultsManager
 
 __all__ = [
-    "SCFParameters",
-    "ParameterProvenance",
-    "SCFAuditTrail",
+    "RelaxParameters",
     "SmearingMethod",
     "MixingType",
-    "BasisType",
-    "SCFAuditLogger",
-    "SCFParameterValidator",
+    "RelaxAuditLogger",
+    "RelaxParameterValidator",
     "ValidationResult",
-    "SCFDefaultsManager",
+    "RelaxDefaultsManager",
 ]

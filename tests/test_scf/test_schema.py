@@ -11,7 +11,7 @@ Tests cover:
 import pytest
 from datetime import datetime
 
-from src.abacusagent.modules.submodules.scf.schema import (
+from src.abacusagent.modules.submodules.scf import (
     SCFParameters,
     ParameterProvenance,
     SCFAuditTrail,
