@@ -130,7 +130,7 @@ def abacus_run_md(
             - xy: Lattice vectors x and y scale proportionally.
             - xz: Lattice vectors x and z scale proportionally.
             - yz: Lattice vectors y and z scale proportionally.
-        md_dumpfreq (int): The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations. Generally the default value 1
+        md_dumpfreq (int): The output frequency of OUT.$[suffix]/MD_dump in molecular dynamics calculations. Generally the default value 1
             is OK. For very long ab-initio MD calculations, increasing md_dumpfreq can help reducing the size of MD_dump.
         md_seed (int): The random seed to initialize random numbers used in molecular dynamics calculations.
             - < 0: No srand() function is called.
