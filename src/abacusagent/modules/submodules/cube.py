@@ -114,14 +114,14 @@ def get_total_charge_density(abacus_inputs_dir: Path):
 
 def abacus_cal_charge_density_difference(
     abacus_inputs_dir: Path,
-    subsys1_atom_index: Optional[List[int]] = [0],
+    subsys1_atom_index: Optional[List[int]] = [1],
 ) -> Dict[str, Any]:
     """
     Calculate charge density difference using ABACUS.
     
     Args:
         abacus_inputs_dir (Path): Path to the ABACUS input files, which contains the INPUT, STRU, KPT, and pseudopotential or orbital files.
-        subsys1_atom_index (Optional[List[int]]): Atom indices of the first subsystem. Should not be empty. The atom indices of
+        subsys1_atom_index (Optional[List[int]]): Atom indices (started from 1) of the first subsystem. Should not be empty. The atom indices of
             the second subsystem will be determined by the remaining atoms in the full system.
     
     Returns:
@@ -137,6 +137,9 @@ def abacus_cal_charge_density_difference(
         if not is_valid:
             raise RuntimeError(f"Invalid ABACUS input files: {msg}")
         
+        for i in range(len(subsys1_atom_index)):
+            subsys1_atom_index[i] -= 1 # Convert to 0-based indexing
+
         work_path = Path(generate_work_path()).absolute()
         full_system_jobpath = os.path.join(work_path, "full_system")
         subsys1_jobpath = os.path.join(work_path, 'subsys1')
@@ -194,11 +197,9 @@ def abacus_cal_charge_density_difference(
         input_params['out_chg'] = '1'
 
         WriteInput(input_params, os.path.join(full_system_jobpath, 'INPUT'))
-        run_abacus(full_system_jobpath)
         WriteInput(input_params, os.path.join(subsys1_jobpath, 'INPUT'))
-        run_abacus(subsys1_jobpath)
         WriteInput(input_params, os.path.join(subsys2_jobpath, 'INPUT'))
-        run_abacus(subsys2_jobpath)
+        run_abacus([full_system_jobpath, subsys1_jobpath, subsys2_jobpath])
 
         # Generate cube file containing charge density difference
         full_system_chgfile = os.path.join(full_system_jobpath, f"OUT.{input_params.get('suffix', 'ABACUS')}/SPIN1_CHG.cube")
