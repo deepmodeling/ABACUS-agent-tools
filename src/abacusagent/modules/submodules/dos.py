@@ -98,7 +98,7 @@ def abacus_dos_run(
         return_dict["dos_data_path"] = dos_pdos_data_paths[0]
         try:
             return_dict["pdos_fig_path"] = fig_paths[1]
-            return_dict["pdos_data_paths"] = dos_pdos_data_paths[1:]
+            return_dict["pdos_data_path"] = dos_pdos_data_paths[1]
         except:
             pass  # Do nothing if PDOS file is not plotted
 
