@@ -232,15 +232,13 @@ def plot_write_dos_pdos(
     dos_data_file = os.path.join(work_path, "DOS.dat")
 
     dosdata = DOSData.ReadFromAbacusJob(str(nscf_job_path), efermi)
-    DOSData.plot_dos(
-        dosdata.dosdata,
-        dosdata.energy,
+    dosdata.plot_dos(
         dos_emin_ev,
         dos_emax_ev,
         "Density of States",
         dos_plot_file,
     )
-    DOSData.write_dos(dosdata.dosdata, dosdata.energy, dos_data_file)
+    dosdata.write_dos(dos_data_file)
 
     all_plot_files = [Path(dos_plot_file).absolute()]
     dos_pdos_data_files = [Path(dos_data_file).absolute()]
