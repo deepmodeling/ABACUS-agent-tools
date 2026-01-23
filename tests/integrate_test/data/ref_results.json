@@ -122,6 +122,12 @@
             "scf_energy": -1688.5908919
         }
     },
+    "test_abacus_dos_run_atoms":
+    {
+        "result": {
+            "scf_energy": -1688.5908919
+        }
+    },
     "test_abacus_dos_run_species_nspin2": 
     {
         "result": {
@@ -135,6 +141,12 @@
         }
     },
     "test_abacus_dos_run_species_orbital_nspin2": 
+    {
+        "result": {
+            "scf_energy": -3220.427369911483
+        }
+    },
+    "test_abacus_dos_run_atoms_nspin2": 
     {
         "result": {
             "scf_energy": -3220.427369911483

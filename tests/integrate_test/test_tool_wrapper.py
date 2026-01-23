@@ -175,15 +175,20 @@ class TestToolWrapper(unittest.TestCase):
                                  fixed_axes=None,
                                  pdos_mode='species+shell',
                                  dos_edelta_ev=0.01,
-                                 dos_sigma=0.07,
-                                 dos_scale=0.01)
+                                 dos_sigma=0.07)
         print(outputs)
 
         dos_fig_path = outputs['dos_fig_path']
         pdos_fig_path = outputs['pdos_fig_path']
+        dos_data_path = outputs['dos_data_path']
+        pdos_data_paths = outputs['pdos_data_paths']
 
         self.assertIsInstance(dos_fig_path, get_path_type())
+        self.assertIsInstance(dos_data_path, get_path_type())
         self.assertIsInstance(pdos_fig_path, get_path_type())
+        for pdos_data_path in pdos_data_paths:
+            self.assertIsInstance(pdos_data_path, get_path_type())
+
         self.assertTrue(outputs['scf_normal_end'])
         self.assertTrue(outputs['scf_converge'])
         self.assertTrue(outputs['nscf_normal_end'])

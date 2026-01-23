@@ -382,13 +382,12 @@ def abacus_dos_run(
     relax_precision: Literal['low', 'medium', 'high'] = 'medium',
     relax_method: Literal["cg", "bfgs", "bfgs_trad", "cg_bfgs", "sd", "fire"] = "cg",
     fixed_axes: Literal["None", "volume", "shape", "a", "b", "c", "ab", "ac", "bc"] = None,
-    pdos_mode: Literal['species', 'species+shell', 'species+orbital'] = 'species+shell',
+    pdos_mode: Literal['atoms', 'species', 'species+shell', 'species+orbital'] = 'species+shell',
+    pdos_atom_indices: Optional[List[int]] = None,
     dos_edelta_ev: float = 0.01,
     dos_sigma: float = 0.07,
-    dos_scale: float = 0.01,
-    dos_emin_ev: float = None,
-    dos_emax_ev: float = None,
-    dos_nche: int = None,
+    dos_emin_ev: float = -10.0,
+    dos_emax_ev: float = 10.0,
 ) -> Dict[str, Any]:
     """
     Run the DOS and PDOS calculation.
@@ -432,21 +431,22 @@ def abacus_dos_run(
             - ac: fix both a and c axes
             - bc: fix both b and c axes
         pdos_mode: Mode of plotted PDOS file.
+            - "atoms": PDOS of a list of atoms will be plotted.
             - "species": Total PDOS of any species will be plotted in a picture.
             - "species+shell": PDOS for any shell (s, p, d, f, g,...) of any species will be plotted. PDOS of a shell of a species willbe plotted in a subplot.
-            - “species+orbital": Orbital-resolved PDOS will be plotted. PDOS of orbitals in the same shell of a species will be plotted in a subplot.
+            - "species+orbital": Orbital-resolved PDOS will be plotted. PDOS of orbitals in the same shell of a species will be plotted in a subplot.
+        pdos_atom_indices: A list of atom indices, only used if pdos_mode is "atoms".
         dos_edelta_ev: Step size in writing Density of States (DOS) in eV.
         dos_sigma: Width of the Gaussian factor when obtaining smeared Density of States (DOS) in eV. 
-        dos_scale: Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. 
-                   This parameter will be used when dos_emin_ev and dos_emax_ev are not set.
-        dos_emin_ev: Minimal range for Density of States (DOS) in eV.
-        dos_emax_ev: Maximal range for Density of States (DOS) in eV.
-        dos_nche: The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
-    
+        dos_emin_ev: Minimal range for Density of States (DOS) in eV. Default is -10.0.
+        dos_emax_ev: Maximal range for Density of States (DOS) in eV. Default is 10.0.
+   
     Returns:
         Dict[str, Any]: A dictionary containing:
             - dos_fig_path: Path to the plotted DOS.
             - pdos_fig_path: Path to the plotted PDOS. Only for LCAO basis.
+            - dos_data_path: Path to the data used in plotting DOS.
+            - pdos_data_paths: Path to the data used in plotting PDOS. Only for LCAO basis.
             - scf_normal_end: If the SCF calculation ended normally.
             - scf_converge: If the SCF calculation converged.
             - scf_energy: The calculated energy of SCF calculation.
@@ -474,15 +474,16 @@ def abacus_dos_run(
 
     dos_results = _abacus_dos_run(abacus_inputs_dir,
                                   pdos_mode,
+                                  pdos_atom_indices,
                                   dos_edelta_ev,
                                   dos_sigma,
-                                  dos_scale,
                                   dos_emin_ev,
-                                  dos_emax_ev,
-                                  dos_nche)
+                                  dos_emax_ev)
     
     return {'dos_fig_path': dos_results.get('dos_fig_path', None),
             'pdos_fig_path': dos_results.get('pdos_fig_path', None),
+            'dos_data_path': dos_results.get('dos_data_path', None),
+            'pdos_data_paths': dos_results.get('pdos_data_paths', None),
             'scf_normal_end': dos_results.get('scf_normal_end', None),
             'scf_converge': dos_results.get('scf_converge', None),
             'scf_energy': dos_results.get('scf_energy', None),
