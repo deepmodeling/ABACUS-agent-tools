@@ -1,8 +1,9 @@
 from pathlib import Path
-from typing import Dict, Any, List, Literal, Optional
+from typing import Dict, Any, List, Literal, Optional, Tuple
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.submodules.dos import abacus_dos_run as _abacus_dos_run
+from abacusagent.modules.submodules.dos import plot_write_dos_pdos as _plot_write_dos_pdos
 
 @mcp.tool()
 def abacus_dos_run(
@@ -48,3 +49,34 @@ def abacus_dos_run(
             - nscf_work_path: Path to the work directory of NSCF calculation
     """
     return _abacus_dos_run(abacus_inputs_dir, pdos_mode, pdos_atom_indices, dos_edelta_ev, dos_sigma, dos_emin_ev, dos_emax_ev)
+
+def plot_write_dos_pdos(
+    scf_job_path: Path,
+    nscf_job_path: Path,
+    mode: Literal[
+        "species", "species+shell", "species+orbital", "atoms"
+    ] = "species+shell",
+    pdos_atom_indices: Optional[List[int]] = None,
+    dos_emin_ev: float = -10.0,
+    dos_emax_ev: float = 5.0,
+) -> Tuple[List[str], List[str]]:
+    """
+    Plot DOS, PDOS and write data used in plotting to files using SCF and NSCF job directories from abacus_dos_run.
+
+    Args:
+        scf_job_path (Path): Path to the SCF job directory of the DOS calculation
+        nscf_job_path (Path): Path to the NSCF job directory of the DOS calculation
+        mode: Mode for plotting PDOS and write PDOS data.
+            - "atoms": PDOS of a list of atoms will be plotted.
+            - "species": Total PDOS of any species will be plotted in a picture.
+            - "species+shell": PDOS for any shell (s, p, d, f, g,...) of any species will be plotted. PDOS of a shell of a species willbe plotted in a subplot.
+            - "species+orbital": Orbital-resolved PDOS will be plotted. PDOS of orbitals in the same shell of a species will be plotted in a subplot.
+        pdos_atom_indices: A list of atom indices, only used if pdos_mode is "atoms".
+        pdos_atom_indices (List[int], optional): List of atom indices for atom-specific PDOS. Only valid for 'atoms' mode.
+        dos_emin_ev (float): Minimum energy for DOS and PDOS plots.
+        dos_emax_ev (float): Maximum energy for DOS and PDOS plots.
+
+    Returns:
+        Tuple[List[str], List[str]]: Tuple containing list of plot file paths and data file paths.
+    """
+    return _plot_write_dos_pdos(scf_job_path, nscf_job_path, mode, pdos_atom_indices, dos_emin_ev, dos_emax_ev)
