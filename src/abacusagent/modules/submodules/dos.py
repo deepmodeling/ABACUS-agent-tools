@@ -1,9 +1,5 @@
 import os
-import re
 import glob
-import numpy as np
-from numpy.typing import NDArray
-import matplotlib.pyplot as plt
 from abacustest.lib_prepare.abacus import ReadInput, WriteInput
 from abacustest.lib_collectdata.collectdata import RESULT
 from abacustest.lib_model.comm import check_abacus_inputs
@@ -17,38 +13,8 @@ from abacusagent.modules.util.comm import (
     link_abacusjob,
     run_abacus,
     has_chgfile,
-    collect_metrics,
 )
-from abacusagent.modules.util.chemical_elements import MAX_ANGULAR_MOMENTUM_OF_ELEMENTS
 
-
-angular_momentum_map = ["s", "p", "d", "f", "g"]
-color_map = {
-    "s": "#FF5733",
-    "p": "#33FF57",
-    "d": "#3357FF",
-    "f": "#F033FF",
-    "g": "#33FFF0",
-}
-
-orbital_rep_map = {
-    "s": "s",
-    "px": r"$p_x$",
-    "py": r"$p_y$",
-    "pz": r"$p_z$",
-    "dz^2": r"$d_{z^2}$",
-    "dxz": r"$d_{xz}$",
-    "dyz": r"$d_{yz}$",
-    "dxy": r"$d_{xy}$",
-    "dx^2-y^2": r"$d_{x^2-y^2}$",
-    "fz^3": r"$f_{z^3}$",
-    "fxz^2": r"$f_{xz^2}$",
-    "fyz^2": r"$f_{yz^2}$",
-    "fzx^2-zy^2": r"$f_{zx^2-zy^2}$",
-    "fxyz": r"$f_{xyz}$",
-    "fx^3-3*xy^2": r"$f_{x^3-3xy^2}$",
-    "f3yx^2-y^3": r"$f_{3yx^2-y^3}$",
-}
 
 
 def abacus_dos_run(
@@ -228,241 +194,6 @@ def abacus_dos_run_nscf(
         "nscf_normal_end": rs["normal_end"],
     }
 
-
-def plot_write_pdos_species(
-    pdos_data: PDOSData,
-    output_dir: Path,
-    dos_emin_ev: float,
-    dos_emax_ev: float,
-) -> Tuple[str, List[str]]:
-    """Plot PDOS by species using PDOSData class."""
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Get unique species
-    species_set = set()
-    for orbital in pdos_data.projected_dos:
-        species_set.add(orbital["species"])
-
-    # Sum PDOS for each species
-    species_pdos_data = []
-    species_labels = []
-    for species in species_set:
-        species_pdos_data.append(pdos_data.get_pdos_by_species(species))
-        species_labels.append(species)
-    
-    # Use PDOSData.plot_pdos method
-    pdos_pic_file = os.path.join(output_dir, "PDOS.png")
-    PDOSData.plot_pdos(
-        pdosdatas=[species_pdos_data],
-        labels=[species_labels],
-        titles=["Projected density of States of different species"],
-        energy=pdos_data.energy,
-        energy_min=dos_emin_ev,
-        energy_max=dos_emax_ev,
-        pdos_fig_name=pdos_pic_file,
-    )
-
-    # Write data file using PDOSData.write_pdos method
-    pdos_data_file = os.path.join(output_dir, "PDOS.dat")
-    PDOSData.write_pdos(
-        pdosdatas=species_pdos_data,
-        energy=pdos_data.energy,
-        labels=species_labels,
-        filename=str(pdos_data_file),
-    )
-
-    return pdos_pic_file, pdos_data_file
-
-
-def plot_write_pdos_species_shell(
-    pdos_data: PDOSData,
-    output_dir: Path,
-    dos_emin_ev: float,
-    dos_emax_ev: float,
-) -> Tuple[str, List[str]]:
-    """Plot PDOS by species and shell using PDOSData class."""
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Get unique species
-    species_set = set()
-    for orbital in pdos_data.projected_dos:
-        species_set.add(orbital["species"])
-
-    # Prepare data for PDOSData.plot_pdos
-    all_pdos_datas, all_labels, all_titles = [], [], []
-
-    for species in sorted(species_set):
-        species_pdos_data = []
-        species_labels = []
-        # Get shells for this species
-        species_shells = []
-        for orbital in pdos_data.projected_dos:
-            if orbital["species"] == species:
-                l = orbital["l"]
-                if l not in species_shells:
-                    species_shells.append(l)
-                    species_shell_pdos = pdos_data.get_pdos_by_species_shell(species, l)
-                    species_pdos_data.append(species_shell_pdos)
-
-                    shell_label = f"{species}-{l_map[l]}"
-                    species_labels.append(shell_label)
-        
-        all_titles.append(f"PDOS of {species}")
-        all_pdos_datas.append(species_pdos_data)
-        all_labels.append(species_labels)
-
-    # Use PDOSData.plot_pdos method
-    pdos_pic_file = os.path.join(output_dir, "PDOS.png")
-    PDOSData.plot_pdos(
-        pdosdatas=all_pdos_datas,
-        labels=all_labels,
-        titles=all_titles,
-        energy=pdos_data.energy,
-        energy_min=dos_emin_ev,
-        energy_max=dos_emax_ev,
-        pdos_fig_name=pdos_pic_file,
-    )
-
-    all_pdos_data_flattened = [data for species_pdos_datas in all_pdos_datas for data in species_pdos_datas]
-    all_labels_flattened = [label for species_labels in all_labels for label in species_labels]
-    pdos_data_file = os.path.join(output_dir, "PDOS.dat")
-    PDOSData.write_pdos(
-        pdosdatas=all_pdos_data_flattened,
-        energy=pdos_data.energy,
-        labels=all_labels_flattened,
-        filename=pdos_data_file,
-    )
-
-    return pdos_pic_file, pdos_data_file
-
-
-def plot_write_pdos_species_orbital(
-    pdos_data: PDOSData,
-    output_dir: Path,
-    dos_emin_ev: float,
-    dos_emax_ev: float,
-) -> Tuple[str, List[str]]:
-    """Plot PDOS by species and orbital using PDOSData class."""
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Get unique species
-    species_shell_set = set()
-    for orbital in pdos_data.projected_dos:
-        species_shell_set.add((orbital["species"], orbital["l"]))
-
-    # Prepare data for PDOSData.plot_pdos
-    all_pdos_datas, all_labels, all_titles = [], [], []
-
-    for (species, l) in sorted(species_shell_set):
-        orbital_pdos_data = []
-        species_orbital_labels = []
-        # Get orbitals for this shell
-        species_orbitals = []
-        for orbital in pdos_data.projected_dos:
-            if orbital["species"] == species and orbital["l"] == l:
-                m = orbital["m"]
-                if m not in species_orbitals:
-                    species_orbitals.append(m)
-                    species_orbital_pdos = pdos_data.get_pdos_by_species_orbital(species, l, m)
-                    orbital_pdos_data.append(species_orbital_pdos)
-
-                    orbital_label = f"{species}-{orbital_names[(l, m)]}"
-                    species_orbital_labels.append(orbital_label)
-        
-        all_titles.append(f"PDOS of {species}-{l_map[l]}")
-        all_pdos_datas.append(orbital_pdos_data)
-        all_labels.append(species_orbital_labels)
-
-    # Use PDOSData.plot_pdos method
-    pdos_pic_file = os.path.join(output_dir, "PDOS.png")
-    PDOSData.plot_pdos(
-        pdosdatas=all_pdos_datas,
-        labels=all_labels,
-        titles=all_titles,
-        energy=pdos_data.energy,
-        energy_min=dos_emin_ev,
-        energy_max=dos_emax_ev,
-        pdos_fig_name=pdos_pic_file,
-    )
-
-    all_pdos_data_flattened = [data for species_pdos_datas in all_pdos_datas for data in species_pdos_datas]
-    all_labels_flattened = [label.replace("$", "") for species_labels in all_labels for label in species_labels]
-    pdos_data_file = os.path.join(output_dir, "PDOS.dat")
-    PDOSData.write_pdos(
-        pdosdatas=all_pdos_data_flattened,
-        energy=pdos_data.energy,
-        labels=all_labels_flattened,
-        filename=pdos_data_file,
-    )
-
-    return pdos_pic_file, pdos_data_file
-
-
-def plot_write_pdos_atoms(
-    pdos_data: PDOSData,
-    output_dir: Path,
-    pdos_atom_indices: List[int],
-    dos_emin_ev: float,
-    dos_emax_ev: float,
-) -> Tuple[str, List[str]]:
-    """Plot PDOS for selected atoms using PDOSData class."""
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Prepare data for PDOSData.plot_pdos
-    all_pdos_datas, all_labels, all_titles = [], [], []
-
-    for atom_index in pdos_atom_indices:
-        # Obtain all shells of the selected atom
-        atom_shell_set = set()
-        for orbital in pdos_data.projected_dos:
-            if orbital["atom_index"] == atom_index:
-                species = orbital["species"]
-                atom_shell_set.add((orbital["l"]))
-
-        for l in atom_shell_set:
-            orbital_pdos_data = []
-            species_orbital_labels = []
-            # Get shells for this species
-            species_orbitals = []
-            for orbital in pdos_data.projected_dos:
-                if orbital["species"] == species and orbital["l"] == l:
-                    m = orbital["m"]
-                    if m not in species_orbitals:
-                        species_orbitals.append(m)
-                        species_orbital_pdos = pdos_data.get_pdos_by_species_orbital(species, l, m)
-                        orbital_pdos_data.append(species_orbital_pdos)
-
-                        orbital_label = f"{species}{atom_index}-{orbital_names[(l, m)]}"
-                        species_orbital_labels.append(orbital_label)
-
-            all_titles.append(f"PDOS of {species}{atom_index}-{l_map[l]}")
-            all_pdos_datas.append(orbital_pdos_data)
-            all_labels.append(species_orbital_labels)
-
-    # Use PDOSData.plot_pdos method
-    pdos_pic_file = os.path.join(output_dir, "PDOS.png")
-    PDOSData.plot_pdos(
-        pdosdatas=all_pdos_datas,
-        labels=all_labels,
-        titles=all_titles,
-        energy=pdos_data.energy,
-        energy_min=dos_emin_ev,
-        energy_max=dos_emax_ev,
-        pdos_fig_name=pdos_pic_file,
-    )
-
-    all_pdos_data_flattened = [data for species_pdos_datas in all_pdos_datas for data in species_pdos_datas]
-    all_labels_flattened = [label.replace("$", "") for species_labels in all_labels for label in species_labels]
-    pdos_data_file = os.path.join(output_dir, "PDOS.dat")
-    PDOSData.write_pdos(
-        pdosdatas=all_pdos_data_flattened,
-        energy=pdos_data.energy,
-        labels=all_labels_flattened,
-        filename=pdos_data_file,
-    )
-
-    return pdos_pic_file, pdos_data_file
-
 def plot_write_dos_pdos(
     scf_job_path: Path,
     nscf_job_path: Path,
@@ -473,19 +204,21 @@ def plot_write_dos_pdos(
     dos_emin_ev: float = -10.0,
     dos_emax_ev: float = 5.0,
 ) -> Tuple[List[str], List[str]]:
-    """Plot DOS and PDOS from the NSCF job path using PDOSData class.
+    """
+    Plot DOS, PDOS and write data used in plotting to files using SCF and NSCF job directories from abacus_dos_run.
 
     Args:
         scf_job_path (Path): Path to the SCF job directory of the DOS calculation
         nscf_job_path (Path): Path to the NSCF job directory of the DOS calculation
-        mode (str): PDOS plotting mode ('species', 'species+shell', 'species+orbital', or 'atoms').
+        mode: Mode for plotting PDOS and write PDOS data.
+            - "atoms": PDOS of a list of atoms will be plotted.
+            - "species": Total PDOS of any species will be plotted in a picture.
+            - "species+shell": PDOS for any shell (s, p, d, f, g,...) of any species will be plotted. PDOS of a shell of a species willbe plotted in a subplot.
+            - "species+orbital": Orbital-resolved PDOS will be plotted. PDOS of orbitals in the same shell of a species will be plotted in a subplot.
+        pdos_atom_indices: A list of atom indices, only used if pdos_mode is "atoms".
         pdos_atom_indices (List[int], optional): List of atom indices for atom-specific PDOS. Only valid for 'atoms' mode.
         dos_emin_ev (float): Minimum energy for DOS and PDOS plots.
-        dos_emax_ev (float): Maximum energy for DOS and PDOS plots.
-
-    Returns:
-        Tuple[List[str], List[str]]: Tuple containing list of plot file paths and data file paths.
-    """
+        dos_emax_ev (float): Maximum energy for DOS and PDOS plots.    """
     work_path = generate_work_path()
     
     input_param = ReadInput(os.path.join(nscf_job_path, "INPUT"))
@@ -519,32 +252,26 @@ def plot_write_dos_pdos(
         try:
             # Load PDOS data using PDOSData class
             pdos_data = PDOSData.ReadFromAbacusJob(str(nscf_job_path), efermi)
+            pdos_plot_file = Path(os.path.join(work_path, "PDOS.png")).absolute()
+            pdos_data_file = Path(os.path.join(work_path, "PDOS.dat")).absolute()
 
             # Plot PDOS based on mode
             if mode == "species":
-                pdos_plot_file, pdos_data_file = plot_write_pdos_species(
-                    pdos_data, work_path, dos_emin_ev, dos_emax_ev
-                )
+                pdos_data.plot_species_pdos(dos_emin_ev, dos_emax_ev, pdos_plot_file)
+                pdos_data.write_species_pdos(pdos_data_file)
             elif mode == "species+shell":
-                pdos_plot_file, pdos_data_file = plot_write_pdos_species_shell(
-                    pdos_data, work_path, dos_emin_ev, dos_emax_ev
-                )
+                pdos_data.plot_species_shell_pdos(dos_emin_ev, dos_emax_ev, pdos_plot_file)
+                pdos_data.write_species_shell_pdos(pdos_data_file)
             elif mode == "species+orbital":
-                pdos_plot_file, pdos_data_file = plot_write_pdos_species_orbital(
-                    pdos_data, work_path, dos_emin_ev, dos_emax_ev
-                )
+                pdos_data.plot_species_orbital_pdos(dos_emin_ev, dos_emax_ev, pdos_plot_file)
+                pdos_data.write_species_orbital_pdos(pdos_data_file)
             elif mode == "atoms":
                 if pdos_atom_indices is None or len(pdos_atom_indices) == 0:
                     raise ValueError(
                         "For 'atoms' mode, pdos_atom_indices must be provided"
                     )
-                pdos_plot_file, pdos_data_file = plot_write_pdos_atoms(
-                    pdos_data,
-                    work_path,
-                    pdos_atom_indices,
-                    dos_emin_ev,
-                    dos_emax_ev,
-                )
+                pdos_data.plot_atoms_pdos(pdos_atom_indices, dos_emin_ev, dos_emax_ev, pdos_plot_file)
+                pdos_data.write_atoms_pdos(pdos_atom_indices, pdos_data_file)
             else:
                 raise ValueError(f"Unsupported mode: {mode}")
 
