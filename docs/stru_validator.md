@@ -103,10 +103,10 @@ Returns a dictionary with the following structure:
 - Reasonable cell volume
 
 ### 6. ATOMIC_POSITIONS
-- Valid coordinate type (Direct or Cartesian)
+- Valid coordinate type (Direct, Cartesian, Cartesian_angstrom, Cartesian_au, Cartesian_angstrom_center_xy/xz/yz/xyz)
 - At least 3 coordinates (x, y, z) per atom
 - Direct coordinates typically in [0, 1] (warning if outside)
-- Valid movement flags and magnetic moments (if present)
+- Optional atom attributes (see Atom Attributes section below)
 
 ### 7. Consistency
 - All elements in ATOMIC_POSITIONS exist in ATOMIC_SPECIES
@@ -114,8 +114,238 @@ Returns a dictionary with the following structure:
 - Total atom count > 0
 
 ### 8. Physical Validity
-- Atoms not too close together (< 0.5 Angstrom)
+- Atoms not too close together (< 0.00053 Angstrom / 1e-3 Bohr)
 - Reasonable magnetic moments (|mag| < 10)
+
+## Atom Attributes
+
+The validator supports parsing and validation of optional atom attributes that can appear after atomic coordinates in the ATOMIC_POSITIONS section. These attributes match the ABACUS C++ implementation (read_atoms.cpp:206-316).
+
+### Supported Attributes
+
+#### 1. Movement Constraints
+Controls which directions an atom can move during relaxation/MD.
+
+**New format (recommended):**
+```
+0.0 0.0 0.0 m 1 1 0
+```
+- `m`: keyword
+- Three values: 0 (frozen) or 1 (movable) for x, y, z directions
+
+**Old format (deprecated):**
+```
+0.0 0.0 0.0 0 0 1
+```
+- Three numeric values immediately after coordinates
+- Still supported but triggers deprecation warning
+
+**Validation:**
+- Values must be 0 or 1
+- Deprecation warning for old format
+
+#### 2. Velocities
+Initial velocities for molecular dynamics.
+
+**Format:**
+```
+0.0 0.0 0.0 v 1.0 2.0 3.0
+```
+or
+```
+0.0 0.0 0.0 vel 1.0 2.0 3.0
+0.0 0.0 0.0 velocity 1.0 2.0 3.0
+```
+- Keywords: `v`, `vel`, or `velocity`
+- Three float values for vx, vy, vz
+
+**Validation:**
+- Must have exactly 3 numeric values
+
+#### 3. Magnetic Moments
+Initial magnetic moments for spin-polarized calculations.
+
+**Scalar format (z-component only):**
+```
+0.0 0.0 0.0 mag 2.0
+```
+
+**Vector format (x, y, z components):**
+```
+0.0 0.0 0.0 mag 1.0 2.0 3.0
+```
+- Keywords: `mag` or `magmom`
+- 1 value (scalar) or 3 values (vector)
+
+**Validation:**
+- Cannot use both vector magnetic moment and angles on same atom (ERROR)
+
+#### 4. Angles
+Alternative way to specify magnetic moment direction using spherical coordinates.
+
+**Format:**
+```
+0.0 0.0 0.0 angle1 45.0 angle2 90.0
+```
+- `angle1`: polar angle (degrees)
+- `angle2`: azimuthal angle (degrees)
+
+**Validation:**
+- Warning if outside [-360, 360] degrees
+- Cannot use with vector magnetic moment (ERROR)
+
+#### 5. Lambda Parameters (DFT+U)
+Hubbard U parameters for DFT+U calculations.
+
+**Scalar format (z-component only):**
+```
+0.0 0.0 0.0 lambda 0.5
+```
+
+**Vector format (x, y, z components):**
+```
+0.0 0.0 0.0 lambda 0.1 0.2 0.3
+```
+- Keyword: `lambda`
+- 1 value (scalar) or 3 values (vector)
+
+#### 6. Spin Constraints
+Constrain spin direction during calculations.
+
+**Scalar format (z-component only):**
+```
+0.0 0.0 0.0 sc 1.0
+```
+
+**Vector format (x, y, z components):**
+```
+0.0 0.0 0.0 sc 0.1 0.2 0.3
+```
+- Keyword: `sc`
+- 1 value (scalar) or 3 values (vector)
+
+### Multiple Attributes
+
+Multiple attributes can be specified on the same line:
+
+```
+0.0 0.0 0.0 m 1 1 0 v 0.1 0.2 0.3 mag 2.0
+```
+
+### Comments
+
+Attributes support inline comments:
+
+```
+0.0 0.0 0.0 m 1 1 0 mag 2.0  # frozen in xy, mag moment 2.0
+```
+
+### Validation Results
+
+Attribute validation results are included in the `details["atomic_positions"]["attributes"]` section:
+
+```python
+{
+    "total_atoms_with_attributes": int,
+    "movement_constraints": {
+        "count": int,
+        "old_format_count": int,
+        "new_format_count": int
+    },
+    "velocities": {
+        "count": int
+    },
+    "magnetic_moments": {
+        "scalar_count": int,
+        "vector_count": int,
+        "angle_count": int,
+        "conflicts": []  # Atoms with both vector mag and angles
+    },
+    "lambda_parameters": {
+        "scalar_count": int,
+        "vector_count": int
+    },
+    "spin_constraints": {
+        "scalar_count": int,
+        "vector_count": int
+    },
+    "issues": []
+}
+```
+
+### Attribute Validation Errors
+
+#### Invalid Movement Values
+```
+ERROR: [ATOMIC_POSITIONS] Invalid movement constraint values
+  Element: H, Atom: 1
+  Values: 1 2 0
+  Expected: Each value must be 0 (frozen) or 1 (movable)
+  Fix: Use 0 to freeze or 1 to allow movement in each direction
+```
+
+#### Conflicting Magnetic Specifications
+```
+ERROR: [ATOMIC_POSITIONS] Conflicting magnetic moment specifications
+  Element: H, Atom: 1
+  Found: Vector magnetic moment AND angles
+  Fix: Use either vector magnetic moment (mag x y z) OR angles (angle1/angle2), not both
+```
+
+#### Angle Out of Range
+```
+WARNING: [ATOMIC_POSITIONS] Angle outside reasonable range
+  Element: H, Atom: 1
+  angle1: 500.0 degrees
+  Reasonable range: [-360.0, 360.0]
+  Suggestion: Verify this is the intended value
+```
+
+#### Deprecated Format
+```
+WARNING: [ATOMIC_POSITIONS] Deprecated movement constraint format
+  Format: Numeric values after coordinates (e.g., '0 0 1')
+  Suggestion: Use new keyword format: 'm 0 0 1'
+  Note: Old format still works but may be removed in future versions
+```
+
+### Example: Complete STRU with Attributes
+
+```
+ATOMIC_SPECIES
+Ni 58.693 Ni_ONCV_PBE-1.0.upf
+O 15.999 O_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+1.889726
+
+LATTICE_VECTORS
+4.17 2.085 2.085
+2.085 4.17 2.085
+2.085 2.085 4.17
+
+ATOMIC_POSITIONS
+Direct
+
+Ni
+0.0
+2
+0.0 0.0 0.0 m 0 0 1 mag 2.0
+0.5 0.5 0.5 m 1 1 1 mag -2.0
+
+O
+0.0
+2
+0.25 0.25 0.25 m 0 0 0 mag 0.0
+0.75 0.75 0.75 m 1 0 1 mag 0.0
+```
+
+This file will validate successfully with:
+- 4 movement constraints (new format)
+- 4 scalar magnetic moments
+- 1 deprecation warning if old format is used
+
+
 
 ## Examples
 
@@ -269,9 +499,9 @@ python examples/validate_stru_example.py
 
 ## Limitations
 
-- Does not validate advanced features like DFT+U parameters or external fields
 - File existence checks are relative to the STRU file directory
 - Physical validity checks are heuristic-based (e.g., minimum atom distance threshold)
+- Attribute parsing focuses on validation; runtime operations (unit conversions, default values) are handled by ABACUS
 
 ## Future Enhancements
 

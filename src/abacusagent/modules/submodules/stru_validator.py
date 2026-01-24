@@ -33,6 +33,27 @@ VALID_COORD_TYPES = [
 # Valid pseudopotential types (from read_atom_species.cpp:52-66)
 VALID_PP_TYPES = ["auto", "upf", "vwr", "upf201", "blps", "1/r"]
 
+# Valid attribute keywords for atomic positions (from read_atoms.cpp:206-316)
+VALID_MOVEMENT_KEYWORDS = ["m"]
+VALID_VELOCITY_KEYWORDS = ["v", "vel", "velocity"]
+VALID_MAG_KEYWORDS = ["mag", "magmom"]
+VALID_ANGLE_KEYWORDS = ["angle1", "angle2"]
+VALID_LAMBDA_KEYWORDS = ["lambda"]
+VALID_SC_KEYWORDS = ["sc"]
+
+ALL_VALID_ATTRIBUTES = (
+    VALID_MOVEMENT_KEYWORDS +
+    VALID_VELOCITY_KEYWORDS +
+    VALID_MAG_KEYWORDS +
+    VALID_ANGLE_KEYWORDS +
+    VALID_LAMBDA_KEYWORDS +
+    VALID_SC_KEYWORDS
+)
+
+# Angle range validation (degrees)
+REASONABLE_ANGLE_MIN = -360.0
+REASONABLE_ANGLE_MAX = 360.0
+
 
 class ValidationResult:
     """Helper class to accumulate validation results."""
@@ -173,6 +194,10 @@ def validate_stru(
         stru = _manual_parse_stru(lines, result)
         if stru is None:
             return result.to_dict(strict_mode)
+    else:
+        # AbacusStru parsed successfully, but we still need to parse attributes
+        # since AbacusStru doesn't extract them
+        _parse_attributes_from_lines(stru, lines)
 
     # Validate each section
     _validate_atomic_species(stru, lines, result, stru_path.parent if check_file_existence else None)
@@ -180,6 +205,7 @@ def validate_stru(
     _validate_lattice_constant(stru, lines, result)
     _validate_lattice_vectors(stru, lines, result)
     _validate_atomic_positions(stru, lines, result)
+    _validate_atom_attributes(stru, lines, result)
     _validate_consistency(stru, result)
     _validate_physical(stru, result)
 
@@ -212,6 +238,16 @@ def _manual_parse_stru(lines: List[str], result: ValidationResult):
             self.coords = {}
             self.magmoms = {}
             self.empty_elements = []
+
+            # New fields for optional attributes
+            self.movement_constraints = {}  # {element: [(mx, my, mz), ...]}
+            self.velocities = {}            # {element: [(vx, vy, vz), ...]}
+            self.mag_scalar = {}            # {element: [mag, ...]}
+            self.mag_vector = {}            # {element: [(mx, my, mz), ...]}
+            self.angles = {}                # {element: [(angle1, angle2), ...]}
+            self.lambda_params = {}         # {element: [scalar or (x,y,z), ...]}
+            self.spin_constraints = {}      # {element: [scalar or (x,y,z), ...]}
+            self.has_old_style_movement = False  # Track deprecated format
 
     stru = ManualStru()
     content = '\n'.join(lines)
@@ -326,6 +362,62 @@ def _manual_parse_stru(lines: List[str], result: ValidationResult):
                                         if len(coord_parts) >= 3:
                                             coords = [float(coord_parts[0]), float(coord_parts[1]), float(coord_parts[2])]
                                             stru.coords[elem].append(coords)
+
+                                            # Parse optional attributes
+                                            attrs = _parse_atom_attributes(coord_line, coord_parts)
+                                            if attrs:
+                                                # Store movement constraints
+                                                if attrs['movement'] is not None:
+                                                    if elem not in stru.movement_constraints:
+                                                        stru.movement_constraints[elem] = []
+                                                    stru.movement_constraints[elem].append(attrs['movement'])
+                                                    if attrs['old_style_movement']:
+                                                        stru.has_old_style_movement = True
+
+                                                # Store velocities
+                                                if attrs['velocity'] is not None:
+                                                    if elem not in stru.velocities:
+                                                        stru.velocities[elem] = []
+                                                    stru.velocities[elem].append(attrs['velocity'])
+
+                                                # Store magnetic moments
+                                                if attrs['mag_scalar'] is not None:
+                                                    if elem not in stru.mag_scalar:
+                                                        stru.mag_scalar[elem] = []
+                                                    stru.mag_scalar[elem].append(attrs['mag_scalar'])
+
+                                                if attrs['mag_vector'] is not None:
+                                                    if elem not in stru.mag_vector:
+                                                        stru.mag_vector[elem] = []
+                                                    stru.mag_vector[elem].append(attrs['mag_vector'])
+
+                                                # Store angles
+                                                if attrs['angle1'] is not None or attrs['angle2'] is not None:
+                                                    if elem not in stru.angles:
+                                                        stru.angles[elem] = []
+                                                    stru.angles[elem].append((attrs['angle1'], attrs['angle2']))
+
+                                                # Store lambda parameters
+                                                if attrs['lambda_scalar'] is not None:
+                                                    if elem not in stru.lambda_params:
+                                                        stru.lambda_params[elem] = []
+                                                    stru.lambda_params[elem].append(attrs['lambda_scalar'])
+
+                                                if attrs['lambda_vector'] is not None:
+                                                    if elem not in stru.lambda_params:
+                                                        stru.lambda_params[elem] = []
+                                                    stru.lambda_params[elem].append(attrs['lambda_vector'])
+
+                                                # Store spin constraints
+                                                if attrs['sc_scalar'] is not None:
+                                                    if elem not in stru.spin_constraints:
+                                                        stru.spin_constraints[elem] = []
+                                                    stru.spin_constraints[elem].append(attrs['sc_scalar'])
+
+                                                if attrs['sc_vector'] is not None:
+                                                    if elem not in stru.spin_constraints:
+                                                        stru.spin_constraints[elem] = []
+                                                    stru.spin_constraints[elem].append(attrs['sc_vector'])
                                     i += 1
                         except:
                             i += 1
@@ -704,6 +796,324 @@ def _validate_lattice_vectors(stru: AbacusStru, lines: List[str], result: Valida
     result.details["lattice_vectors"] = details
 
 
+def _parse_attributes_from_lines(stru: AbacusStru, lines: List[str]) -> None:
+    """
+    Parse optional atom attributes from raw lines and add to stru object.
+
+    This is needed because AbacusStru.ReadStru() doesn't extract optional attributes.
+
+    Args:
+        stru: Parsed STRU structure (from AbacusStru.ReadStru())
+        lines: Raw file lines
+    """
+    # Initialize attribute storage on stru object
+    stru.movement_constraints = {}
+    stru.velocities = {}
+    stru.mag_scalar = {}
+    stru.mag_vector = {}
+    stru.angles = {}
+    stru.lambda_params = {}
+    stru.spin_constraints = {}
+    stru.has_old_style_movement = False
+
+    # Find ATOMIC_POSITIONS section
+    content = '\n'.join(lines)
+    if "ATOMIC_POSITIONS" not in content:
+        return
+
+    try:
+        start_idx = next(i for i, line in enumerate(lines) if "ATOMIC_POSITIONS" in line)
+        i = start_idx + 2  # Skip ATOMIC_POSITIONS and coordinate type line
+
+        # Get element labels from stru
+        labels = getattr(stru, '_label', None) or getattr(stru, 'elements', None)
+        atom_numbers = getattr(stru, '_atom_number', None)
+
+        if not labels or not atom_numbers:
+            return
+
+        # Parse each element's atoms
+        for elem_idx, (elem, count) in enumerate(zip(labels, atom_numbers)):
+            # Skip to element label
+            while i < len(lines):
+                raw_line = lines[i]
+                line = strip_comments(raw_line).strip()
+                if line and line.split()[0] == elem:
+                    break
+                i += 1
+
+            if i >= len(lines):
+                break
+
+            # Skip element label, magnetism, and count lines
+            i += 3
+
+            # Parse coordinates and attributes for this element
+            for atom_idx in range(count):
+                if i >= len(lines):
+                    break
+
+                coord_line = lines[i]  # Use raw line (with comments)
+                coord_line_clean = strip_comments(coord_line).strip()
+
+                if coord_line_clean:
+                    coord_parts = coord_line_clean.split()
+                    if len(coord_parts) >= 3:
+                        # Parse attributes
+                        attrs = _parse_atom_attributes(coord_line_clean, coord_parts)
+
+                        # Store movement constraints
+                        if attrs['movement'] is not None:
+                            if elem not in stru.movement_constraints:
+                                stru.movement_constraints[elem] = []
+                            stru.movement_constraints[elem].append(attrs['movement'])
+                            if attrs['old_style_movement']:
+                                stru.has_old_style_movement = True
+
+                        # Store velocities
+                        if attrs['velocity'] is not None:
+                            if elem not in stru.velocities:
+                                stru.velocities[elem] = []
+                            stru.velocities[elem].append(attrs['velocity'])
+
+                        # Store magnetic moments
+                        if attrs['mag_scalar'] is not None:
+                            if elem not in stru.mag_scalar:
+                                stru.mag_scalar[elem] = []
+                            stru.mag_scalar[elem].append(attrs['mag_scalar'])
+
+                        if attrs['mag_vector'] is not None:
+                            if elem not in stru.mag_vector:
+                                stru.mag_vector[elem] = []
+                            stru.mag_vector[elem].append(attrs['mag_vector'])
+
+                        # Store angles
+                        if attrs['angle1'] is not None or attrs['angle2'] is not None:
+                            if elem not in stru.angles:
+                                stru.angles[elem] = []
+                            stru.angles[elem].append((attrs['angle1'], attrs['angle2']))
+
+                        # Store lambda parameters
+                        if attrs['lambda_scalar'] is not None:
+                            if elem not in stru.lambda_params:
+                                stru.lambda_params[elem] = []
+                            stru.lambda_params[elem].append(attrs['lambda_scalar'])
+
+                        if attrs['lambda_vector'] is not None:
+                            if elem not in stru.lambda_params:
+                                stru.lambda_params[elem] = []
+                            stru.lambda_params[elem].append(attrs['lambda_vector'])
+
+                        # Store spin constraints
+                        if attrs['sc_scalar'] is not None:
+                            if elem not in stru.spin_constraints:
+                                stru.spin_constraints[elem] = []
+                            stru.spin_constraints[elem].append(attrs['sc_scalar'])
+
+                        if attrs['sc_vector'] is not None:
+                            if elem not in stru.spin_constraints:
+                                stru.spin_constraints[elem] = []
+                            stru.spin_constraints[elem].append(attrs['sc_vector'])
+
+                i += 1
+
+    except Exception:
+        # If parsing fails, just return with empty attributes
+        pass
+
+
+def _parse_atom_attributes(line: str, coord_parts: List[str]) -> Dict[str, Any]:
+    """
+    Parse optional attributes after atomic coordinates.
+
+    Implements parsing logic from read_atoms.cpp:206-316.
+
+    Args:
+        line: Full line with coordinates and attributes
+        coord_parts: Already split line parts (first 3 are coordinates)
+
+    Returns:
+        Dictionary with parsed attributes:
+        - movement: (mx, my, mz) tuple or None
+        - old_style_movement: bool (True if old numeric format used)
+        - velocity: (vx, vy, vz) tuple or None
+        - mag_scalar: float or None
+        - mag_vector: (mx, my, mz) tuple or None
+        - angle1: float or None
+        - angle2: float or None
+        - lambda_scalar: float or None
+        - lambda_vector: (x, y, z) tuple or None
+        - sc_scalar: float or None
+        - sc_vector: (x, y, z) tuple or None
+    """
+    attrs = {
+        'movement': None,
+        'old_style_movement': False,
+        'velocity': None,
+        'mag_scalar': None,
+        'mag_vector': None,
+        'angle1': None,
+        'angle2': None,
+        'lambda_scalar': None,
+        'lambda_vector': None,
+        'sc_scalar': None,
+        'sc_vector': None
+    }
+
+    # If we only have 3 parts (coordinates), no attributes
+    if len(coord_parts) <= 3:
+        return attrs
+
+    # Start parsing after first 3 coordinate values
+    i = 3
+
+    # Check for old-style movement constraints (3 consecutive 0/1 digits)
+    # This must come immediately after coordinates
+    if i + 2 < len(coord_parts):
+        try:
+            m1 = int(coord_parts[i])
+            m2 = int(coord_parts[i+1])
+            m3 = int(coord_parts[i+2])
+            # Check if all are 0 or 1 (old-style movement)
+            if all(m in [0, 1] for m in [m1, m2, m3]):
+                attrs['movement'] = (m1, m2, m3)
+                attrs['old_style_movement'] = True
+                i += 3
+        except (ValueError, IndexError):
+            pass
+
+    # Parse keyword-based attributes
+    while i < len(coord_parts):
+        keyword = coord_parts[i].lower()
+
+        # Check if this is a valid attribute keyword
+        if keyword in VALID_MOVEMENT_KEYWORDS:
+            # Movement: m 0 0 1
+            if i + 3 < len(coord_parts):
+                try:
+                    m1 = int(coord_parts[i+1])
+                    m2 = int(coord_parts[i+2])
+                    m3 = int(coord_parts[i+3])
+                    attrs['movement'] = (m1, m2, m3)
+                    i += 4
+                    continue
+                except (ValueError, IndexError):
+                    pass
+
+        elif keyword in VALID_VELOCITY_KEYWORDS:
+            # Velocity: v 1.0 2.0 3.0
+            if i + 3 < len(coord_parts):
+                try:
+                    vx = float(coord_parts[i+1])
+                    vy = float(coord_parts[i+2])
+                    vz = float(coord_parts[i+3])
+                    attrs['velocity'] = (vx, vy, vz)
+                    i += 4
+                    continue
+                except (ValueError, IndexError):
+                    pass
+
+        elif keyword in VALID_MAG_KEYWORDS:
+            # Magnetic moment: mag 2.0 (scalar) or mag 1.0 2.0 3.0 (vector)
+            if i + 1 < len(coord_parts):
+                try:
+                    val1 = float(coord_parts[i+1])
+                    # Check if next value is also numeric (vector) or not (scalar)
+                    if i + 3 < len(coord_parts):
+                        try:
+                            val2 = float(coord_parts[i+2])
+                            val3 = float(coord_parts[i+3])
+                            # Vector magnetic moment
+                            attrs['mag_vector'] = (val1, val2, val3)
+                            i += 4
+                            continue
+                        except (ValueError, IndexError):
+                            # Scalar magnetic moment
+                            attrs['mag_scalar'] = val1
+                            i += 2
+                            continue
+                    else:
+                        # Scalar magnetic moment
+                        attrs['mag_scalar'] = val1
+                        i += 2
+                        continue
+                except (ValueError, IndexError):
+                    pass
+
+        elif keyword in VALID_ANGLE_KEYWORDS:
+            # Angles: angle1 45.0 or angle2 90.0
+            if i + 1 < len(coord_parts):
+                try:
+                    angle_val = float(coord_parts[i+1])
+                    if keyword == "angle1":
+                        attrs['angle1'] = angle_val
+                    else:  # angle2
+                        attrs['angle2'] = angle_val
+                    i += 2
+                    continue
+                except (ValueError, IndexError):
+                    pass
+
+        elif keyword in VALID_LAMBDA_KEYWORDS:
+            # Lambda: lambda 0.5 (scalar) or lambda 0.1 0.2 0.3 (vector)
+            if i + 1 < len(coord_parts):
+                try:
+                    val1 = float(coord_parts[i+1])
+                    # Check if next value is also numeric (vector) or not (scalar)
+                    if i + 3 < len(coord_parts):
+                        try:
+                            val2 = float(coord_parts[i+2])
+                            val3 = float(coord_parts[i+3])
+                            # Vector lambda
+                            attrs['lambda_vector'] = (val1, val2, val3)
+                            i += 4
+                            continue
+                        except (ValueError, IndexError):
+                            # Scalar lambda
+                            attrs['lambda_scalar'] = val1
+                            i += 2
+                            continue
+                    else:
+                        # Scalar lambda
+                        attrs['lambda_scalar'] = val1
+                        i += 2
+                        continue
+                except (ValueError, IndexError):
+                    pass
+
+        elif keyword in VALID_SC_KEYWORDS:
+            # Spin constraint: sc 1.0 (scalar) or sc 0.1 0.2 0.3 (vector)
+            if i + 1 < len(coord_parts):
+                try:
+                    val1 = float(coord_parts[i+1])
+                    # Check if next value is also numeric (vector) or not (scalar)
+                    if i + 3 < len(coord_parts):
+                        try:
+                            val2 = float(coord_parts[i+2])
+                            val3 = float(coord_parts[i+3])
+                            # Vector spin constraint
+                            attrs['sc_vector'] = (val1, val2, val3)
+                            i += 4
+                            continue
+                        except (ValueError, IndexError):
+                            # Scalar spin constraint
+                            attrs['sc_scalar'] = val1
+                            i += 2
+                            continue
+                    else:
+                        # Scalar spin constraint
+                        attrs['sc_scalar'] = val1
+                        i += 2
+                        continue
+                except (ValueError, IndexError):
+                    pass
+
+        # If we couldn't parse this keyword, move to next token
+        i += 1
+
+    return attrs
+
+
 def _validate_atomic_positions(stru: AbacusStru, lines: List[str], result: ValidationResult):
     """Validate ATOMIC_POSITIONS section."""
     details = {"coordinate_type": None, "elements": [], "valid": True}
@@ -818,6 +1228,186 @@ def _validate_atomic_positions(stru: AbacusStru, lines: List[str], result: Valid
             details["elements"].append(elem_info)
 
     result.details["atomic_positions"] = details
+
+
+def _validate_atom_attributes(
+    stru: AbacusStru,
+    lines: List[str],
+    result: ValidationResult
+) -> None:
+    """
+    Validate optional atom attributes in ATOMIC_POSITIONS section.
+
+    Implements validation logic from read_atoms.cpp:206-316.
+
+    Args:
+        stru: Parsed STRU structure (AbacusStru or ManualStru)
+        lines: Raw file lines
+        result: ValidationResult object to accumulate errors/warnings
+    """
+    # Initialize details structure
+    details = {
+        "total_atoms_with_attributes": 0,
+        "movement_constraints": {
+            "count": 0,
+            "old_format_count": 0,
+            "new_format_count": 0
+        },
+        "velocities": {
+            "count": 0
+        },
+        "magnetic_moments": {
+            "scalar_count": 0,
+            "vector_count": 0,
+            "angle_count": 0,
+            "conflicts": []
+        },
+        "lambda_parameters": {
+            "scalar_count": 0,
+            "vector_count": 0
+        },
+        "spin_constraints": {
+            "scalar_count": 0,
+            "vector_count": 0
+        },
+        "issues": []
+    }
+
+    # Check if we have attribute data from manual parsing
+    has_attributes = (
+        hasattr(stru, 'movement_constraints') or
+        hasattr(stru, 'velocities') or
+        hasattr(stru, 'mag_scalar') or
+        hasattr(stru, 'mag_vector') or
+        hasattr(stru, 'angles') or
+        hasattr(stru, 'lambda_params') or
+        hasattr(stru, 'spin_constraints')
+    )
+
+    if not has_attributes:
+        # No attributes parsed, nothing to validate
+        if "atomic_positions" in result.details:
+            result.details["atomic_positions"]["attributes"] = details
+        return
+
+    # Validate movement constraints
+    if hasattr(stru, 'movement_constraints'):
+        for elem, movements in stru.movement_constraints.items():
+            for i, (mx, my, mz) in enumerate(movements):
+                details["movement_constraints"]["count"] += 1
+
+                # Check values are 0 or 1
+                if not all(m in [0, 1] for m in [mx, my, mz]):
+                    issue = f"Element: {elem}, Atom: {i+1} - Invalid movement values: {mx} {my} {mz}"
+                    details["issues"].append(issue)
+                    result.add_error(
+                        f"ERROR: [ATOMIC_POSITIONS] Invalid movement constraint values\n"
+                        f"  Element: {elem}, Atom: {i+1}\n"
+                        f"  Values: {mx} {my} {mz}\n"
+                        f"  Expected: Each value must be 0 (frozen) or 1 (movable)\n"
+                        f"  Fix: Use 0 to freeze or 1 to allow movement in each direction"
+                    )
+
+    # Check for old-style movement format
+    if hasattr(stru, 'has_old_style_movement') and stru.has_old_style_movement:
+        details["movement_constraints"]["old_format_count"] = details["movement_constraints"]["count"]
+        result.add_warning(
+            f"WARNING: [ATOMIC_POSITIONS] Deprecated movement constraint format\n"
+            f"  Format: Numeric values after coordinates (e.g., '0 0 1')\n"
+            f"  Suggestion: Use new keyword format: 'm 0 0 1'\n"
+            f"  Note: Old format still works but may be removed in future versions"
+        )
+    else:
+        details["movement_constraints"]["new_format_count"] = details["movement_constraints"]["count"]
+
+    # Validate velocities
+    if hasattr(stru, 'velocities'):
+        for elem, velocities in stru.velocities.items():
+            for i, (vx, vy, vz) in enumerate(velocities):
+                details["velocities"]["count"] += 1
+
+                # Check all values are numeric (already validated during parsing)
+                # Just count them here
+
+    # Validate magnetic moments
+    if hasattr(stru, 'mag_scalar'):
+        for elem, mags in stru.mag_scalar.items():
+            details["magnetic_moments"]["scalar_count"] += len(mags)
+
+    if hasattr(stru, 'mag_vector'):
+        for elem, mags in stru.mag_vector.items():
+            details["magnetic_moments"]["vector_count"] += len(mags)
+
+    # Check for angle specifications
+    if hasattr(stru, 'angles'):
+        for elem, angles in stru.angles.items():
+            for i, (angle1, angle2) in enumerate(angles):
+                details["magnetic_moments"]["angle_count"] += 1
+
+                # Validate angle ranges
+                if angle1 is not None:
+                    if angle1 < REASONABLE_ANGLE_MIN or angle1 > REASONABLE_ANGLE_MAX:
+                        result.add_warning(
+                            f"WARNING: [ATOMIC_POSITIONS] Angle outside reasonable range\n"
+                            f"  Element: {elem}, Atom: {i+1}\n"
+                            f"  angle1: {angle1} degrees\n"
+                            f"  Reasonable range: [{REASONABLE_ANGLE_MIN}, {REASONABLE_ANGLE_MAX}]\n"
+                            f"  Suggestion: Verify this is the intended value"
+                        )
+
+                if angle2 is not None:
+                    if angle2 < REASONABLE_ANGLE_MIN or angle2 > REASONABLE_ANGLE_MAX:
+                        result.add_warning(
+                            f"WARNING: [ATOMIC_POSITIONS] Angle outside reasonable range\n"
+                            f"  Element: {elem}, Atom: {i+1}\n"
+                            f"  angle2: {angle2} degrees\n"
+                            f"  Reasonable range: [{REASONABLE_ANGLE_MIN}, {REASONABLE_ANGLE_MAX}]\n"
+                            f"  Suggestion: Verify this is the intended value"
+                        )
+
+                # Check for conflict: vector mag and angles cannot both be specified
+                # This is checked per-atom, so we need to track which atoms have both
+                if hasattr(stru, 'mag_vector') and elem in stru.mag_vector:
+                    if i < len(stru.mag_vector[elem]):
+                        conflict = f"{elem}:{i+1}"
+                        details["magnetic_moments"]["conflicts"].append(conflict)
+                        result.add_error(
+                            f"ERROR: [ATOMIC_POSITIONS] Conflicting magnetic moment specifications\n"
+                            f"  Element: {elem}, Atom: {i+1}\n"
+                            f"  Found: Vector magnetic moment AND angles\n"
+                            f"  Fix: Use either vector magnetic moment (mag x y z) OR angles (angle1/angle2), not both"
+                        )
+
+    # Validate lambda parameters
+    if hasattr(stru, 'lambda_params'):
+        for elem, lambdas in stru.lambda_params.items():
+            for lam in lambdas:
+                if isinstance(lam, tuple):
+                    details["lambda_parameters"]["vector_count"] += 1
+                else:
+                    details["lambda_parameters"]["scalar_count"] += 1
+
+    # Validate spin constraints
+    if hasattr(stru, 'spin_constraints'):
+        for elem, scs in stru.spin_constraints.items():
+            for sc in scs:
+                if isinstance(sc, tuple):
+                    details["spin_constraints"]["vector_count"] += 1
+                else:
+                    details["spin_constraints"]["scalar_count"] += 1
+
+    # Calculate total atoms with attributes
+    details["total_atoms_with_attributes"] = max(
+        details["movement_constraints"]["count"],
+        details["velocities"]["count"],
+        details["magnetic_moments"]["scalar_count"] + details["magnetic_moments"]["vector_count"],
+        details["lambda_parameters"]["scalar_count"] + details["lambda_parameters"]["vector_count"],
+        details["spin_constraints"]["scalar_count"] + details["spin_constraints"]["vector_count"]
+    )
+
+    # Add to result details
+    if "atomic_positions" in result.details:
+        result.details["atomic_positions"]["attributes"] = details
 
 
 def _validate_consistency(stru: AbacusStru, result: ValidationResult):

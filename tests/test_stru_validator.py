@@ -1316,3 +1316,544 @@ Ga
         assert result["valid"] is True
         assert not any("empty atom" in s.lower() for s in result["suggestions"])
         assert len(result["details"]["atomic_species"]["empty_elements"]) == 0
+
+
+# ============================================================================
+# Atom Attribute Validation Tests
+# ============================================================================
+
+class TestAtomAttributeParsing:
+    """Test parsing of optional atom attributes."""
+
+    def test_movement_new_format(self, temp_stru):
+        """Test new-style movement constraints (m 0 0 1)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+2
+0.0 0.0 0.0 m 1 1 0
+5.0 5.0 5.0 m 1 1 1
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["movement_constraints"]["count"] == 2
+        assert attrs["movement_constraints"]["new_format_count"] == 2
+        assert attrs["movement_constraints"]["old_format_count"] == 0
+
+    def test_movement_old_format(self, temp_stru):
+        """Test old-style movement constraints (0 0 1)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+2
+0.0 0.0 0.0 0 0 1
+5.0 5.0 5.0 1 1 1
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["movement_constraints"]["count"] == 2
+        assert attrs["movement_constraints"]["old_format_count"] == 2
+        # Should have deprecation warning
+        assert any("deprecated" in w.lower() for w in result["warnings"])
+
+    def test_velocity(self, temp_stru):
+        """Test velocity attributes (v 1.0 2.0 3.0)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 v 1.0 2.0 3.0
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["velocities"]["count"] == 1
+
+    def test_mag_scalar(self, temp_stru):
+        """Test scalar magnetic moment (mag 2.0)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 mag 2.0
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["magnetic_moments"]["scalar_count"] == 1
+        assert attrs["magnetic_moments"]["vector_count"] == 0
+
+    def test_mag_vector(self, temp_stru):
+        """Test vector magnetic moment (mag 1.0 2.0 3.0)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 mag 1.0 2.0 3.0
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["magnetic_moments"]["scalar_count"] == 0
+        assert attrs["magnetic_moments"]["vector_count"] == 1
+
+    def test_angles(self, temp_stru):
+        """Test angle attributes (angle1 45.0 angle2 90.0)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 angle1 45.0 angle2 90.0
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["magnetic_moments"]["angle_count"] == 1
+
+    def test_lambda_scalar(self, temp_stru):
+        """Test scalar lambda (lambda 0.5)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 lambda 0.5
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["lambda_parameters"]["scalar_count"] == 1
+        assert attrs["lambda_parameters"]["vector_count"] == 0
+
+    def test_lambda_vector(self, temp_stru):
+        """Test vector lambda (lambda 0.1 0.2 0.3)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 lambda 0.1 0.2 0.3
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["lambda_parameters"]["scalar_count"] == 0
+        assert attrs["lambda_parameters"]["vector_count"] == 1
+
+    def test_sc_scalar(self, temp_stru):
+        """Test scalar spin constraint (sc 1.0)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 sc 1.0
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["spin_constraints"]["scalar_count"] == 1
+        assert attrs["spin_constraints"]["vector_count"] == 0
+
+    def test_sc_vector(self, temp_stru):
+        """Test vector spin constraint (sc 0.1 0.2 0.3)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 sc 0.1 0.2 0.3
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["spin_constraints"]["scalar_count"] == 0
+        assert attrs["spin_constraints"]["vector_count"] == 1
+
+    def test_mixed_attributes(self, temp_stru):
+        """Test multiple attributes on same line."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 m 1 1 0 v 0.1 0.2 0.3 mag 1.5
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["movement_constraints"]["count"] == 1
+        assert attrs["velocities"]["count"] == 1
+        assert attrs["magnetic_moments"]["scalar_count"] == 1
+
+    def test_attributes_with_comments(self, temp_stru):
+        """Test attributes with trailing comments."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 m 1 1 0 mag 2.0  # frozen in xy, mag moment 2.0
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert "attributes" in result["details"]["atomic_positions"]
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert attrs["movement_constraints"]["count"] == 1
+        assert attrs["magnetic_moments"]["scalar_count"] == 1
+
+
+class TestAtomAttributeValidation:
+    """Test validation of attribute values."""
+
+    def test_invalid_movement_values(self, temp_stru):
+        """Test invalid movement constraint values (not 0 or 1)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 m 1 2 0
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is False
+        assert any("invalid movement" in e.lower() for e in result["errors"])
+
+    def test_angle_outside_range(self, temp_stru):
+        """Test angle outside reasonable range (warning)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 angle1 500.0
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True  # Warning, not error
+        assert any("angle" in w.lower() and "range" in w.lower() for w in result["warnings"])
+
+    def test_conflicting_mag_specifications(self, temp_stru):
+        """Test conflicting magnetic specifications (vector mag + angles)."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 mag 1.0 2.0 3.0 angle1 45.0
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is False
+        assert any("conflict" in e.lower() for e in result["errors"])
+        attrs = result["details"]["atomic_positions"]["attributes"]
+        assert len(attrs["magnetic_moments"]["conflicts"]) > 0
+
+
+class TestDeprecatedFormats:
+    """Test handling of deprecated formats."""
+
+    def test_old_style_movement_warning(self, temp_stru):
+        """Test warning for old-style movement format."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 0 0 1
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert any("deprecated" in w.lower() for w in result["warnings"])
+        assert any("m 0 0 1" in w for w in result["warnings"])
+
+    def test_new_style_no_warning(self, temp_stru):
+        """Test no warning for new-style movement format."""
+        content = """ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.0
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+H
+0.0
+1
+0.0 0.0 0.0 m 0 0 1
+"""
+        stru_file = temp_stru(content)
+        result = validate_stru(str(stru_file), check_file_existence=False)
+
+        assert result["valid"] is True
+        assert not any("deprecated" in w.lower() for w in result["warnings"])
+
+
+class TestRealStruFiles:
+    """Test with existing STRU files."""
+
+    def test_nio_fixatom_attributes(self, valid_stru_nio):
+        """Test STRU_NiO_fixatom has attributes correctly parsed."""
+        if not valid_stru_nio.exists():
+            pytest.skip("NiO STRU test file not found")
+
+        result = validate_stru(str(valid_stru_nio), check_file_existence=False)
+
+        assert result["valid"] is True
+        # File should have old-style movement and mag attributes
+        if "attributes" in result["details"]["atomic_positions"]:
+            attrs = result["details"]["atomic_positions"]["attributes"]
+            # Should have movement constraints
+            assert attrs["movement_constraints"]["count"] > 0
+            # Should have magnetic moments
+            assert (attrs["magnetic_moments"]["scalar_count"] +
+                   attrs["magnetic_moments"]["vector_count"]) > 0
+            # Should have deprecation warning for old-style format
+            assert any("deprecated" in w.lower() for w in result["warnings"])
