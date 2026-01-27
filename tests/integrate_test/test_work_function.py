@@ -41,11 +41,12 @@ class TestAbacusWorkFunction(unittest.TestCase):
         shutil.copy2(self.stru_al110, test_work_dir / 'STRU')
         shutil.copy2(self.input_al110, test_work_dir / 'INPUT')
 
-        outputs = abacus_cal_work_function(test_work_dir, vacuum_direction='y')
+        outputs = abacus_cal_work_function(test_work_dir, vacuum_direction='b')
 
         print(outputs)
 
         self.assertIsInstance(outputs['averaged_elecstat_pot_plot'], get_path_type())
+        self.assertIsInstance(outputs['averaged_elecstat_pot_dat_file'], get_path_type())
         self.assertEqual(len(outputs['work_function_results']), len(ref_results['work_function_results']))
         for i in range(len(outputs['work_function_results'])):
             self.assertAlmostEqual(outputs['work_function_results'][i]['work_function'], ref_results['work_function_results'][i]['work_function'], places=2)
@@ -62,11 +63,12 @@ class TestAbacusWorkFunction(unittest.TestCase):
         shutil.copy2(self.stru_zno0001, test_work_dir / "STRU")
         shutil.copy2(self.input_zno0001, test_work_dir / 'INPUT')
 
-        outputs = abacus_cal_work_function(test_work_dir, vacuum_direction='z', dipole_correction=True)
+        outputs = abacus_cal_work_function(test_work_dir, vacuum_direction='c', dipole_correction=True)
 
         print(outputs)
 
         self.assertIsInstance(outputs['averaged_elecstat_pot_plot'], get_path_type())
+        self.assertIsInstance(outputs['averaged_elecstat_pot_dat_file'], get_path_type())
         self.assertEqual(len(outputs['work_function_results']), len(ref_results['work_function_results']))
         for i in range(len(outputs['work_function_results'])):
             self.assertAlmostEqual(outputs['work_function_results'][i]['work_function'], ref_results['work_function_results'][i]['work_function'], places=2)
