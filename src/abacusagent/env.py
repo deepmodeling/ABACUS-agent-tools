@@ -3,14 +3,14 @@ import json
 import time
 
 ENVS = {
-    "ABACUSAGENT_WORK_PATH": "/tmp/abacusagent",
+    "ABACUSAGENT_WORK_PATH": ".",
     "ABACUSAGENT_SUBMIT_TYPE": "local",  # local, bohrium
 
     # connection settings
-    "ABACUSAGENT_TRANSPORT": "sse",  # sse, streamable-http
+    "ABACUSAGENT_TRANSPORT": "stdio",  # sse, streamable-http
     "ABACUSAGENT_HOST": "localhost",
     "ABACUSAGENT_PORT": "50001", 
-    "ABACUSAGENT_MODEL": "dp",  # fastmcp, abacus, dp
+    "ABACUSAGENT_MODEL": "fastmcp",  # fastmcp, abacus, dp
     
     # LLM settings
     "LLM_MODEL": "",
@@ -21,7 +21,7 @@ ENVS = {
     "BOHRIUM_USERNAME": "",
     "BOHRIUM_PASSWORD": "",
     "BOHRIUM_PROJECT_ID": "",
-    "BOHRIUM_ABACUS_IMAGE": "registry.dp.tech/dptech/abacus-stable:LTSv3.10", # THE bohrium image for abacus calculations, 
+    "BOHRIUM_ABACUS_IMAGE": "registry.dp.tech/dptech/abacus:LTSv3.10.1", # THE bohrium image for abacus calculations, 
     "BOHRIUM_ABACUS_MACHINE": "c32_m64_cpu",  # THE bohrium machine for abacus calculations, c32_m64_cpu
     "BOHRIUM_ABACUS_COMMAND": "OMP_NUM_THREADS=1 mpirun -np 16 abacus",
     

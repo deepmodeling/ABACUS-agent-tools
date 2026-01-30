@@ -20,7 +20,7 @@ description = "ABACUS agent tools for connecting LLMs to first-principles calcul
 requires-python = ">=3.11"
 
 dependencies = [
-       "abacustest>=0.4.55",
+       "abacustest>=0.4.56",
        "numpy<2.0",
        "pymatgen>=2025.5.28",
        "bohr-agent-sdk==0.1.121",
