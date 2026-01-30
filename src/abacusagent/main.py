@@ -34,7 +34,7 @@ def parse_args():
         "--transport",
         type=str,
         default=None,
-        choices=["sse", "streamable-http"],
+        choices=["sse", "streamable-http", "stdio"],
         help="Transport protocol to use (default: sse), choices: sse, streamable-http"
     )
     parser.add_argument(
@@ -90,6 +90,8 @@ def print_address():
         print("Address:", address + "/sse")
     elif os.environ["ABACUSAGENT_TRANSPORT"] == "streamable-http":
         print("Address:", address + "/mcp")
+    elif os.environ["ABACUSAGENT_TRANSPORT"] == "stdio":
+        pass
     else:
         raise ValueError("Invalid transport protocol specified. Use 'sse' or 'streamable-http'.")
 
@@ -130,7 +132,8 @@ def main():
         load_tools(args.screen_modules)  
 
     print_address()
+    print("Starting MCP server...")
     mcp.run(transport=os.environ["ABACUSAGENT_TRANSPORT"])
-
+    
 if __name__ == "__main__":
     main()

@@ -38,7 +38,7 @@ ENVS = {
     "_comments":{
         "ABACUS_WORK_PATH": "The working directory for AbacusAgent, where all temporary files will be stored.",
         "ABACUS_SUBMIT_TYPE": "The type of submission for ABACUS, can be local or bohrium.",
-        "ABACUSAGENT_TRANSPORT": "The transport protocol for AbacusAgent, can be 'sse' or 'streamable-http'.",
+        "ABACUSAGENT_TRANSPORT": "The transport protocol for AbacusAgent, can be 'stdio', 'sse' or 'streamable-http'.",
         "ABACUSAGENT_HOST": "The host address for the AbacusAgent server.",
         "ABACUSAGENT_PORT": "The port number for the AbacusAgent server.",
         "ABACUSAGENT_MODEL": "The model to use for AbacusAgent, can be 'fastmcp', 'test', or 'dp'.",
