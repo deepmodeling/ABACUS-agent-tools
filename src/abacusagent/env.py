@@ -133,9 +133,11 @@ def create_workpath(work_path=None):
     os.chdir(work_path)
     print(f"Changed working directory to: {work_path}")
     # write the environment variables to a file
-    json.dump({
+    current_env = {
         k: os.environ.get(k) for k in ENVS.keys()
-    }.update({"ABACUSAGENT_START_PATH": cwd}), 
+    }
+    current_env["ABACUSAGENT_START_PATH"] = cwd
+    json.dump(current_env, 
         open("env.json", "w"), indent=4)
     
     return work_path    
