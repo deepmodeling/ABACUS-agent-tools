@@ -124,7 +124,7 @@ def run_abacus(job_paths: Union[str, List[str], Path, List[Path]],
     
     if submit_type == "local":
         physical_cores = get_physical_cores()
-        command_cmd = os.environ.get("ABACUS_COMMAND", f"OMP_NUM_THREADS=1 mpirun -np {physical_cores} abacus") + f" > {log_file} 2>&1"     
+        command_cmd = os.environ.get("ABACUS_COMMAND", f"OMP_NUM_THREADS=1 mpirun -np {physical_cores} abacus") + f" 2>&1 | tee {log_file}"     
 
         for job_path in job_paths:
             if not job_path.is_dir():
