@@ -56,7 +56,8 @@ def build_slab(stru_file: Path,
         pass
 
     h, k, l = miller_indices
-    surface_stru_file = Path(f"./{stru_file.stem}_{h}{k}{l}_{layers}layer.STRU").absolute()
+    suffix = 'STRU' if stru_type == 'abacus/stru' else stru_type
+    surface_stru_file = Path(f"./{stru_file.stem}_{h}{k}{l}_{layers}layer.{suffix}").absolute()
     stru_surface_abacusstru.write(surface_stru_file, fmt=stru_type)
 
     return {'surface_stru_file': surface_stru_file}
