@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Literal, Optional, Dict, Any, List
 
@@ -38,7 +39,7 @@ def abacus_cal_work_function(
         
         work_path = Path(generate_work_path()).absolute()
         link_abacusjob(src=abacus_inputs_dir,dst=work_path,copy_files=["INPUT", "STRU"], exclude_directories=True)
-        workfunc_work_dir = prep_abacus_workfunc_calc(work_path, vacuum_direction, dipole_correction)
+        workfunc_work_dir = prep_abacus_workfunc_calc(work_path, vacuum_direction, dipole_correction, os.path.join(work_path, "workfunc_job"))
         
         run_abacus(workfunc_work_dir)
 
