@@ -5,15 +5,14 @@ Functions about cube files. Currently including:
 """
 import os
 from pathlib import Path
-from typing import Literal, Optional, TypedDict, Dict, Any, List, Tuple, Union
-from itertools import groupby
+from typing import Optional, Dict, Any, List
 
-from ase.data import chemical_symbols
-from abacustest.lib_prepare.abacus import AbacusStru, ReadInput, WriteInput
+from abacustest import AbacusSTRU
+from abacustest.lib_prepare.abacus import ReadInput, WriteInput
 from abacustest.lib_model.comm import check_abacus_inputs
 
-from abacusagent.modules.util.comm import run_abacus, generate_work_path, link_abacusjob, collect_metrics
-from abacusagent.modules.util.cube_manipulator import read_gaussian_cube, axpy, write_gaussian_cube, profile1d
+from abacusagent.modules.util.comm import run_abacus, generate_work_path, link_abacusjob
+from abacusagent.modules.util.cube_manipulator import read_gaussian_cube, axpy, write_gaussian_cube
 
 def abacus_cal_elf(abacus_inputs_dir: Path):
     """
@@ -60,37 +59,6 @@ def abacus_cal_elf(abacus_inputs_dir: Path):
         }
     except Exception as e:
         return {'message': f"Calculating electron localization function failed: {e}"}
-
-def get_subsys_pp_orb(stru: AbacusStru,
-                      subsys_atom_index: List[int]
-                      ) -> Tuple[str, str]:
-    """
-    Get the pseudopotential and orbital files for a subsystem.
-    
-    Args:
-        stru (AbacusStru): The structure of the full system.
-        subsys_atom_index (List[int]): Atom indices of the subsystem.
-    
-    Returns:
-        Tuple[str, str, str]: Paths to the pseudopotential and orbital files, and labels of different kinds for the subsystem.
-    """
-    pp_list, orb_list = stru.get_pp(), stru.get_orb()
-    element_indices = [key for key, _ in groupby(stru.get_element())]
-    elements = [chemical_symbols[i] for i in element_indices]
-    pp_dict, orb_dict = dict(zip(elements, pp_list)), dict(zip(elements, orb_list))
-
-    subsys_elements = [chemical_symbols[stru.get_element()[i]] for i in subsys_atom_index]
-    subsys_pp, subsys_orb = [], []
-    for element in subsys_elements:
-        if pp_dict[element] not in subsys_pp:
-            subsys_pp.append(pp_dict[element])
-        if orb_dict[element] not in subsys_orb:
-            subsys_orb.append(orb_dict[element])
-    
-    label_list = stru.get_label()
-    subsys_label = [label_list[idx] for idx in subsys_atom_index]
-
-    return subsys_pp, subsys_orb, subsys_label
 
 def get_total_charge_density(abacus_inputs_dir: Path):
     """
@@ -150,10 +118,10 @@ def abacus_cal_charge_density_difference(
 
         input_params = ReadInput(os.path.join(full_system_jobpath, "INPUT"))
         full_system_stru_file = os.path.join(full_system_jobpath, input_params.get('stru_file', 'STRU'))
-        full_system_stru = AbacusStru.ReadStru(full_system_stru_file)
+        full_system_stru = AbacusSTRU.read(full_system_stru_file)
 
         # Prepare labels, coordinates, pp and orbital settings needed to generate STRU file for every subsystems
-        subsys2_atom_index = [i for i in range(full_system_stru.get_natoms()) if i not in subsys1_atom_index]
+        subsys2_atom_index = [i for i in range(full_system_stru.natoms) if i not in subsys1_atom_index]
         if len(subsys1_atom_index) is None:
             raise ValueError("Subsystem 1 have no atoms! Aborting calculating charge density difference")
         if len(subsys2_atom_index) is None:
@@ -161,35 +129,9 @@ def abacus_cal_charge_density_difference(
 
         subsys1_stru_file = os.path.join(work_path, f"subsys1/{input_params.get('stru_file', 'STRU')}")
         subsys2_stru_file = os.path.join(work_path, f"subsys2/{input_params.get('stru_file', 'STRU')}")
-        subsys1_pp, subsys1_orb, subsys1_label = get_subsys_pp_orb(full_system_stru, subsys1_atom_index)
-        subsys2_pp, subsys2_orb, subsys2_label = get_subsys_pp_orb(full_system_stru, subsys2_atom_index)
-
-        subsys1_coord, subsys2_coord = [], []
-        full_system_stru_coord = full_system_stru.get_coord()
-        for i in range(full_system_stru.get_natoms()):
-            if i in subsys1_atom_index:
-                subsys1_coord.append(full_system_stru_coord[i])
-            elif i in subsys2_atom_index:
-                subsys2_coord.append(full_system_stru_coord[i])
-            else:
-                raise ValueError(f"Atom {i} does not belong to neither subsystem1 nor subsystem2")
-
-        subsys1_stru = AbacusStru(label=subsys1_label,
-                                  cell=full_system_stru.get_cell(),
-                                  coord=subsys1_coord,
-                                  lattice_constant=full_system_stru.get_stru()['lat'],
-                                  pp=subsys1_pp,
-                                  orb=subsys1_orb,
-                                  cartesian=True)
+        subsys1_stru = full_system_stru.create_subset(subsys1_atom_index)
+        subsys2_stru = full_system_stru.create_subset(subsys2_atom_index)
         subsys1_stru.write(subsys1_stru_file)
-
-        subsys2_stru = AbacusStru(label=subsys2_label,
-                                  cell=full_system_stru.get_cell(),
-                                  coord=subsys2_coord,
-                                  lattice_constant=full_system_stru.get_stru()['lat'],
-                                  pp=subsys2_pp,
-                                  orb=subsys2_orb,
-                                  cartesian=True)
         subsys2_stru.write(subsys2_stru_file)
 
         # Modify INPUT file to output cube file needed for calculating charge density difference
@@ -219,6 +161,8 @@ def abacus_cal_charge_density_difference(
         return {'charge_density_diff_work_path': Path(work_path).absolute(),
                 'charge_density_difference_cube_file': chg_dens_diff_cube_file}
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return {'message': f'Calculaing charge density difference failed: {e}'}
 
 def abacus_cal_spin_density(
