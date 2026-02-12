@@ -10,6 +10,7 @@ from abacusagent.init_mcp import mcp
 from abacusagent.modules.submodules.cube import abacus_cal_elf as _abacus_cal_elf
 from abacusagent.modules.submodules.cube import abacus_cal_charge_density_difference as _abacus_cal_charge_density_difference
 from abacusagent.modules.submodules.cube import abacus_cal_spin_density as _abacus_cal_spin_density
+
 @mcp.tool()
 def abacus_cal_elf(abacus_inputs_dir: Path):
     """
