@@ -12,6 +12,9 @@ from abacustest.lib_model.comm import check_abacus_inputs
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import generate_work_path, run_abacus, collect_metrics
+import tempfile
+from pymatgen.ext.matproj import MPRester
+from pymatgen.core import Structure
 
 def abacus_prepare(
     stru_file: Path,
@@ -573,44 +576,109 @@ def read_abacus_input_kpt(
     except Exception as e:
         return {'message': f"Read ABACUS INPUT file failed: {e}"}
 
-def read_abacus_stru(abacus_input_dir: Path):
+@mcp.tool()
+def materials_project_download(
+    material_id: str,
+    destination_path: Optional[str] = None,
+    format: Literal["cif", "poscar", "stru"] = "cif"
+) -> Dict[str, Any]:
     """
-    Read ABACUS STRU file.
+    Download structure from Materials Project database by material ID.
+    
     Args:
-        abacus_input_dir (str): Path to the directory containing the ABACUS input files.
+        material_id (str): The Materials Project material ID (e.g., 'mp-12345')
+        destination_path (str, optional): The path to save the downloaded structure file. 
+                                          If not provided, a temporary file will be created.
+        format (Literal["cif", "poscar", "stru"] = "cif"): The format to save the structure file.
+                                                          Can be 'cif', 'poscar', or 'stru'.
+    
     Returns:
-        A dictionary containing information from the STRU file. Containing the following keys:
-            cell: the cell of the structure
-            atom_kinds: a dict, keys are atom labels, values are dicts containing the following keys:
-                pp: the pseudopotential file name
-                orb: the orbital file name
-                element: the element name
-                number: the number of atoms with this label
-                atommag: the magnetic moment of each atom with this label
-            coord: the coordinates of each atom
-            move: the movable flags of each atom
-    Raises:
-        FileNotFoundError: If path of given STRU file does not exist
+        A dictionary containing:
+        - 'structure_file': Path to the downloaded structure file.
+        - 'material_id': The material ID used for download.
+        - 'format': The format of the downloaded structure.
     """
     try:
-        input_params = ReadInput(os.path.join(abacus_input_dir, "INPUT"))
-        stru_file = os.path.join(abacus_input_dir, input_params.get('stru_file', "STRU"))
-        if not os.path.isfile(stru_file):
-            raise FileNotFoundError(f"STRU file {stru_file} does not exist.")
-
-        stru = AbacusStru.ReadStru(stru_file)
-        atom_kinds = {}
-        for idx, label in enumerate(stru.get_label(total=False)):
-            atom_kinds[label] = {
-                'pp': stru.get_pp()[idx],
-                'orb': stru.get_orb()[idx] if stru.get_orb() is not None else None,
-                'element': stru.get_element(number=False,total=False)[idx],
-                'number': stru.get_label().count(label),
-                'atommag': stru.get_atommag()[idx],
-            }
-        return {'cell': stru.get_cell(),
-                'atom_kinds': atom_kinds,
-                'coord': stru.get_coord(),
-                'move': stru.get_move()}
+        # Get the Materials Project API key from environment variables
+        api_key = os.environ.get("MP_API_KEY")
+        if not api_key:
+            raise ValueError("Materials Project API key not found. Please set MP_API_KEY environment variable.")
+            
+        # Connect to Materials Project database
+        with MPRester(api_key) as mpr:
+            # Retrieve the structure
+            structure = mpr.get_structure_by_material_id(material_id)
+            
+        # Determine destination path
+        if destination_path is None:
+            # Create a temporary file
+            temp_file = tempfile.NamedTemporaryFile(suffix=f".{format}", delete=False)
+            destination_path = temp_file.name
+            temp_file.close()
+        
+        # Save structure in specified format
+        if format == "cif":
+            structure.to(filename=destination_path, fmt="cif")
+        elif format == "poscar":
+            structure.to(filename=destination_path, fmt="poscar")
+        elif format == "stru":
+            # For stru format, we need to convert to ABACUS format
+            stru_content = _structure_to_abacus_stru(structure)
+            with open(destination_path, 'w') as f:
+                f.write(stru_content)
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+        
+        return {
+            "structure_file": destination_path,
+            "material_id": material_id,
+            "format": format
+        }
+        
     except Exception as e:
-        return {'message': f"Read ABACUS STRU file failed: {e}"}
+        return {"message": f"Failed to download structure from Materials Project: {e}"}
+
+def _structure_to_abacus_stru(structure: Structure) -> str:
+    """
+    Convert a pymatgen Structure to ABACUS STRU format.
+    
+    Args:
+        structure (Structure): The pymatgen Structure object
+        
+    Returns:
+        str: The ABACUS STRU formatted string
+    """
+    # Start building the STRU content
+    stru_lines = []
+    
+    # Title
+    stru_lines.append("ATOMIC_STRUCTURE")
+    
+    # Cell parameters
+    lattice = structure.lattice
+    stru_lines.append(f"{lattice.a:.10f} {lattice.b:.10f} {lattice.c:.10f}")
+    
+    # Lattice vectors (in fractional coordinates)
+    stru_lines.append("0.0 0.0 0.0")
+    stru_lines.append("0.0 0.0 0.0")
+    stru_lines.append("0.0 0.0 0.0")
+    
+    # Atom kinds and coordinates
+    # Group atoms by element
+    element_counts = {}
+    for site in structure:
+        element = site.specie.symbol
+        element_counts[element] = element_counts.get(element, 0) + 1
+    
+    # Write atom kinds
+    for element, count in element_counts.items():
+        stru_lines.append(f"{element} {count}")
+    
+    # Write coordinates in cartesian format
+    stru_lines.append("CART")
+    for site in structure:
+        element = site.specie.symbol
+        coord = site.coords
+        stru_lines.append(f"{element} {coord[0]:.10f} {coord[1]:.10f} {coord[2]:.10f} 1 1 1")
+    
+    return "\n".join(stru_lines)
