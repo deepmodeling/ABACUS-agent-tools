@@ -6,16 +6,127 @@ from abacusagent.modules.submodules.structure_generator import generate_bulk_str
 from abacusagent.modules.submodules.structure_generator import generate_molecule_structure as _generate_molecule_structure
 from abacusagent.modules.submodules.structure_generator import generate_bulk_structure_from_wyckoff_position as _generate_bulk_structure_from_wyckoff_position
 from abacusagent.modules.submodules.structure_generator import get_ieee_standard_structure as _get_ieee_standard_structure
+import tempfile
+import os
+from pymatgen.ext.matproj import MPRester
+from pymatgen.core import Structure
+
+@mcp.tool()
+def materials_project_download(
+    material_id: str,
+    destination_path: Optional[str] = None,
+    format: Literal["cif", "poscar", "stru"] = "cif"
+) -> Dict[str, Any]:
+    """
+    Download structure from Materials Project database by material ID.
+    
+    Args:
+        material_id (str): The Materials Project material ID (e.g., 'mp-12345')
+        destination_path (str, optional): The path to save the downloaded structure file. 
+                                          If not provided, a temporary file will be created.
+        format (Literal["cif", "poscar", "stru"] = "cif"): The format to save the structure file.
+                                                          Can be 'cif', 'poscar', or 'stru'.
+    
+    Returns:
+        A dictionary containing:
+        - 'structure_file': Path to the downloaded structure file.
+        - 'material_id': The material ID used for download.
+        - 'format': The format of the downloaded structure.
+    """
+    try:
+        # Get the Materials Project API key from environment variables
+        api_key = os.environ.get("MP_API_KEY")
+        if not api_key:
+            raise ValueError("Materials Project API key not found. Please set MP_API_KEY environment variable.")
+            
+        # Connect to Materials Project database
+        with MPRester(api_key) as mpr:
+            # Retrieve the structure
+            structure = mpr.get_structure_by_material_id(material_id)
+            
+        # Determine destination path
+        if destination_path is None:
+            # Create a temporary file
+            temp_file = tempfile.NamedTemporaryFile(suffix=f".{format}", delete=False)
+            destination_path = temp_file.name
+            temp_file.close()
+        
+        # Save structure in specified format
+        if format == "cif":
+            structure.to(filename=destination_path, fmt="cif")
+        elif format == "poscar":
+            structure.to(filename=destination_path, fmt="poscar")
+        elif format == "stru":
+            # For stru format, we need to convert to ABACUS format
+            stru_content = _structure_to_abacus_stru(structure)
+            with open(destination_path, 'w') as f:
+                f.write(stru_content)
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+        
+        return {
+            "structure_file": destination_path,
+            "material_id": material_id,
+            "format": format
+        }
+        
+    except Exception as e:
+        return {"message": f"Failed to download structure from Materials Project: {e}"}
+
+def _structure_to_abacus_stru(structure: Structure) -> str:
+    """
+    Convert a pymatgen Structure to ABACUS STRU format.
+    
+    Args:
+        structure (Structure): The pymatgen Structure object
+        
+    Returns:
+        str: The ABACUS STRU formatted string
+    """
+    # Start building the STRU content
+    stru_lines = []
+    
+    # Title
+    stru_lines.append("ATOMIC_STRUCTURE")
+    
+    # Cell parameters
+    lattice = structure.lattice
+    stru_lines.append(f"{lattice.a:.10f} {lattice.b:.10f} {lattice.c:.10f}")
+    
+    # Lattice vectors (in fractional coordinates)
+    stru_lines.append("0.0 0.0 0.0")
+    stru_lines.append("0.0 0.0 0.0")
+    stru_lines.append("0.0 0.0 0.0")
+    
+    # Atom kinds and coordinates
+    # Group atoms by element
+    element_counts = {}
+    for site in structure:
+        element = site.specie.symbol
+        element_counts[element] = element_counts.get(element, 0) + 1
+    
+    # Write atom kinds
+    for element, count in element_counts.items():
+        stru_lines.append(f"{element} {count}")
+    
+    # Write coordinates in cartesian format
+    stru_lines.append("CART")
+    for site in structure:
+        element = site.specie.symbol
+        coord = site.coords
+        stru_lines.append(f"{element} {coord[0]:.10f} {coord[1]:.10f} {coord[2]:.10f} 1 1 1")
+    
+    return "\n".join(stru_lines)
 
 @mcp.tool()
 def generate_bulk_structure(element: str, 
-                           crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
-                           a:float =None, 
-                           c: float =None,
-                           cubic: bool =False,
-                           orthorhombic: bool =False,
-                           file_format: Literal["cif", "poscar"] = "cif",
-                           ) -> Dict[str, Any]:
+                            crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
+                            a:float =None, 
+                            c: float =None,
+                            cubic: bool =False,
+                            orthorhombic: bool =False,
+                            file_format: Literal["cif", "poscar"] = "cif",
+                            ) -> Dict[str, Any]:
     """
     Generate a bulk crystal structure using ASE's `bulk` function.
     
