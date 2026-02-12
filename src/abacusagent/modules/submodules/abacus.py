@@ -12,6 +12,9 @@ from abacustest.lib_model.comm import check_abacus_inputs
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.util.comm import generate_work_path, run_abacus, collect_metrics
+import tempfile
+from pymatgen.ext.matproj import MPRester
+from pymatgen.core import Structure
 
 def abacus_prepare(
     stru_file: Path,
@@ -614,3 +617,4 @@ def read_abacus_stru(abacus_input_dir: Path):
                 'move': stru.get_move()}
     except Exception as e:
         return {'message': f"Read ABACUS STRU file failed: {e}"}
+

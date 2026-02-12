@@ -6,16 +6,18 @@ from abacusagent.modules.submodules.structure_generator import generate_bulk_str
 from abacusagent.modules.submodules.structure_generator import generate_molecule_structure as _generate_molecule_structure
 from abacusagent.modules.submodules.structure_generator import generate_bulk_structure_from_wyckoff_position as _generate_bulk_structure_from_wyckoff_position
 from abacusagent.modules.submodules.structure_generator import get_ieee_standard_structure as _get_ieee_standard_structure
+from abacusagent.modules.submodules.structure_generator import materials_project_download as _materials_project_download
+
 
 @mcp.tool()
 def generate_bulk_structure(element: str, 
-                           crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
-                           a:float =None, 
-                           c: float =None,
-                           cubic: bool =False,
-                           orthorhombic: bool =False,
-                           file_format: Literal["cif", "poscar"] = "cif",
-                           ) -> Dict[str, Any]:
+                            crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
+                            a:float =None, 
+                            c: float =None,
+                            cubic: bool =False,
+                            orthorhombic: bool =False,
+                            file_format: Literal["cif", "poscar"] = "cif",
+                            ) -> Dict[str, Any]:
     """
     Generate a bulk crystal structure using ASE's `bulk` function.
     
@@ -155,3 +157,23 @@ def get_ieee_standard_structure(
         - standard_stru_file: The absolute path to the rotated crystal structure file.
     """
     return _get_ieee_standard_structure(stru_file, stru_type)
+
+@mcp.tool()
+def materials_project_download(
+    material_id: str,
+    destination_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Download structure from Materials Project database by material ID.
+    
+    Args:
+        material_id (str): The Materials Project material ID (e.g., 'mp-12345')
+        destination_path (str, optional): The path to save the downloaded structure file. 
+                                          If not provided, a temporary file will be created.
+    
+    Returns:
+        A dictionary containing:
+        - 'structure_file': Path to the downloaded structure file.
+        - 'material_id': The material ID used for download.
+    """
+    return _materials_project_download(material_id, destination_path)

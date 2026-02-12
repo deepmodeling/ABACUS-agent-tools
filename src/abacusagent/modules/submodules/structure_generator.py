@@ -1,91 +1,71 @@
+import os
+from pathlib import Path
+from typing import Literal, Optional, Dict, Any, List, Tuple, Union
+
 from ase import Atoms
 from ase.io import read, write
 from ase.build import molecule
 from ase.data import chemical_symbols
 from ase.collections import g2
 from pymatgen.core import Structure, Lattice
-
-from pathlib import Path
-from typing import Literal, Optional, Dict, Any, List, Tuple, Union
+from pymatgen.ext.matproj import MPRester
 
 from abacusagent.modules.util.comm import generate_work_path 
 
 
-# From Introduction to Solid State Physics, 8th edition, by Charles Kittel
-ELEMENT_CRYSTAL_STRUCTURES = {
-    "Li": {"crystal": "bcc", "a": 3.51},
-    "Be": {"crystal": "hcp", "a": 2.27, "c": 3.59},
-    "Na": {"crystal": "bcc", "a": 4.23},
-    "Mg": {"crystal": "hcp", "a": 3.21, "c": 5.21},
-    "Al": {"crystal": "fcc", "a": 4.05},
-    "Si": {"crystal": "diamond", "a": 5.43},
-    "K": {"crystal": "bcc", "a": 5.23},
-    "Ca": {"crystal": "fcc", "a": 5.58},
-    "Sc": {"crystal": "hcp", "a": 3.31, "c": 5.27},
-    "Ti": {"crystal": "hcp", "a": 2.95, "c": 4.68},
-    "V": {"crystal": "bcc", "a": 3.03},
-    "Cr": {"crystal": "bcc", "a": 2.88},
-    "Mn": {"crystal": "bcc", "a": 2.91}, # To be checked
-    "Fe": {"crystal": "bcc", "a": 2.87},
-    "Co": {"crystal": "hcp", "a": 2.51, "c": 4.07},
-    "Ni": {"crystal": "fcc", "a": 3.52},
-    "Cu": {"crystal": "fcc", "a": 3.61},
-    "Zn": {"crystal": "hcp", "a": 2.66, "c": 4.95},
-    "Ga": {"crystal": "fcc", "a": 4.50}, # To be checked
-    "Ge": {"crystal": "diamond", "a": 5.69},
-    "Rb": {"crystal": "bcc", "a": 5.58},
-    "Sr": {"crystal": "fcc", "a": 6.08},
-    "Y": {"crystal": "hcp", "a": 3.65, "c": 5.73},
-    "Zr": {"crystal": "hcp", "a": 3.23, "c": 5.15},
-    "Nb": {"crystal": "bcc", "a": 3.30},
-    "Mo": {"crystal": "bcc", "a": 3.15},
-    "Tc": {"crystal": "hcp", "a": 2.74, "c": 4.44},
-    "Ru": {"crystal": "hcp", "a": 2.71, "c": 4.28},
-    "Rh": {"crystal": "fcc", "a": 3.80},
-    "Pd": {"crystal": "fcc", "a": 3.89},
-    "Ag": {"crystal": "fcc", "a": 4.09},
-    "Cd": {"crystal": "hcp", "a": 2.98, "c": 5.62},
-    "In": {"crystal": "bcc", "a": 3.25}, # To be checked
-    "Sn": {"crystal": "diamond", "a": 6.49},
-    "Cs": {"crystal": "bcc", "a": 6.05},
-    "Ba": {"crystal": "bcc", "a": 5.02},
-    "La": {"crystal": "hcp", "a": 3.75, "c": 5.75}, # To be checked
-    "Ce": {"crystal": "fcc", "a": 5.16}, 
-    "Pr": {"crystal": "hcp", "a": 3.65, "c": 5.75}, # To be checked
-    "Nd": {"crystal": "hcp", "a": 3.65, "c": 5.73}, # To be checked
-    "Pm": {"crystal": "hcp", "a": 3.65, "c": 5.73}, # To be checked
-    "Sm": {"crystal": "hcp", "a": 3.65, "c": 5.73}, # To be checked 
-    "Eu": {"crystal": "bcc", "a": 4.58},
-    "Gd": {"crystal": "hcp", "a": 3.63, "c": 5.78},
-    "Tb": {"crystal": "hcp", "a": 3.60, "c": 5.70},
-    "Dy": {"crystal": "hcp", "a": 3.59, "c": 5.65},
-    "Ho": {"crystal": "hcp", "a": 3.58, "c": 5.62},
-    "Er": {"crystal": "hcp", "a": 3.56, "c": 5.59},
-    "Tm": {"crystal": "hcp", "a": 3.54, "c": 5.56},
-    "Yb": {"crystal": "fcc", "a": 5.48},
-    "Lu": {"crystal": "hcp", "a": 3.50, "c": 5.55},
-    "Hf": {"crystal": "hcp", "a": 3.19, "c": 5.05},
-    "Ta": {"crystal": "bcc", "a": 3.30},
-    "W": {"crystal": "bcc", "a": 3.16},
-    "Re": {"crystal": "hcp", "a": 2.76, "c": 4.46},
-    "Os": {"crystal": "hcp", "a": 2.74, "c": 4.32},
-    "Ir": {"crystal": "fcc", "a": 3.84},
-    "Pt": {"crystal": "fcc", "a": 3.92},
-    "Au": {"crystal": "fcc", "a": 4.08},
-    "Hg": {"crystal": "hcp", "a": 2.99, "c": 5.01}, # To be checked
-    "Tl": {"crystal": "hcp", "a": 3.46, "c": 5.52},
-    "Pb": {"crystal": "fcc", "a": 4.95},
-}
+def materials_project_download(
+    material_id: str,
+    destination_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Download structure from Materials Project database by material ID.
+    
+    Args:
+        material_id (str): The Materials Project material ID (e.g., 'mp-12345')
+        destination_path (str, optional): The path to save the downloaded structure file. 
+                                          If not provided, a temporary file will be created.
+    
+    Returns:
+        A dictionary containing:
+        - 'structure_file': Path to the downloaded structure file.
+        - 'material_id': The material ID used for download.
+    """
+    try:
+        # Get the Materials Project API key from environment variables
+        api_key = os.environ.get("MP_API_KEY")
+        if not api_key:
+            raise ValueError("Materials Project API key not found. Please set MP_API_KEY environment variable.")
+            
+        # Connect to Materials Project database
+        with MPRester(api_key) as mpr:
+            # Retrieve the structure
+            structure = mpr.get_structure_by_material_id(material_id)
+            
+        # Determine destination path
+        if destination_path is None:
+            destination_path = f"{material_id}.cif"
+        
+        # Save structure
+        structure.to(filename=destination_path, fmt="cif")
+        
+        return {
+            "structure_file": destination_path,
+            "material_id": material_id,
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"message": f"Failed to download structure from Materials Project: {e}"}
 
-#@mcp.tool()
 def generate_bulk_structure(element: str, 
-                           crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
-                           a:float =None, 
-                           c: float =None,
-                           cubic: bool =False,
-                           orthorhombic: bool =False,
-                           file_format: Literal["cif", "poscar"] = "cif",
-                           ) -> Dict[str, Any]:
+                            crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
+                            a:float =None, 
+                            c: float =None,
+                            cubic: bool =False,
+                            orthorhombic: bool =False,
+                            file_format: Literal["cif", "poscar"] = "cif",
+                            ) -> Dict[str, Any]:
     """
     Generate a bulk crystal structure using ASE's `bulk` function.
     
@@ -163,7 +143,6 @@ def generate_bulk_structure(element: str,
     except Exception as e:
         return {"message": f"Generating bulk structure failed: {e}"}
 
-#@mcp.tool()
 def generate_bulk_structure_from_wyckoff_position(
     a: float,
     b: float,
@@ -213,7 +192,6 @@ def generate_bulk_structure_from_wyckoff_position(
     except Exception as e:
         return {"message": f"Generating bulk structure from Wyckoff position failed: {e}"}
 
-#@mcp.tool()
 def generate_molecule_structure(
     molecule_name: Literal['PH3', 'P2', 'CH3CHO', 'H2COH', 'CS', 'OCHCHO', 'C3H9C', 'CH3COF',
                            'CH3CH2OCH3', 'HCOOH', 'HCCl3', 'HOCl', 'H2', 'SH2', 'C2H2', 'C4H4NH',
