@@ -9,6 +9,9 @@ from pathlib import Path
 from typing import Literal, Optional, Dict, Any, List, Tuple, Union
 
 from abacusagent.modules.util.comm import generate_work_path 
+import tempfile
+import os
+from pymatgen.ext.matproj import MPRester
 
 
 # From Introduction to Solid State Physics, 8th edition, by Charles Kittel
@@ -77,15 +80,63 @@ ELEMENT_CRYSTAL_STRUCTURES = {
     "Pb": {"crystal": "fcc", "a": 4.95},
 }
 
-#@mcp.tool()
+
+def materials_project_download(
+    material_id: str,
+    destination_path: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Download structure from Materials Project database by material ID.
+    
+    Args:
+        material_id (str): The Materials Project material ID (e.g., 'mp-12345')
+        destination_path (str, optional): The path to save the downloaded structure file. 
+                                          If not provided, a temporary file will be created.
+    
+    Returns:
+        A dictionary containing:
+        - 'structure_file': Path to the downloaded structure file.
+        - 'material_id': The material ID used for download.
+    """
+    try:
+        # Get the Materials Project API key from environment variables
+        api_key = os.environ.get("MP_API_KEY")
+        if not api_key:
+            raise ValueError("Materials Project API key not found. Please set MP_API_KEY environment variable.")
+            
+        # Connect to Materials Project database
+        with MPRester(api_key) as mpr:
+            # Retrieve the structure
+            structure = mpr.get_structure_by_material_id(material_id)
+            
+        # Determine destination path
+        if destination_path is None:
+            # Create a temporary file
+            temp_file = tempfile.NamedTemporaryFile(suffix=".cif", delete=False)
+            destination_path = temp_file.name
+            temp_file.close()
+        
+        # Save structure in CIF format (default)
+        structure.to(filename=destination_path, fmt="cif")
+        
+        return {
+            "structure_file": destination_path,
+            "material_id": material_id
+        }
+        
+    except Exception as e:
+        return {"message": f"Failed to download structure from Materials Project: {e}"}
+
+
+@mcp.tool()
 def generate_bulk_structure(element: str, 
-                           crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
-                           a:float =None, 
-                           c: float =None,
-                           cubic: bool =False,
-                           orthorhombic: bool =False,
-                           file_format: Literal["cif", "poscar"] = "cif",
-                           ) -> Dict[str, Any]:
+                            crystal_structure:Literal["sc", "fcc", "bcc","hcp","diamond", "zincblende", "rocksalt"]='fcc', 
+                            a:float =None, 
+                            c: float =None,
+                            cubic: bool =False,
+                            orthorhombic: bool =False,
+                            file_format: Literal["cif", "poscar"] = "cif",
+                            ) -> Dict[str, Any]:
     """
     Generate a bulk crystal structure using ASE's `bulk` function.
     
