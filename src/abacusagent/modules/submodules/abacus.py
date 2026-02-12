@@ -576,7 +576,48 @@ def read_abacus_input_kpt(
     except Exception as e:
         return {'message': f"Read ABACUS INPUT file failed: {e}"}
 
-@mcp.tool()
+def read_abacus_stru(abacus_input_dir: Path):
+    """
+    Read ABACUS STRU file.
+    Args:
+        abacus_input_dir (str): Path to the directory containing the ABACUS input files.
+    Returns:
+        A dictionary containing information from the STRU file. Containing the following keys:
+            cell: the cell of the structure
+            atom_kinds: a dict, keys are atom labels, values are dicts containing the following keys:
+                pp: the pseudopotential file name
+                orb: the orbital file name
+                element: the element name
+                number: the number of atoms with this label
+                atommag: the magnetic moment of each atom with this label
+            coord: the coordinates of each atom
+            move: the movable flags of each atom
+    Raises:
+        FileNotFoundError: If path of given STRU file does not exist
+    """
+    try:
+        input_params = ReadInput(os.path.join(abacus_input_dir, "INPUT"))
+        stru_file = os.path.join(abacus_input_dir, input_params.get('stru_file', "STRU"))
+        if not os.path.isfile(stru_file):
+            raise FileNotFoundError(f"STRU file {stru_file} does not exist.")
+
+        stru = AbacusStru.ReadStru(stru_file)
+        atom_kinds = {}
+        for idx, label in enumerate(stru.get_label(total=False)):
+            atom_kinds[label] = {
+                'pp': stru.get_pp()[idx],
+                'orb': stru.get_orb()[idx] if stru.get_orb() is not None else None,
+                'element': stru.get_element(number=False,total=False)[idx],
+                'number': stru.get_label().count(label),
+                'atommag': stru.get_atommag()[idx],
+            }
+        return {'cell': stru.get_cell(),
+                'atom_kinds': atom_kinds,
+                'coord': stru.get_coord(),
+                'move': stru.get_move()}
+    except Exception as e:
+        return {'message': f"Read ABACUS STRU file failed: {e}"}
+
 def materials_project_download(
     material_id: str,
     destination_path: Optional[str] = None,
