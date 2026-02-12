@@ -8,8 +8,8 @@ class TestMaterialsProjectDownload(unittest.TestCase):
     
     def setUp(self):
         """设置测试环境"""
-        # 设置测试用的API密钥
-        self.api_key = 'n9WVEKNI1A8yP1MfO3KBK8eKeFwESFBu'
+        # 从环境变量获取API密钥，如果没有则使用默认值用于测试
+        self.api_key = os.environ.get('MP_API_KEY', 'n9WVEKNI1A8yP1MfO3KBK8eKeFwESFBu')
         os.environ['MP_API_KEY'] = self.api_key
         
     def test_materials_project_download_basic(self):
