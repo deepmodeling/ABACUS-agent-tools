@@ -38,7 +38,7 @@ def build_slab(
     return _build_slab(stru_file, stru_type, miller_indices, layers, surface_supercell, vacuum, vacuum_direction)
 
 @mcp.tool()
-def convert_structure_to_primitive(
+def convert_to_primitive(
     stru_file: Path,
     stru_type: Literal["cif", "poscar", "abacus/stru"] = "cif",
     output_format: Optional[Literal["cif", "poscar", "abacus/stru"]] = None,
@@ -83,7 +83,7 @@ def convert_structure_to_primitive(
 
 
 @mcp.tool()
-def convert_structure_to_conventional(
+def convert_to_conventional(
     stru_file: Path,
     stru_type: Literal["cif", "poscar", "abacus/stru"] = "cif",
     output_format: Optional[Literal["cif", "poscar", "abacus/stru"]] = None,
