@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Dict, List, Union
+from typing import Literal, Dict, List, Union, Any
 
 from abacusagent.init_mcp import mcp
 from abacusagent.modules.submodules.band import abacus_cal_band as _abacus_cal_band
@@ -12,7 +12,7 @@ def abacus_cal_band(abacus_inputs_dir: Path,
                     energy_min: float = -10,
                     energy_max: float = 10,
                     insert_point_nums: int = 30
-) -> Dict[str, float|str]:
+) -> Dict[str, Any]:
     """
     Calculate band using ABACUS based on prepared directory containing the INPUT, STRU, KPT, and pseudopotential or orbital files.
     PYATB or ABACUS NSCF calculation will be used according to parameters in INPUT.
