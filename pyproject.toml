@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45"]
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,9 @@ name = "abacusagent"
 dynamic = ["version"]
 description = "Abacus agent"
 requires-python = ">=3.11"
+license = "LGPL-3.0-or-later"
 
+license-files = ["LICENSE"]
 dependencies = [
        "abacustest>=0.4.50",
        "numpy<2.0",
